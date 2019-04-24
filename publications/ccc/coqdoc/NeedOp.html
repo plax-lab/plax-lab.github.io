@@ -1,0 +1,255 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module NeedOp</title>
+<meta name="description" content="Documentation of Coq module NeedOp" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module NeedOp</h1>
+<div class="coq">
+<br/>
+<div class="doc">Neededness analysis for x86_64 operators </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span> <span class="id">Integers</span> <span class="id">Floats</span> <span class="id">Values</span> <span class="id">Memory</span> <span class="id">Globalenvs</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Op</span> <span class="id">NeedDomain</span> <span class="id">RTL</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">op1</span> (<span class="id">nv</span>: <span class="id">nval</span>) := <span class="id">nv</span> :: <span class="id">nil</span>.<br/>
+<span class="kwd">Definition</span> <span class="id">op2</span> (<span class="id">nv</span>: <span class="id">nval</span>) := <span class="id">nv</span> :: <span class="id">nv</span> :: <span class="id">nil</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">needs_of_condition</span> (<span class="id">cond</span>: <span class="id">condition</span>): <span class="id">list</span> <span class="id">nval</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">cond</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Cmaskzero</span> <span class="id">n</span> | <span class="id">Cmasknotzero</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">maskzero</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">needs_of_addressing_32</span> (<span class="id">addr</span>: <span class="id">addressing</span>) (<span class="id">nv</span>: <span class="id">nval</span>): <span class="id">list</span> <span class="id">nval</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">addr</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Aindexed</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">modarith</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Aindexed2</span> <span class="id">n</span> =&gt; <span class="id">op2</span> (<span class="id">modarith</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ascaled</span> <span class="id">sc</span> <span class="id">ofs</span> =&gt; <span class="id">op1</span> (<span class="id">modarith</span> (<span class="id">modarith</span> <span class="id">nv</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Aindexed2scaled</span> <span class="id">sc</span> <span class="id">ofs</span> =&gt; <span class="id">op2</span> (<span class="id">modarith</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Aglobal</span> <span class="id">s</span> <span class="id">ofs</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Abased</span> <span class="id">s</span> <span class="id">ofs</span> =&gt; <span class="id">op1</span> (<span class="id">modarith</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Abasedscaled</span> <span class="id">sc</span> <span class="id">s</span> <span class="id">ofs</span> =&gt; <span class="id">op1</span> (<span class="id">modarith</span> (<span class="id">modarith</span> <span class="id">nv</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Ainstack</span> <span class="id">ofs</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">needs_of_addressing_64</span> (<span class="id">addr</span>: <span class="id">addressing</span>) (<span class="id">nv</span>: <span class="id">nval</span>): <span class="id">list</span> <span class="id">nval</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">addr</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Aindexed</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Aindexed2</span> <span class="id">n</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ascaled</span> <span class="id">sc</span> <span class="id">ofs</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Aindexed2scaled</span> <span class="id">sc</span> <span class="id">ofs</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Aglobal</span> <span class="id">s</span> <span class="id">ofs</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Abased</span> <span class="id">s</span> <span class="id">ofs</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Abasedscaled</span> <span class="id">sc</span> <span class="id">s</span> <span class="id">ofs</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ainstack</span> <span class="id">ofs</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">needs_of_addressing</span> (<span class="id">addr</span>: <span class="id">addressing</span>) (<span class="id">nv</span>: <span class="id">nval</span>): <span class="id">list</span> <span class="id">nval</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Archi.ptr64</span> <span class="kwd">then</span> <span class="id">needs_of_addressing_64</span> <span class="id">addr</span> <span class="id">nv</span> <span class="kwd">else</span> <span class="id">needs_of_addressing_32</span> <span class="id">addr</span> <span class="id">nv</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">needs_of_operation</span> (<span class="id">op</span>: <span class="id">operation</span>) (<span class="id">nv</span>: <span class="id">nval</span>): <span class="id">list</span> <span class="id">nval</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">op</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Omove</span> =&gt; <span class="id">op1</span> <span class="id">nv</span><br/>
+&nbsp;&nbsp;| <span class="id">Ointconst</span> <span class="id">n</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Olongconst</span> <span class="id">n</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Ofloatconst</span> <span class="id">n</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Osingleconst</span> <span class="id">n</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Oindirectsymbol</span> <span class="id">id</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocast8signed</span> =&gt; <span class="id">op1</span> (<span class="id">sign_ext</span> 8 <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ocast8unsigned</span> =&gt; <span class="id">op1</span> (<span class="id">zero_ext</span> 8 <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ocast16signed</span> =&gt; <span class="id">op1</span> (<span class="id">sign_ext</span> 16 <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ocast16unsigned</span> =&gt; <span class="id">op1</span> (<span class="id">zero_ext</span> 16 <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oneg</span> =&gt; <span class="id">op1</span> (<span class="id">modarith</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Osub</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Omul</span> =&gt; <span class="id">op2</span> (<span class="id">modarith</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Omulimm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">modarith</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Omulhs</span> | <span class="id">Omulhu</span> | <span class="id">Odiv</span> | <span class="id">Odivu</span> | <span class="id">Omod</span> | <span class="id">Omodu</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oand</span> =&gt; <span class="id">op2</span> (<span class="id">bitwise</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oandimm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">andimm</span> <span class="id">nv</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oor</span> =&gt; <span class="id">op2</span> (<span class="id">bitwise</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oorimm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">orimm</span> <span class="id">nv</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oxor</span> =&gt; <span class="id">op2</span> (<span class="id">bitwise</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oxorimm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">bitwise</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Onot</span> =&gt; <span class="id">op1</span> (<span class="id">bitwise</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshl</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshlimm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">shlimm</span> <span class="id">nv</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshr</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrimm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">shrimm</span> <span class="id">nv</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrximm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshru</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshruimm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">shruimm</span> <span class="id">nv</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ororimm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">ror</span> <span class="id">nv</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshldimm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Olea</span> <span class="id">addr</span> =&gt; <span class="id">needs_of_addressing_32</span> <span class="id">addr</span> <span class="id">nv</span><br/>
+&nbsp;&nbsp;| <span class="id">Omakelong</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Olowlong</span> | <span class="id">Ohighlong</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ocast32signed</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ocast32unsigned</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Onegl</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oaddlimm</span> <span class="id">_</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Osubl</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Omull</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Omullimm</span> <span class="id">_</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Omullhs</span> | <span class="id">Omullhu</span> | <span class="id">Odivl</span> | <span class="id">Odivlu</span> | <span class="id">Omodl</span> | <span class="id">Omodlu</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oandl</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oandlimm</span> <span class="id">_</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oorl</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oorlimm</span> <span class="id">_</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oxorl</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oxorlimm</span> <span class="id">_</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Onotl</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshll</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshllimm</span> <span class="id">_</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrl</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrlimm</span> <span class="id">_</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrxlimm</span> <span class="id">n</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrlu</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrluimm</span> <span class="id">_</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ororlimm</span> <span class="id">_</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oleal</span> <span class="id">addr</span> =&gt; <span class="id">needs_of_addressing_64</span> <span class="id">addr</span> <span class="id">nv</span><br/>
+&nbsp;&nbsp;| <span class="id">Onegf</span> | <span class="id">Oabsf</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oaddf</span> | <span class="id">Osubf</span> | <span class="id">Omulf</span> | <span class="id">Odivf</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Onegfs</span> | <span class="id">Oabsfs</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oaddfs</span> | <span class="id">Osubfs</span> | <span class="id">Omulfs</span> | <span class="id">Odivfs</span> =&gt; <span class="id">op2</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Osingleoffloat</span> | <span class="id">Ofloatofsingle</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ointoffloat</span> | <span class="id">Ofloatofint</span> | <span class="id">Ointofsingle</span> | <span class="id">Osingleofint</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Olongoffloat</span> | <span class="id">Ofloatoflong</span> | <span class="id">Olongofsingle</span> | <span class="id">Osingleoflong</span> =&gt; <span class="id">op1</span> (<span class="id">default</span> <span class="id">nv</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ocmp</span> <span class="id">c</span> =&gt; <span class="id">needs_of_condition</span> <span class="id">c</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">operation_is_redundant</span> (<span class="id">op</span>: <span class="id">operation</span>) (<span class="id">nv</span>: <span class="id">nval</span>): <span class="id">bool</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">op</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocast8signed</span> =&gt; <span class="id">sign_ext_redundant</span> 8 <span class="id">nv</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocast8unsigned</span> =&gt; <span class="id">zero_ext_redundant</span> 8 <span class="id">nv</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocast16signed</span> =&gt; <span class="id">sign_ext_redundant</span> 16 <span class="id">nv</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocast16unsigned</span> =&gt; <span class="id">zero_ext_redundant</span> 16 <span class="id">nv</span><br/>
+&nbsp;&nbsp;| <span class="id">Oandimm</span> <span class="id">n</span> =&gt; <span class="id">andimm_redundant</span> <span class="id">nv</span> <span class="id">n</span><br/>
+&nbsp;&nbsp;| <span class="id">Oorimm</span> <span class="id">n</span> =&gt; <span class="id">orimm_redundant</span> <span class="id">nv</span> <span class="id">n</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">false</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">InvAgree</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| [<span class="id">H</span>: <span class="id">vagree_list</span> <span class="id">nil</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <span class="id">inv</span> <span class="id">H</span>; <span class="id">InvAgree</span><br/>
+&nbsp;&nbsp;| [<span class="id">H</span>: <span class="id">vagree_list</span> (<span class="id">_</span>::<span class="id">_</span>) <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <span class="id">inv</span> <span class="id">H</span>; <span class="id">InvAgree</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">TrivialExists</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| [ |- <span class="id">exists</span> <span class="id">v</span>, <span class="id">Some</span> ?<span class="id">x</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">_</span> ] =&gt; <span class="id">exists</span> <span class="id">x</span>; <span class="tactic">split</span>; <span class="tactic">auto</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id">SOUNDNESS</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">ge</span>: <span class="id">genv</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">sp</span>: <span class="id">block</span>.<br/>
+<span class="kwd">Variables</span> <span class="id">m</span> <span class="id">m</span>': <span class="id">mem</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id">PERM</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span> <span class="id">p</span>, <span class="id">Mem.perm</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span> <span class="id">p</span> -&gt; <span class="id">Mem.perm</span> <span class="id">m</span>' <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span> <span class="id">p</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">needs_of_condition_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">b</span> <span class="id">args</span>',<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">b</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">vagree_list</span> <span class="id">args</span> <span class="id">args</span>' (<span class="id">needs_of_condition</span> <span class="id">cond</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span> <span class="id">args</span>' <span class="id">m</span>' = <span class="id">Some</span> <span class="id">b</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3279')">Proof.</div>
+<div class="proofscript" id="proof3279">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">cond</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">try</span> (<span class="tactic">eapply</span> <span class="id">default_needs_of_condition_sound</span>; <span class="tactic">eauto</span>; <span class="tactic">fail</span>);<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">FuncInv</span>; <span class="id">InvAgree</span>.<br/>
+- <span class="tactic">eapply</span> <span class="id">maskzero_sound</span>; <span class="tactic">eauto</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id">Val.maskzero_bool</span> <span class="id">v</span> <span class="id">n</span>) <span class="kwd">as</span> [<span class="id">b</span>'|] <span class="id">eqn</span>:<span class="id">MZ</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id">maskzero_sound</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">needs_of_addressing_32_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sp</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">v</span> <span class="id">nv</span> <span class="id">args</span>',<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing32</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span> <span class="id">args</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">vagree_list</span> <span class="id">args</span> <span class="id">args</span>' (<span class="id">needs_of_addressing_32</span> <span class="id">addr</span> <span class="id">nv</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eval_addressing32</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span> <span class="id">args</span>' = <span class="id">Some</span> <span class="id">v</span>'<br/>
+&nbsp;&nbsp;/\ <span class="id">vagree</span> <span class="id">v</span> <span class="id">v</span>' <span class="id">nv</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3280')">Proof.</div>
+<div class="proofscript" id="proof3280">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">needs_of_addressing_32</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">addr</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">FuncInv</span>; <span class="id">InvAgree</span>; <span class="id">TrivialExists</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span> <span class="kwd">using</span> <span class="id">add_sound</span>, <span class="id">mul_sound</span> <span class="kwd">with</span> <span class="id">na</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">add_sound</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">na</span>. <span class="tactic">apply</span> <span class="id">add_sound</span>; <span class="tactic">rewrite</span> <span class="id">modarith_idem</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">add_sound</span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id">add_sound</span>; <span class="tactic">rewrite</span> <span class="id">modarith_idem</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">na</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">mul_sound</span>; <span class="tactic">rewrite</span> <span class="id">modarith_idem</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">na</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">needs_of_operation_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">op</span> <span class="id">args</span> <span class="id">v</span> <span class="id">nv</span> <span class="id">args</span>',<br/>
+&nbsp;&nbsp;<span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">vagree_list</span> <span class="id">args</span> <span class="id">args</span>' (<span class="id">needs_of_operation</span> <span class="id">op</span> <span class="id">nv</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">nv</span> &lt;&gt; <span class="id">Nothing</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">args</span>' <span class="id">m</span>' = <span class="id">Some</span> <span class="id">v</span>'<br/>
+&nbsp;&nbsp;/\ <span class="id">vagree</span> <span class="id">v</span> <span class="id">v</span>' <span class="id">nv</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3281')">Proof.</div>
+<div class="proofscript" id="proof3281">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">needs_of_operation</span>; <span class="tactic">intros</span>; <span class="tactic">destruct</span> <span class="id">op</span>; <span class="tactic">try</span> (<span class="tactic">eapply</span> <span class="id">default_needs_of_operation_sound</span>; <span class="tactic">eauto</span>; <span class="tactic">fail</span>);<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">FuncInv</span>; <span class="id">InvAgree</span>; <span class="id">TrivialExists</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">sign_ext_sound</span>; <span class="tactic">auto</span>. <span class="tactic">compute</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">zero_ext_sound</span>; <span class="tactic">auto</span>. <span class="tactic">omega</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">sign_ext_sound</span>; <span class="tactic">auto</span>. <span class="tactic">compute</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">zero_ext_sound</span>; <span class="tactic">auto</span>. <span class="tactic">omega</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">neg_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">mul_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">mul_sound</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">na</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">and_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">andimm_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">or_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">orimm_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">xor_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">xor_sound</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">na</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">notint_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">shlimm_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">shrimm_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">shruimm_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">ror_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">eapply</span> <span class="id">needs_of_addressing_32_sound</span>; <span class="tactic">eauto</span>.<br/>
+- <span class="id">change</span> (<span class="id">eval_addressing64</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">a</span> <span class="id">args</span>')<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">with</span> (<span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) (<span class="id">Oleal</span> <span class="id">a</span>) <span class="id">args</span>' <span class="id">m</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">default_needs_of_operation_sound</span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">a</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id">eval_condition</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">m</span>) <span class="kwd">as</span> [<span class="id">b</span>|] <span class="id">eqn</span>:<span class="id">EC</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id">needs_of_condition_sound</span> <span class="tactic">by</span> <span class="tactic">eauto</span>. <span class="tactic">simpl</span>. <span class="id">eexists</span>. <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">na</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">operation_is_redundant_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">op</span> <span class="id">nv</span> <span class="id">arg1</span> <span class="id">args</span> <span class="id">v</span> <span class="id">arg1</span>' <span class="id">args</span>',<br/>
+&nbsp;&nbsp;<span class="id">operation_is_redundant</span> <span class="id">op</span> <span class="id">nv</span> = <span class="id">true</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> (<span class="id">arg1</span> :: <span class="id">args</span>) <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">vagree_list</span> (<span class="id">arg1</span> :: <span class="id">args</span>) (<span class="id">arg1</span>' :: <span class="id">args</span>') (<span class="id">needs_of_operation</span> <span class="id">op</span> <span class="id">nv</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">vagree</span> <span class="id">v</span> <span class="id">arg1</span>' <span class="id">nv</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3282')">Proof.</div>
+<div class="proofscript" id="proof3282">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">op</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">try</span> <span class="tactic">discriminate</span>; <span class="id">inv</span> <span class="id">H1</span>; <span class="id">FuncInv</span>; <span class="tactic">subst</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">sign_ext_redundant_sound</span>; <span class="tactic">auto</span>. <span class="tactic">omega</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">zero_ext_redundant_sound</span>; <span class="tactic">auto</span>. <span class="tactic">omega</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">sign_ext_redundant_sound</span>; <span class="tactic">auto</span>. <span class="tactic">omega</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">zero_ext_redundant_sound</span>; <span class="tactic">auto</span>. <span class="tactic">omega</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">andimm_redundant_sound</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">orimm_redundant_sound</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">SOUNDNESS</span>.<br/>
+<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

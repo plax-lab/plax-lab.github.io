@@ -1,0 +1,295 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module FinalTheoremExt</title>
+<meta name="description" content="Documentation of Coq module FinalTheoremExt" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module FinalTheoremExt</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">mathcomp.ssreflect.fintype</span> <span class="id">mathcomp.ssreflect.ssrnat</span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Axioms.html">Axioms</a></span> <span class="id"><a href="Errors.html">Errors</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span> <span class="id"><a href="GAST.html">GAST</a></span> <span class="id"><a href="GlobSemantics.html">GlobSemantics</a></span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="ReachClose.html">ReachClose</a></span> <span class="id"><a href="DRF.html">DRF</a></span> <span class="id"><a href="SeqCorrect.html">SeqCorrect</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Soundness.html">Soundness</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="LangProps.html">LangProps</a></span> <span class="id"><a href="SpecLangIDtrans.html">SpecLangIDtrans</a></span> <span class="id"><a href="CompCorrect.html">CompCorrect</a></span>.<br/>
+<br/>
+<span class="kwd">Import</span> <span class="id">Compositionality</span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Languages.html">Languages</a></span> <span class="id"><a href="SCSemLemmas.html">SCSemLemmas</a></span>.<br/>
+<br/>
+<h1> Final Theorem of the extended framework </h1>
+<br/>
+<span class="kwd">Require</span> <span class="id"><a href="code.html">code</a></span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="ClightSC_Compilation_correctness">ClightSC_Compilation_correctness</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Variable</span> (<span class="id"><a name="ClightSC_Compilation_correctness.cl_units">cl_units</a></span>: @<span class="id"><a href="GAST.html#cunits">cunits</a></span> <span class="id"><a href="Languages.html#NL">NL</a></span> <span class="id"><a href="Languages.html#L">L</a></span>).<br/>
+&nbsp;&nbsp;<span class="kwd">Variable</span> (<span class="id"><a name="ClightSC_Compilation_correctness.compiled_units">compiled_units</a></span>: @<span class="id"><a href="GAST.html#cunits">cunits</a></span> <span class="id"><a href="Languages.html#NL">NL</a></span> <span class="id"><a href="Languages.html#L">L</a></span>).<br/>
+&nbsp;&nbsp;<span class="kwd">Variable</span> (<span class="id"><a name="ClightSC_Compilation_correctness.spec_unit">spec_unit</a></span>: @<span class="id"><a href="GAST.html#cunit">cunit</a></span> <span class="id"><a href="Languages.html#NL">NL</a></span> <span class="id"><a href="Languages.html#L">L</a></span>).<br/>
+&nbsp;&nbsp;<span class="kwd">Let</span> <span class="id"><a name="ClightSC_Compilation_correctness.scunits">scunits</a></span>:= <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.spec_unit">spec_unit</a></span> :: <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.cl_units">cl_units</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Let</span> <span class="id"><a name="ClightSC_Compilation_correctness.tcunits">tcunits</a></span>:= <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.spec_unit">spec_unit</a></span> :: <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.compiled_units">compiled_units</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Variable</span> <span class="id"><a name="ClightSC_Compilation_correctness.e">e</a></span>: @<span class="id"><a href="GAST.html#entries">entries</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="cl_comps">cl_comps</a></span> : @<span class="id"><a href="GAST.html#gcomp">gcomp</a></span> <span class="id"><a href="Languages.html#NL">NL</a></span> <span class="id"><a href="Languages.html#L">L</a></span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#repeat">List.repeat</a></span> (<span class="id"><a href="GAST.html#Build_seq_comp_i">Build_seq_comp_i</a></span> <span class="id"><a href="Languages.html#NL">NL</a></span> <span class="id"><a href="Languages.html#L">L</a></span> <span class="id"><a href="Languages.html#id0">id0</a></span> <span class="id"><a href="Languages.html#id1">id1</a></span> <span class="id"><a href="CompCorrect.html#clight_trans">clight_trans</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#length">List.length</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.cl_units">cl_units</a></span>).<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="id_comp">id_comp</a></span>: @<span class="id"><a href="GAST.html#seq_comp_i">seq_comp_i</a></span> <span class="id"><a href="Languages.html#NL">NL</a></span> <span class="id"><a href="Languages.html#L">L</a></span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="GAST.html#Build_seq_comp_i">Build_seq_comp_i</a></span> <span class="id"><a href="Languages.html#NL">NL</a></span> <span class="id"><a href="Languages.html#L">L</a></span> <span class="id"><a href="Languages.html#id2">id2</a></span> <span class="id"><a href="Languages.html#id2">id2</a></span> <span class="id"><a href="SpecLangIDtrans.html#id_trans_speclang">id_trans_speclang</a></span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<div class="doc">Hypothesis 1: modules are reach-closed </div>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> <span class="id"><a name="ClightSC_Compilation_correctness.Hrc">Hrc</a></span> : <span class="id"><a href="Compositionality.html#rc_cunits">rc_cunits</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.scunits">scunits</a></span>.<br/>
+<div class="doc">Hypothesis 2: compilation units are compiled by <span class="bracket"><span class="id">comps</span></span> </div>
+&nbsp;&nbsp;<span class="kwd">Hypotheses</span> (<span class="id"><a name="ClightSC_Compilation_correctness.Hcomp_clight">Hcomp_clight</a></span>: <span class="id"><a href="GAST.html#cunits_transf">cunits_transf</a></span> <span class="id"><a href="FinalTheoremExt.html#cl_comps">cl_comps</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.cl_units">cl_units</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.compiled_units">compiled_units</a></span>).<br/>
+&nbsp;&nbsp;<span class="kwd">Hypotheses</span> (<span class="id"><a name="ClightSC_Compilation_correctness.Hcomp_spec">Hcomp_spec</a></span>: <span class="id"><a href="GAST.html#cunit_transf">cunit_transf</a></span> <span class="id"><a href="FinalTheoremExt.html#id_comp">id_comp</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.spec_unit">spec_unit</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.spec_unit">spec_unit</a></span>).<br/>
+<div class="doc">Hypothesis 3: whole source program is safe and data-race-free </div>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> (<span class="id"><a name="ClightSC_Compilation_correctness.Hdrf">Hdrf</a></span>: <span class="id"><a href="DRF.html#drf">drf</a></span> (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.scunits">scunits</a></span>, <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>)).<br/>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> (<span class="id"><a name="ClightSC_Compilation_correctness.Hsafe">Hsafe</a></span>: <span class="id"><a href="GlobSemantics.html#safe_prog">safe_prog</a></span> (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.scunits">scunits</a></span>, <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>)).<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="comps">comps</a></span>: @<span class="id"><a href="GAST.html#gcomp">gcomp</a></span> <span class="id"><a href="Languages.html#NL">NL</a></span> <span class="id"><a href="Languages.html#L">L</a></span> := <span class="id"><a href="FinalTheoremExt.html#id_comp">id_comp</a></span> :: <span class="id"><a href="FinalTheoremExt.html#cl_comps">cl_comps</a></span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="Hwd_src">Hwd_src</a></span>: <span class="id"><a href="GAST.html#wd_langs">wd_langs</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.scunits">scunits</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof10315')">Proof.</div>
+<div class="proofscript" id="proof10315">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">Hdrf</span> <span class="id">Hsafe</span> <span class="id">Hrc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.scunits">scunits</a></span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">cu</span> <span class="id">C</span>. <span class="tactic">inversion</span> <span class="id">C</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GAST.html#wd_langs">wd_langs</a></span>. <span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">cu</span>; <span class="tactic">simpl</span>. <span class="tactic">destruct</span> (<span class="id"><a href="Languages.html#eq_ord">eq_ord</a></span> <span class="id">lid</span>); <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Languages.html#L_sound_1">L_sound_1</a></span>. <span class="tactic">apply</span> <span class="id"><a href="ClightWD.html#Clight_wd2">ClightWD.Clight_wd2</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Languages.html#L_sound_2">L_sound_2</a></span>. <span class="tactic">apply</span> <span class="id"><a href="AsmWD.html#Asm_wd">AsmWD.Asm_wd</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Languages.html#L_sound_3">L_sound_3</a></span>. <span class="tactic">apply</span> <span class="id"><a href="SpecLangWDDET.html#SpecLang_wd">SpecLangWDDET.SpecLang_wd</a></span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="Hwd_tgt">Hwd_tgt</a></span>: <span class="id"><a href="GAST.html#wd_langs">wd_langs</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.tcunits">tcunits</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof10316')">Proof.</div>
+<div class="proofscript" id="proof10316">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">Hdrf</span> <span class="id">Hsafe</span> <span class="id">Hrc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.tcunits">tcunits</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">cu</span> <span class="id">C</span>. <span class="tactic">inversion</span> <span class="id">C</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GAST.html#wd_langs">wd_langs</a></span>. <span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">cu</span>; <span class="tactic">simpl</span>. <span class="tactic">destruct</span> (<span class="id"><a href="Languages.html#eq_ord">eq_ord</a></span> <span class="id">lid</span>); <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Languages.html#L_sound_1">L_sound_1</a></span>. <span class="tactic">apply</span> <span class="id"><a href="ClightWD.html#Clight_wd2">ClightWD.Clight_wd2</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Languages.html#L_sound_2">L_sound_2</a></span>. <span class="tactic">apply</span> <span class="id"><a href="AsmWD.html#Asm_wd">AsmWD.Asm_wd</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Languages.html#L_sound_3">L_sound_3</a></span>. <span class="tactic">apply</span> <span class="id"><a href="SpecLangWDDET.html#SpecLang_wd">SpecLangWDDET.SpecLang_wd</a></span>.    <br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="Hdet_tgt">Hdet_tgt</a></span>: <span class="id"><a href="GAST.html#det_langs">det_langs</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.tcunits">tcunits</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof10317')">Proof.</div>
+<div class="proofscript" id="proof10317">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">scunits</span> <span class="id">tcunits</span>. <span class="tactic">unfold</span> <span class="id"><a href="FinalTheoremExt.html#cl_comps">cl_comps</a></span>, <span class="id"><a href="FinalTheoremExt.html#id_comp">id_comp</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">Hrc</span> <span class="id">e</span> <span class="id">Hdrf</span> <span class="id">Hsafe</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">revert</span> <span class="id">compiled_units</span> <span class="id">Hcomp_clight</span> <span class="id">Hcomp_spec</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.cl_units">cl_units</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Hcomp_clight">Hcomp_clight</a></span>. <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">cu</span> <span class="id">H</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">destruct</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Hcomp_spec">Hcomp_spec</a></span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id"><a href="SpecLangWDDET.html#SpecLang_det">SpecLangWDDET.SpecLang_det</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Hcomp_clight">Hcomp_clight</a></span>. <span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="tactic">intros</span> <span class="id">cu</span> <span class="id">IN</span>. <span class="id">inv</span> <span class="id">IN</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Hcomp_spec">Hcomp_spec</a></span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id"><a href="SpecLangWDDET.html#SpecLang_det">SpecLangWDDET.SpecLang_det</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H4</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id"><a href="AsmDET.html#Asm_det">AsmDET.Asm_det</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHc</span>; <span class="tactic">eauto</span>. <span class="id">right</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="Hcomp">Hcomp</a></span>: <span class="id"><a href="GAST.html#cunits_transf">cunits_transf</a></span> <span class="id"><a href="FinalTheoremExt.html#comps">comps</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.scunits">scunits</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.tcunits">tcunits</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof10318')">Proof.</div>
+<div class="proofscript" id="proof10318">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">Hsafe</span> <span class="id">Hrc</span> <span class="id">Hdrf</span>. <span class="tactic">subst</span> <span class="id">scunits</span> <span class="id">tcunits</span>. <span class="tactic">unfold</span> <span class="id"><a href="FinalTheoremExt.html#comps">comps</a></span>, <span class="id"><a href="FinalTheoremExt.html#cl_comps">cl_comps</a></span>, <span class="id"><a href="FinalTheoremExt.html#id_comp">id_comp</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">revert</span> <span class="id">compiled_units</span> <span class="id">Hcomp_clight</span> <span class="id">Hcomp_spec</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.cl_units">cl_units</a></span>; <span class="tactic">intros</span>; <span class="id">inv</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Hcomp_clight">Hcomp_clight</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">constructor</span>; <span class="tactic">auto</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">IHc</span>; <span class="tactic">eauto</span>. <span class="tactic">intro</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="Hcorrect">Hcorrect</a></span>: <span class="id"><a href="Soundness.html#seqs_correct">seqs_correct</a></span> <span class="id"><a href="FinalTheoremExt.html#comps">comps</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof10319')">Proof.</div>
+<div class="proofscript" id="proof10319">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="FinalTheoremExt.html#comps">comps</a></span>. <span class="tactic">clear</span>. <span class="tactic">unfold</span> <span class="id"><a href="FinalTheoremExt.html#cl_comps">cl_comps</a></span>, <span class="id"><a href="FinalTheoremExt.html#id_comp">id_comp</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#length">length</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.cl_units">cl_units</a></span>). <span class="tactic">clear</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">n</span>; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">simpl</span>. <span class="tactic">apply</span> <span class="id"><a href="SpecLangIDtrans.html#id_trans_correct">SpecLangIDtrans.id_trans_correct</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id">IHn</span>. <span class="id">constructor</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">simpl</span>. <span class="tactic">apply</span> <span class="id"><a href="CompCorrect.html#compcert_correct">compcert_correct</a></span>. <span class="tactic">auto</span>. <br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="refinement_sc">refinement_sc</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics.html#prog_refine">prog_refine</a></span> (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.scunits">scunits</a></span>, <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>) (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.tcunits">tcunits</a></span>, <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof10320')">Proof.</div>
+<div class="proofscript" id="proof10320">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Soundness.html#framework_sound">framework_sound</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="FinalTheoremExt.html#Hwd_src">Hwd_src</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="FinalTheoremExt.html#Hwd_tgt">Hwd_tgt</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="FinalTheoremExt.html#Hdet_tgt">Hdet_tgt</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Hrc">Hrc</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="FinalTheoremExt.html#Hcomp">Hcomp</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="FinalTheoremExt.html#Hcorrect">Hcorrect</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Hdrf">Hdrf</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Hsafe">Hsafe</a></span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="TSOGlobSem.html">TSOGlobSem</a></span> <span class="id"><a href="TSOGlobUSim.html">TSOGlobUSim</a></span> <span class="id"><a href="TSOCompInvs.html">TSOCompInvs</a></span> <span class="id"><a href="TSOCompositionality.html">TSOCompositionality</a></span> <span class="id"><a href="RGRels.html">RGRels</a></span> <span class="id"><a href="ClientSim.html">ClientSim</a></span> <span class="id"><a href="ObjectSim.html">ObjectSim</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="code.html">code</a></span> <span class="id"><a href="InvRG.html">InvRG</a></span> <span class="id"><a href="LockProof.html">LockProof</a></span> <span class="id"><a href="LockSim.html">LockSim</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Variable</span> (<span class="id"><a name="ClightSC_Compilation_correctness.client_units">client_units</a></span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="AsmTSO.html#comp_unit">AsmTSO.comp_unit</a></span>).<br/>
+<div class="doc">client code are identical </div>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> (<span class="id"><a name="ClightSC_Compilation_correctness.H_client_code">H_client_code</a></span>: <span class="id"><a href="TSOCompInvs.html#client_id">client_id</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.compiled_units">compiled_units</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.client_units">client_units</a></span>).<br/>
+<br/>
+<div class="doc">object  module </div>
+&nbsp;&nbsp;<span class="kwd">Variable</span> (<span class="id"><a name="ClightSC_Compilation_correctness.impl_unit">impl_unit</a></span>: <span class="id"><a href="AsmTSO.html#comp_unit">AsmTSO.comp_unit</a></span>).<br/>
+<div class="doc">object  R/G/O </div>
+&nbsp;&nbsp;<span class="kwd">Variable</span> (<span class="id"><a name="ClightSC_Compilation_correctness.Io">Io</a></span>: <span class="id"><a href="ASM_local.html#genv">ASM_local.genv</a></span> -&gt; <span class="id"><a href="RGRels.html#stInv">stInv</a></span>).<br/>
+&nbsp;&nbsp;<span class="kwd">Variable</span> (<span class="id"><a name="ClightSC_Compilation_correctness.Ro">Ro</a></span> <span class="id"><a name="ClightSC_Compilation_correctness.Go">Go</a></span>: <span class="id"><a href="ASM_local.html#genv">ASM_local.genv</a></span> -&gt; <span class="id"><a href="GlobDefs.html#tid">tid</a></span> -&gt; <span class="id"><a href="RGRels.html#stRel">stRel</a></span>).<br/>
+<div class="doc">object  R/G/O properties </div>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> (<span class="id"><a name="ClightSC_Compilation_correctness.Io_Sta_Go">Io_Sta_Go</a></span>: <span class="kwd">forall</span> <span class="id">ge</span> <span class="id">t</span>, <span class="id"><a href="RGRels.html#Sta">Sta</a></span> (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Io">Io</a></span> <span class="id"><a href="FinalTheoremExt.html#ge">ge</a></span>) (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Go">Go</a></span> <span class="id"><a href="FinalTheoremExt.html#ge">ge</a></span> <span class="id"><a href="FinalTheoremExt.html#t">t</a></span>)).<br/>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> (<span class="id"><a name="ClightSC_Compilation_correctness.Go_Implies_Ro">Go_Implies_Ro</a></span>: <span class="kwd">forall</span> <span class="id">ge</span> <span class="id">t</span> <span class="id">t</span>', <span class="id"><a href="FinalTheoremExt.html#t">t</a></span> &lt;&gt; <span class="id">t</span>' -&gt; <span class="id"><a href="RGRels.html#Implies">Implies</a></span> (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Go">Go</a></span> <span class="id"><a href="FinalTheoremExt.html#ge">ge</a></span> <span class="id"><a href="FinalTheoremExt.html#t">t</a></span>) (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Ro">Ro</a></span> <span class="id"><a href="FinalTheoremExt.html#ge">ge</a></span> <span class="id">t</span>')).  <br/>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> (<span class="id"><a name="ClightSC_Compilation_correctness.UBSta_Io">UBSta_Io</a></span>: <span class="kwd">forall</span> <span class="id">ge</span>, <span class="id"><a href="RGRels.html#UBSta">UBSta</a></span> (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Io">Io</a></span> <span class="id"><a href="FinalTheoremExt.html#ge">ge</a></span>)).<br/>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> (<span class="id"><a name="ClightSC_Compilation_correctness.UBImplies_Ro">UBImplies_Ro</a></span>: <span class="kwd">forall</span> <span class="id">ge</span> <span class="id">t</span>, <span class="id"><a href="RGRels.html#UBImplies">UBImplies</a></span> (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Io">Io</a></span> <span class="id"><a href="FinalTheoremExt.html#ge">ge</a></span>) (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Ro">Ro</a></span> <span class="id"><a href="FinalTheoremExt.html#ge">ge</a></span> <span class="id"><a href="FinalTheoremExt.html#t">t</a></span>)).<br/>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> (<span class="id"><a name="ClightSC_Compilation_correctness.HRP">HRP</a></span>: <span class="id"><a href="ObjectSim.html#RespectPerm">RespectPerm</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Io">Io</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Ro">Ro</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Go">Go</a></span>).<br/>
+<div class="doc">object simulation </div>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> (<span class="id"><a name="ClightSC_Compilation_correctness.H_obj_sim">H_obj_sim</a></span>: <span class="id"><a href="TSOCompInvs.html#objcu_sim">objcu_sim</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Ro">Ro</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Go">Go</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.Io">Io</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.spec_unit">spec_unit</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.impl_unit">impl_unit</a></span>).<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="refinement_tso_asm_sc">refinement_tso_asm_sc</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics.html#safe_prog">safe_prog</a></span> (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.tcunits">tcunits</a></span>, <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="DRF.html#drf">drf</a></span> (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.tcunits">tcunits</a></span>, <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_refine_sc">tso_refine_sc</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.tcunits">tcunits</a></span>, <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.impl_unit">impl_unit</a></span> :: <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.client_units">client_units</a></span>,<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof10321')">Proof.</div>
+<div class="proofscript" id="proof10321">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">Htgtsafe</span> <span class="id">Htgtdrf</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="TSOGlobUSim.html#tso_globusim_refinement">tso_globusim_refinement</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="TSOCompositionality.html#compositionality">compositionality</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Let</span> <span class="id"><a name="ClightSC_Compilation_correctness.pSrc">pSrc</a></span> := (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.scunits">scunits</a></span>, <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>).<br/>
+&nbsp;&nbsp;<span class="kwd">Let</span> <span class="id">pSrc</span>' := (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.tcunits">tcunits</a></span>, <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>).<br/>
+&nbsp;&nbsp;<span class="kwd">Let</span> <span class="id"><a name="ClightSC_Compilation_correctness.pTgt">pTgt</a></span> := (<span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.impl_unit">impl_unit</a></span> :: <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.client_units">client_units</a></span>, <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.e">e</a></span>).<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="refinement_tso_clight">refinement_tso_clight</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sgm</span> <span class="id">sge</span> <span class="id">spc</span> <span class="id">t</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sgm</span>' <span class="id">sge</span>' <span class="id">spc</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">tgm</span> <span class="id">tge</span> <span class="id">tpc</span>,<br/>
+<div class="doc">initial states related </div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.pSrc">pSrc</a></span> <span class="id"><a href="FinalTheoremExt.html#sgm">sgm</a></span> <span class="id"><a href="FinalTheoremExt.html#sge">sge</a></span> <span class="id"><a href="FinalTheoremExt.html#spc">spc</a></span> <span class="id"><a href="FinalTheoremExt.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#InitRel">InitRel</a></span> <span class="id"><a href="FinalTheoremExt.html#mu">mu</a></span> <span class="id"><a href="FinalTheoremExt.html#sge">sge</a></span> <span class="id">sge</span>' <span class="id"><a href="FinalTheoremExt.html#sgm">sgm</a></span> <span class="id">sgm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id">pSrc</span>' <span class="id">sgm</span>' <span class="id">sge</span>' <span class="id">spc</span>' <span class="id"><a href="FinalTheoremExt.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_sc_initRel">tso_sc_initRel</a></span> <span class="id">sge</span>' <span class="id"><a href="FinalTheoremExt.html#tge">tge</a></span> <span class="id">sgm</span>' <span class="id"><a href="FinalTheoremExt.html#tgm">tgm</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_initconfig">tso_initconfig</a></span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness.pTgt">pTgt</a></span> <span class="id"><a href="FinalTheoremExt.html#tgm">tgm</a></span> <span class="id"><a href="FinalTheoremExt.html#tge">tge</a></span> <span class="id"><a href="FinalTheoremExt.html#tpc">tpc</a></span> <span class="id"><a href="FinalTheoremExt.html#t">t</a></span> -&gt;<br/>
+<div class="doc">event trace refinement for behaviors that do not silently diverge </div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">B</span>: <span class="id"><a href="ETrace.html#behav">ETrace.behav</a></span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tsoEtr">tsoEtr</a></span> <span class="id"><a href="FinalTheoremExt.html#tpc">tpc</a></span> <span class="id"><a href="FinalTheoremExt.html#B">B</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#notsd">notsd</a></span> <span class="id"><a href="FinalTheoremExt.html#B">B</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#Etr">ETrace.Etr</a></span> <span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics.html#abort">GlobSemantics.abort</a></span> <span class="id"><a href="GlobDefs.html#final_state">GlobDefs.final_state</a></span> <span class="id"><a href="FinalTheoremExt.html#spc">spc</a></span> <span class="id"><a href="FinalTheoremExt.html#B">B</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof10322')">Proof.</div>
+<div class="proofscript" id="proof10322">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="TSOGlobUSim.html#tso_globusim_refinement">tso_globusim_refinement</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="TSOCompositionality.html#compositionality">compositionality</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intro</span>. <span class="id">inv</span> <span class="id">H6</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> <span class="id"><a href="FinalTheoremExt.html#refinement_sc">refinement_sc</a></span> <span class="kwd">as</span> <span class="id">Hasm_cl</span>. <span class="id">inv</span> <span class="id">Hasm_cl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H6</span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H7</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="SCSemLemmas.html#drf_preservation">drf_preservation</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="FinalTheoremExt.html#Hwd_src">Hwd_src</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="FinalTheoremExt.html#Hwd_tgt">Hwd_tgt</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="FinalTheoremExt.html#Hdet_tgt">Hdet_tgt</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="FinalTheoremExt.html#Hcomp">Hcomp</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="FinalTheoremExt.html#Hcorrect">Hcorrect</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="SCSemLemmas.html#safety_preservation">safety_preservation</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="FinalTheoremExt.html#Hwd_src">Hwd_src</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="FinalTheoremExt.html#Hwd_tgt">Hwd_tgt</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="FinalTheoremExt.html#Hdet_tgt">Hdet_tgt</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="FinalTheoremExt.html#Hcomp">Hcomp</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="FinalTheoremExt.html#Hcorrect">Hcorrect</a></span>.    <br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">End</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness">ClightSC_Compilation_correctness</a></span>.<br/>
+<br/>
+<span class="kwd">Check</span> <span class="id"><a href="FinalTheoremExt.html#refinement_tso_clight">refinement_tso_clight</a></span>.<br/>
+<div class="doc">Theorem 13 in Sec. 7. </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">rc_cunits</span></span> : 
+    source modules are reach-closed </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">cunits_transf</span> (<span class="id">cl_comps</span> <span class="id">cl_units</span>) <span class="id">cl_units</span> <span class="id">compiled_units</span></span> :
+    <span class="bracket"><span class="id">compiled_units</span></span> are x86 assembly units that compiled from <span class="bracket"><span class="id">cl_units</span></span> by CompCert passes </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">cunit_transf</span> <span class="id">id_comp</span> <span class="id">spec_unit</span> <span class="id">spec_unit</span></span>:
+    <span class="bracket"><span class="id">spec_unit</span></span> is identically translated </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">drf</span> (<span class="id">spec_unit</span> ++ <span class="id">cl_units</span> :: <span class="id">nil</span>, <span class="id">e</span>)</span>:
+    source program is data-race free </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">safe_prog</span> (<span class="id">spec_unit</span> ++ <span class="id">cl_units</span> :: <span class="id">nil</span>, <span class="id">e</span>)</span>:
+    source program is safe </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">client_id</span> <span class="id">compiled_units</span> <span class="id">client_units</span></span>:
+    <span class="bracket"><span class="id">client_units</span></span> are x86TSO units that is identical to <span class="bracket"><span class="id">compiled_units</span></span> </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="kwd">forall</span> (<span class="id">impl_unit</span> : <span class="id">AsmTSO.comp_unit</span>) (<span class="id">Io</span> : <span class="id">ASM_local.genv</span> -&gt; <span class="id">stInv</span>) (<span class="id">Ro</span> <span class="id">Go</span> : <span class="id">ASM_local.genv</span> -&gt; <span class="id">tid</span> -&gt; <span class="id">stRel</span>),
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> : <span class="id">tid</span>), <span class="id">Sta</span> <span class="id">Ic</span> (<span class="id">Go</span> <span class="id">ge</span> <span class="id">t</span>)) -&gt;
+       (<span class="kwd">forall</span> <span class="id">t</span> : <span class="id">tid</span>, <span class="id">Sta</span> <span class="id">Ic</span> (<span class="id">Gc</span> <span class="id">t</span>)) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> : <span class="id">tid</span>), <span class="id">Sta</span> (<span class="id">Io</span> <span class="id">ge</span>) (<span class="id">Go</span> <span class="id">ge</span> <span class="id">t</span>)) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> : <span class="id">tid</span>), <span class="id">Sta</span> (<span class="id">Io</span> <span class="id">ge</span>) (<span class="id">Gc</span> <span class="id">t</span>)) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> <span class="id">t</span>' : <span class="id">tid</span>), <span class="id">Implies</span> (<span class="id">Go</span> <span class="id">ge</span> <span class="id">t</span>) (<span class="id">Rc</span> <span class="id">t</span>')) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> <span class="id">t</span>' : <span class="id">tid</span>), <span class="id">t</span> &lt;&gt; <span class="id">t</span>' -&gt; <span class="id">Implies</span> (<span class="id">Go</span> <span class="id">ge</span> <span class="id">t</span>) (<span class="id">Ro</span> <span class="id">ge</span> <span class="id">t</span>')) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> <span class="id">t</span>' : <span class="id">tid</span>), <span class="id">t</span> &lt;&gt; <span class="id">t</span>' -&gt; <span class="id">Implies</span> (<span class="id">Gc</span> <span class="id">t</span>) (<span class="id">Ro</span> <span class="id">ge</span> <span class="id">t</span>')) -&gt;
+       (<span class="kwd">forall</span> <span class="id">ge</span> : <span class="id">ASM_local.genv</span>, <span class="id">UBSta</span> (<span class="id">Io</span> <span class="id">ge</span>)) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> : <span class="id">tid</span>), <span class="id">UBImplies</span> (<span class="id">Io</span> <span class="id">ge</span>) (<span class="id">Ro</span> <span class="id">ge</span> <span class="id">t</span>)) -&gt;
+       <span class="id">objcu_sim</span> <span class="id">Ro</span> <span class="id">Go</span> <span class="id">Io</span> <span class="id">spec_unit</span> <span class="id">impl_unit</span></span>
+       :         
+       object correctness (4. in Thm. 13) </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">init_config</span> (<span class="id">cl_units</span> ++ <span class="id">spec_unit</span> :: <span class="id">nil</span>, <span class="id">e</span>) <span class="id">sgm</span> <span class="id">sge</span> <span class="id">spc</span> <span class="id">ts</span></span>
+    <span class="bracket"><span class="id">init_config</span> (<span class="id">compiled_units</span> ++ <span class="id">spec_unit</span> :; <span class="id">nil</span>, <span class="id">e</span>) <span class="id">sgm</span>' <span class="id">sge</span>' <span class="id">spc</span>' <span class="id">ts</span>'</span>
+    <span class="bracket"><span class="id">tso_initconfig</span> (<span class="id">client_units</span> ++ <span class="id">impl_unit</span> :: <span class="id">nil</span>, <span class="id">e</span>) <span class="id">tgm</span> <span class="id">tge</span> <span class="id">tpc</span> <span class="id">tt</span></span>:
+    forall initial states of source program and target program </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">InitRel</span> <span class="id">mu</span> <span class="id">sge</span> <span class="id">sge</span>' <span class="id">sgm</span> <span class="id">sgm</span>'</span>
+    <span class="bracket"><span class="id">tso_sc_initRel</span> <span class="id">sge</span>' <span class="id">tge</span> <span class="id">sgm</span>' <span class="id">tgm</span></span>:
+    initial states are properly related by some <span class="bracket"><span class="id">mu</span></span> </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="kwd">forall</span> <span class="id">B</span> : <span class="id">ETrace.behav</span>, <span class="id">tsoEtr</span> <span class="id">tpc</span> <span class="id">B</span> -&gt; <span class="id">notsd</span> <span class="id">B</span> -&gt; <span class="id">ETrace.Etr</span> <span class="id">glob_step</span> <span class="id">GlobSemantics.abort</span> <span class="id">GlobDefs.final_state</span> <span class="id">spc</span> <span class="id">B</span></span>:
+    for any bahavior <span class="bracket"><span class="id">B</span></span> of tso program (<span class="bracket"><span class="id">tsoEtr</span> <span class="id">tpc</span> <span class="id">B</span></span>),
+    if <span class="bracket"><span class="id">B</span></span> will not silently diverge (<span class="bracket"><span class="id">notsd</span> <span class="id">B</span></span>),
+    then the clight source program with lock spec has the same behavior <span class="bracket"><span class="id">B</span></span> 
+    (<span class="bracket"><span class="id">ETrace.Etr</span> <span class="id">glob_step</span> <span class="id">GlobSemantics.abort</span> <span class="id">GlobDefs.final_state</span> <span class="id">spc</span></span>) </div>
+<br/>
+<br/>
+<span class="kwd">Check</span> <span class="id"><a href="FinalTheoremExt.html#refinement_tso_asm_sc">refinement_tso_asm_sc</a></span>.<br/>
+<div class="doc">Lemma 14 in Sec. 7, object module replaced by lock impl. </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">client_id</span> <span class="id">compiled_units</span> <span class="id">client_units</span></span>:
+    <span class="bracket"><span class="id">client_units</span></span> are x86TSO units that is identical to <span class="bracket"><span class="id">compiled_units</span></span> </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="kwd">forall</span> (<span class="id">impl_unit</span> : <span class="id">AsmTSO.comp_unit</span>) (<span class="id">Io</span> : <span class="id">ASM_local.genv</span> -&gt; <span class="id">stInv</span>) (<span class="id">Ro</span> <span class="id">Go</span> : <span class="id">ASM_local.genv</span> -&gt; <span class="id">tid</span> -&gt; <span class="id">stRel</span>),
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> : <span class="id">tid</span>), <span class="id">Sta</span> <span class="id">Ic</span> (<span class="id">Go</span> <span class="id">ge</span> <span class="id">t</span>)) -&gt;
+       (<span class="kwd">forall</span> <span class="id">t</span> : <span class="id">tid</span>, <span class="id">Sta</span> <span class="id">Ic</span> (<span class="id">Gc</span> <span class="id">t</span>)) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> : <span class="id">tid</span>), <span class="id">Sta</span> (<span class="id">Io</span> <span class="id">ge</span>) (<span class="id">Go</span> <span class="id">ge</span> <span class="id">t</span>)) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> : <span class="id">tid</span>), <span class="id">Sta</span> (<span class="id">Io</span> <span class="id">ge</span>) (<span class="id">Gc</span> <span class="id">t</span>)) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> <span class="id">t</span>' : <span class="id">tid</span>), <span class="id">Implies</span> (<span class="id">Go</span> <span class="id">ge</span> <span class="id">t</span>) (<span class="id">Rc</span> <span class="id">t</span>')) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> <span class="id">t</span>' : <span class="id">tid</span>), <span class="id">t</span> &lt;&gt; <span class="id">t</span>' -&gt; <span class="id">Implies</span> (<span class="id">Go</span> <span class="id">ge</span> <span class="id">t</span>) (<span class="id">Ro</span> <span class="id">ge</span> <span class="id">t</span>')) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> <span class="id">t</span>' : <span class="id">tid</span>), <span class="id">t</span> &lt;&gt; <span class="id">t</span>' -&gt; <span class="id">Implies</span> (<span class="id">Gc</span> <span class="id">t</span>) (<span class="id">Ro</span> <span class="id">ge</span> <span class="id">t</span>')) -&gt;
+       (<span class="kwd">forall</span> <span class="id">ge</span> : <span class="id">ASM_local.genv</span>, <span class="id">UBSta</span> (<span class="id">Io</span> <span class="id">ge</span>)) -&gt;
+       (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> : <span class="id">tid</span>), <span class="id">UBImplies</span> (<span class="id">Io</span> <span class="id">ge</span>) (<span class="id">Ro</span> <span class="id">ge</span> <span class="id">t</span>)) -&gt;
+       <span class="id">objcu_sim</span> <span class="id">Ro</span> <span class="id">Go</span> <span class="id">Io</span> <span class="id">spec_unit</span> <span class="id">impl_unit</span></span>
+       :
+       object correctness (2. in Lem. 14 </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">safe_prog</span> (<span class="id">spec_unit</span> :: <span class="id">compiled_units</span>, <span class="id">e</span>)</span>
+    SC program is safe </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">drf</span> (<span class="id">spec_unit</span> :: <span class="id">compiled_units</span>, <span class="id">e</span>)</span>
+    SC program is DRF </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">tso_refine_sc</span> (<span class="id">spec_unit</span> :: <span class="id">compiled_units</span>, <span class="id">e</span>) (<span class="id">impl_unit</span> :: <span class="id">client_units</span>, <span class="id">e</span>)</span>
+    then the x86-TSO program refines the SC program </div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

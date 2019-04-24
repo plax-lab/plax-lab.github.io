@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module LDSim</title>
+<meta name="description" content="Documentation of Coq module LDSim" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module LDSim</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html">Streams</a></span> <span class="id"><a href="Errors.html">Errors</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html">Injections</a></span> <span class="id"><a href="MemAux.html">MemAux</a></span> <span class="id"><a href="MemClosures.html">MemClosures</a></span> <span class="id"><a href="LDSimDefs.html">LDSimDefs</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Events.html">Events</a></span>.<br/>
+<br/>
+<div class="doc">This file defines the downward local simulation of modules and <span class="bracket"><span class="id">SeqCorrect</span></span> condition for compilers </div>
+<br/>
+<br/>
+<br/>
+<div class="doc">initial relation on source and target memories </div>
+<span class="kwd">Record</span> <span class="id"><a name="local_init_rel">local_init_rel</a></span> (<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>) (<span class="id">sfl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">sm</span>: <span class="id"><a href="GMemory.html#gmem">gmem</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">tfl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">tm</span>: <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+<div class="doc">Mu is well-formed w.r.t. freelists </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="init_mu">init_mu</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.inject_weak">Bset.inject_weak</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="LDSim.html#tfl">tfl</a></span> (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>);<br/>
+<br/>
+<div class="doc">Mu is injective </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="Binj">Binj</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.Binject_weak">GMem.Binject_weak</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) <span class="id"><a href="LDSim.html#sm">sm</a></span> <span class="id"><a href="LDSim.html#tm">tm</a></span>;<br/>
+<br/>
+<div class="doc">freelists do not overlap with valid blocks </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="sfl_free">sfl_free</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> (<span class="id"><a href="MemAux.html#valid_block_bset">valid_block_bset</a></span> <span class="id"><a href="LDSim.html#sm">sm</a></span>);<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="tfl_free">tfl_free</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="LDSim.html#tfl">tfl</a></span> (<span class="id"><a href="MemAux.html#valid_block_bset">valid_block_bset</a></span> <span class="id"><a href="LDSim.html#tm">tm</a></span>);<br/>
+<br/>
+<div class="doc">freelists have no duplicated blocks </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="sfl_norep">sfl_norep</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#norep">norep</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span>;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="tfl_norep">tfl_norep</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#norep">norep</a></span> <span class="id"><a href="LDSim.html#tfl">tfl</a></span>;<br/>
+<br/>
+<div class="doc">SharedSrc/SharedTgt in Mu is set to validblocks of memory </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="valid_Src">valid_Src</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="GMemory.html#GMem.valid_block">GMem.valid_block</a></span> <span class="id"><a href="LDSim.html#sm">sm</a></span> <span class="id"><a href="LDSim.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#b">b</a></span>;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="valid_Tgt">valid_Tgt</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="GMemory.html#GMem.valid_block">GMem.valid_block</a></span> <span class="id"><a href="LDSim.html#tm">tm</a></span> <span class="id"><a href="LDSim.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#b">b</a></span>;<br/>
+<br/>
+<div class="doc">SharedSrc/SharedTgt are closed </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="rc_shared_Src">rc_shared_Src</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemClosures.html#reach_closed">reach_closed</a></span> <span class="id"><a href="LDSim.html#sm">sm</a></span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>);<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="rc_shared_Tgt">rc_shared_Tgt</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemClosures.html#reach_closed">reach_closed</a></span> <span class="id"><a href="LDSim.html#tm">tm</a></span> (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>);<br/>
+&nbsp;&nbsp;}.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="LocalSimulation">LocalSimulation</a></span>.<br/>
+<br/>
+<span class="kwd">Context</span> {<span class="id">sl</span> <span class="id">tl</span>: <span class="id"><a href="InteractionSemantics.html#Language">Language</a></span>}.<br/>
+<br/>
+<h1> Module Local Simulation </h1>
+<br/>
+<h2> Simulation between configurations (Def. 3) </h2>
+<div class="doc">local simulation is defined as inductively parameterized by
+    <span class="bracket"><span class="id">match_state</span></span> relation between source and target configurations </div>
+<br/>
+<span class="kwd">Record</span> <span class="id"><a name="config_ldsim">config_ldsim</a></span> {<span class="id">sl</span> <span class="id">tl</span>: <span class="id"><a href="InteractionSemantics.html#Language">Language</a></span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">index</span>: <span class="kwd">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">index_order</span>: <span class="id"><a href="LDSim.html#index">index</a></span> -&gt; <span class="id"><a href="LDSim.html#index">index</a></span> -&gt; <span class="kwd">Prop</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">sfl</span> <span class="id">tfl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">sG</span>: <span class="id"><a href="InteractionSemantics.html#G">G</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">tG</span>: <span class="id"><a href="InteractionSemantics.html#G">G</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">sge</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> (<span class="id"><a href="InteractionSemantics.html#F">F</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span>) (<span class="id"><a href="InteractionSemantics.html#V">V</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">tge</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> (<span class="id"><a href="InteractionSemantics.html#F">F</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span>) (<span class="id"><a href="InteractionSemantics.html#V">V</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">match_state</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#bool">bool</a></span> -&gt; <span class="id"><a href="LDSim.html#index">index</a></span> -&gt; <span class="id"><a href="Injections.html#Mu">Mu</a></span> -&gt; <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> -&gt; <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((<span class="id"><a href="InteractionSemantics.html#core">core</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span>) * <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) -&gt; ((<span class="id"><a href="InteractionSemantics.html#core">core</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span>) * <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) -&gt; <span class="kwd">Prop</span>): <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="index_wf">index_wf</a></span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded">well_founded</a></span> <span class="id"><a href="LDSim.html#index_order">index_order</a></span>;<br/>
+<br/>
+<div class="doc">Mu is well-formed </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="wd_mu">wd_mu</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">Hfp</span> <span class="id">Lfp</span> <span class="id">Hc</span> <span class="id">Lc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="LDSim.html#b">b</a></span> <span class="id"><a href="LDSim.html#i">i</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> <span class="id"><a href="LDSim.html#Hc">Hc</a></span> <span class="id"><a href="LDSim.html#Lc">Lc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.inject">Bset.inject</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="LDSim.html#tfl">tfl</a></span> (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+<div class="doc">freelists have no duplicated blocks </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="fl_norep">fl_norep</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">Hfp</span> <span class="id">Lfp</span> <span class="id">Hc</span> <span class="id">Lc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="LDSim.html#b">b</a></span> <span class="id"><a href="LDSim.html#i">i</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> <span class="id"><a href="LDSim.html#Hc">Hc</a></span> <span class="id"><a href="LDSim.html#Lc">Lc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#norep">norep</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> /\ <span class="id"><a href="MemAux.html#norep">norep</a></span> <span class="id"><a href="LDSim.html#tfl">tfl</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+<div class="doc">global environments are matched </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_ge">match_ge</a></span>: <span class="id"><a href="LDSimDefs.html#ge_match">ge_match</a></span> <span class="id"><a href="LDSim.html#sge">sge</a></span> <span class="id"><a href="LDSim.html#tge">tge</a></span>;<br/>
+<br/>
+<div class="doc">global environments consistent with mu </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_mu_ge">match_mu_ge</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">Hfp</span> <span class="id">Lfp</span> <span class="id">Hc</span> <span class="id">Lc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="LDSim.html#b">b</a></span> <span class="id"><a href="LDSim.html#i">i</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> <span class="id"><a href="LDSim.html#Hc">Hc</a></span> <span class="id"><a href="LDSim.html#Lc">Lc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#ge_init_inj">ge_init_inj</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#sge">sge</a></span> <span class="id"><a href="LDSim.html#tge">tge</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+<div class="doc">init core clause:
+     if source could <span class="bracket"><span class="id">init_core</span></span> given function <span class="bracket"><span class="id">id</span></span> and <span class="bracket"><span class="id">argSrc</span></span>,
+     and <span class="bracket"><span class="id">argTgt</span></span> is related with <span class="bracket"><span class="id">argSrc</span></span> by <span class="bracket"><span class="id">arg_rel</span></span> (similar to value injection),
+     then target could <span class="bracket"><span class="id">init_core</span></span> given <span class="bracket"><span class="id">id</span></span> and <span class="bracket"><span class="id">argTgt</span></span>, 
+     and the initialized cores together with related initial memories <span class="bracket"><span class="id">sm</span></span> and <span class="bracket"><span class="id">tm</span></span> 
+     are related by <span class="bracket"><span class="id">match_state</span></span> </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_init">match_init</a></span>: <span class="kwd">forall</span> <span class="id">mu</span> <span class="id">id</span> <span class="id">argSrc</span> <span class="id">argTgt</span> <span class="id">score</span>,<br/>
+<div class="doc">constraints on arguments </div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#ge_init_inj">ge_init_inj</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#sge">sge</a></span> <span class="id"><a href="LDSim.html#tge">tge</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#G_args">G_args</a></span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) <span class="id"><a href="LDSim.html#argSrc">argSrc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#arg_rel">arg_rel</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) <span class="id"><a href="LDSim.html#argSrc">argSrc</a></span> <span class="id"><a href="LDSim.html#argTgt">argTgt</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_core">init_core</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span> <span class="id"><a href="LDSim.html#sG">sG</a></span> <span class="id"><a href="LDSim.html#id">id</a></span> <span class="id"><a href="LDSim.html#argSrc">argSrc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="LDSim.html#score">score</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tcore</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_core">init_core</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span> <span class="id"><a href="LDSim.html#tG">tG</a></span> <span class="id"><a href="LDSim.html#id">id</a></span> <span class="id"><a href="LDSim.html#argTgt">argTgt</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="LDSim.html#tcore">tcore</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">sm</span> <span class="id">tm</span>, <br/>
+<div class="doc">constraint on <span class="bracket"><span class="id">sm</span></span> and <span class="bracket"><span class="id">tm</span></span> </div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_gmem">init_gmem</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span> <span class="id"><a href="LDSim.html#sge">sge</a></span> <span class="id"><a href="LDSim.html#sm">sm</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_gmem">init_gmem</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span> <span class="id"><a href="LDSim.html#tge">tge</a></span> <span class="id"><a href="LDSim.html#tm">tm</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#local_init_rel">local_init_rel</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> <span class="id"><a href="LDSim.html#sm">sm</a></span> <span class="id"><a href="LDSim.html#tfl">tfl</a></span> <span class="id"><a href="LDSim.html#tm">tm</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sm</span>' <span class="id">tm</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#HLRely">HLRely</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> <span class="id"><a href="LDSim.html#tfl">tfl</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#sm">sm</a></span> <span class="id">sm</span>' <span class="id"><a href="LDSim.html#tm">tm</a></span> <span class="id">tm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">i</span>, <span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> <span class="id"><a href="LDSim.html#i">i</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> (<span class="id"><a href="LDSim.html#score">score</a></span>, <span class="id">sm</span>') (<span class="id"><a href="LDSim.html#tcore">tcore</a></span>, <span class="id">tm</span>'))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+<div class="doc">internal step clause:
+        if source performs an internal step, the target either
+        1) perform no step, and the target configuration matches with source's resulting configuration with decreased index, or
+        2) perform multiple steps, and the target resulting configuration matches with source's resulting configuration
+        <span class="bracket"><span class="id">HfpG</span></span> appears in preconditions since we assume source to be reach-closed,
+        and <span class="bracket"><span class="id">LfpG</span>'</span> states that target footprint is confined in S union F, 
+        and <span class="bracket"><span class="id">FPMatch</span></span>ed with source footprint.
+     </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_tau_step">match_tau_step</a></span>: <span class="kwd">forall</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">Hfp</span> <span class="id">Lfp</span> <span class="id">Hcore</span> <span class="id">Hm</span> <span class="id">Lcore</span> <span class="id">Lm</span> <span class="id">Hfp</span>' <span class="id">Hcore</span>' <span class="id">Hm</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> <span class="id"><a href="LDSim.html#i">i</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> (<span class="id"><a href="LDSim.html#Hcore">Hcore</a></span>, <span class="id"><a href="LDSim.html#Hm">Hm</a></span>) (<span class="id"><a href="LDSim.html#Lcore">Lcore</a></span>, <span class="id"><a href="LDSim.html#Lm">Lm</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#step">step</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span>) <span class="id"><a href="LDSim.html#sG">sG</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> <span class="id"><a href="LDSim.html#Hcore">Hcore</a></span> <span class="id"><a href="LDSim.html#Hm">Hm</a></span> <span class="id">Hfp</span>' <span class="id">Hcore</span>' <span class="id">Hm</span>' -&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#HfpG">HfpG</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id">Hfp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">exists</span> <span class="id">i</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#index_order">index_order</a></span> <span class="id">i</span>' <span class="id"><a href="LDSim.html#i">i</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> <span class="id">i</span>' <span class="id"><a href="LDSim.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id">Hfp</span>') <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> (<span class="id">Hcore</span>', <span class="id">Hm</span>') (<span class="id"><a href="LDSim.html#Lcore">Lcore</a></span>, <span class="id"><a href="LDSim.html#Lm">Lm</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">exists</span> <span class="id">i</span>' <span class="id">Lfp</span>' <span class="id">Lcore</span>' <span class="id">Lm</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#plus">plus</a></span> (<span class="id"><a href="InteractionSemantics.html#step">step</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span> <span class="id"><a href="LDSim.html#tG">tG</a></span> <span class="id"><a href="LDSim.html#tfl">tfl</a></span>) <span class="id"><a href="LDSim.html#Lcore">Lcore</a></span> <span class="id"><a href="LDSim.html#Lm">Lm</a></span> <span class="id">Lfp</span>' <span class="id">Lcore</span>' <span class="id">Lm</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSim.html#tfl">tfl</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id">Hfp</span>') (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> <span class="id">Lfp</span>') /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> <span class="id">i</span>' <span class="id"><a href="LDSim.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id">Hfp</span>') (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> <span class="id">Lfp</span>') (<span class="id">Hcore</span>', <span class="id">Hm</span>') (<span class="id">Lcore</span>', <span class="id">Lm</span>'))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+<div class="doc">at_external clause:
+        if source reaches the external call point with function <span class="bracket"><span class="id">f</span></span> and arguments <span class="bracket"><span class="id">argSrc</span></span>,
+        and the resulting configuration satisfies <span class="bracket"><span class="id">HG</span></span>, 
+        and the arguments satisfies <span class="bracket"><span class="id">G_args</span></span> such that escape of stack pointers is disallowed,
+        then target reaches the external call point after star steps,
+        with the same <span class="bracket"><span class="id">f</span></span> and <span class="bracket"><span class="id">arg_rel</span></span> related <span class="bracket"><span class="id">argTgt</span></span>,
+        and the resulting configuartion and footprints satisfies <span class="bracket"><span class="id">LG</span></span>, 
+        and <span class="bracket"><span class="id">match_state</span></span> holds on resulting configurations.
+        Footprint recorded in <span class="bracket"><span class="id">match_state</span></span> is cleared at this point.
+     </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_at_external">match_at_external</a></span>: <span class="kwd">forall</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">Hfp</span> <span class="id">Lfp</span> <span class="id">Hcore</span> <span class="id">Hm</span> <span class="id">Lcore</span> <span class="id">Lm</span> <span class="id">f</span> <span class="id">sg</span> <span class="id">argSrc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> <span class="id"><a href="LDSim.html#i">i</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> (<span class="id"><a href="LDSim.html#Hcore">Hcore</a></span>, <span class="id"><a href="LDSim.html#Hm">Hm</a></span>) (<span class="id"><a href="LDSim.html#Lcore">Lcore</a></span>, <span class="id"><a href="LDSim.html#Lm">Lm</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#at_external">at_external</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span>) <span class="id"><a href="LDSim.html#sG">sG</a></span> <span class="id"><a href="LDSim.html#Hcore">Hcore</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="LDSim.html#f">f</a></span>, <span class="id"><a href="LDSim.html#sg">sg</a></span>, <span class="id"><a href="LDSim.html#argSrc">argSrc</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#HG">HG</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id"><a href="LDSim.html#Hm">Hm</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#G_args">G_args</a></span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) <span class="id"><a href="LDSim.html#argSrc">argSrc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">i</span>' <span class="id">argTgt</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#at_external">at_external</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span>) <span class="id"><a href="LDSim.html#tG">tG</a></span> <span class="id"><a href="LDSim.html#Lcore">Lcore</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="LDSim.html#f">f</a></span>, <span class="id"><a href="LDSim.html#sg">sg</a></span>, <span class="id"><a href="LDSim.html#argTgt">argTgt</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#arg_rel">arg_rel</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) <span class="id"><a href="LDSim.html#argSrc">argSrc</a></span> <span class="id"><a href="LDSim.html#argTgt">argTgt</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LG</span>' <span class="id"><a href="LDSim.html#tfl">tfl</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id"><a href="LDSim.html#Hm">Hm</a></span> <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> <span class="id"><a href="LDSim.html#Lm">Lm</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id">i</span>' <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> (<span class="id"><a href="LDSim.html#Hcore">Hcore</a></span>, <span class="id"><a href="LDSim.html#Hm">Hm</a></span>) (<span class="id"><a href="LDSim.html#Lcore">Lcore</a></span>, <span class="id"><a href="LDSim.html#Lm">Lm</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+<div class="doc">after external clause:
+        when environments performes action satisfies <span class="bracket"><span class="id">HLRely</span></span>,
+        with <span class="bracket"><span class="id">ores_rel</span></span> related return values <span class="bracket"><span class="id">oresSrc</span></span> and <span class="bracket"><span class="id">oresTgt</span></span>,
+        then if source is updated to <span class="bracket"><span class="id">Hcore</span>'</span> by <span class="bracket"><span class="id">after_external</span></span>,
+        then target could be updated to <span class="bracket"><span class="id">match_state</span></span> related <span class="bracket"><span class="id">Lcore</span>'</span> by <span class="bracket"><span class="id">after_external</span></span>. 
+        <span class="bracket"><span class="id">G_oarg</span></span> is required to disallow recieving of stack pointers from return value.
+</div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_after_external">match_after_external</a></span>: <span class="kwd">forall</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">Hcore</span> <span class="id">Hm</span> <span class="id">Lcore</span> <span class="id">Lm</span> <span class="id">oresSrc</span> <span class="id">Hcore</span>' <span class="id">oresTgt</span>,<br/>
+<div class="doc">TODO: is this clause too strong for CompCert? </div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="LDSim.html#i">i</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> (<span class="id"><a href="LDSim.html#Hcore">Hcore</a></span>, <span class="id"><a href="LDSim.html#Hm">Hm</a></span>) (<span class="id"><a href="LDSim.html#Lcore">Lcore</a></span>, <span class="id"><a href="LDSim.html#Lm">Lm</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#G_oarg">G_oarg</a></span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) <span class="id"><a href="LDSim.html#oresSrc">oresSrc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#after_external">after_external</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span>) <span class="id"><a href="LDSim.html#Hcore">Hcore</a></span> <span class="id"><a href="LDSim.html#oresSrc">oresSrc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">Hcore</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#ores_rel">ores_rel</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) <span class="id"><a href="LDSim.html#oresSrc">oresSrc</a></span> <span class="id"><a href="LDSim.html#oresTgt">oresTgt</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">Lcore</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#after_external">after_external</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span>) <span class="id"><a href="LDSim.html#Lcore">Lcore</a></span> <span class="id"><a href="LDSim.html#oresTgt">oresTgt</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">Lcore</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">Hm</span>' <span class="id">Lm</span>', <span class="id"><a href="LDSimDefs.html#HLRely">HLRely</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> <span class="id"><a href="LDSim.html#tfl">tfl</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hm">Hm</a></span> <span class="id">Hm</span>' <span class="id"><a href="LDSim.html#Lm">Lm</a></span> <span class="id">Lm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">i</span>', <span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> <span class="id">i</span>' <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> (<span class="id">Hcore</span>', <span class="id">Hm</span>') (<span class="id">Lcore</span>', <span class="id">Lm</span>'))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+<div class="doc">halted clause:
+        if source core halts with resulting footprint and memory satisfies <span class="bracket"><span class="id">HG</span></span>,
+        then target core halts with footprint and memory satisfies <span class="bracket"><span class="id">LG</span>'</span>,
+        and the returning value of source and target cores are related by <span class="bracket"><span class="id">res_rel</span></span>.
+        <span class="bracket"><span class="id">G_arg</span></span> is required to disallow escap of stack pointers via return value. </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_halt">match_halt</a></span>: <span class="kwd">forall</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">Hfp</span> <span class="id">Lfp</span> <span class="id">Hcore</span> <span class="id">Hm</span> <span class="id">Lcore</span> <span class="id">Lm</span> <span class="id">resSrc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#match_state">match_state</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> <span class="id"><a href="LDSim.html#i">i</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> (<span class="id"><a href="LDSim.html#Hcore">Hcore</a></span>, <span class="id"><a href="LDSim.html#Hm">Hm</a></span>) (<span class="id"><a href="LDSim.html#Lcore">Lcore</a></span>, <span class="id"><a href="LDSim.html#Lm">Lm</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#halt">halt</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span>) <span class="id"><a href="LDSim.html#Hcore">Hcore</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="LDSim.html#resSrc">resSrc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#HG">HG</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id"><a href="LDSim.html#Hm">Hm</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#G_arg">G_arg</a></span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) <span class="id"><a href="LDSim.html#resSrc">resSrc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">resTgt</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#halt">halt</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span>) <span class="id"><a href="LDSim.html#Lcore">Lcore</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="LDSim.html#resTgt">resTgt</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#res_rel">res_rel</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span>) <span class="id"><a href="LDSim.html#resSrc">resSrc</a></span> <span class="id"><a href="LDSim.html#resTgt">resTgt</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LG</span>' <span class="id"><a href="LDSim.html#tfl">tfl</a></span> <span class="id"><a href="LDSim.html#mu">mu</a></span> <span class="id"><a href="LDSim.html#Hfp">Hfp</a></span> <span class="id"><a href="LDSim.html#Hm">Hm</a></span> <span class="id"><a href="LDSim.html#Lfp">Lfp</a></span> <span class="id"><a href="LDSim.html#Lm">Lm</a></span><br/>
+&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<span class="kwd">End</span> <span class="id"><a href="LDSim.html#LocalSimulation">LocalSimulation</a></span>.<br/>
+<br/>
+<h2> The simultion definition (Def. 2) </h2>
+<div class="doc">The simulation is defined as an inductive type
+    with an existential relation <span class="bracket"><span class="id">match_state</span></span> between source and target configurations, 
+    instead of a co-inductive formulation presented in the paper.
+    It is for the convenience of proof development, and could be proved 
+    equivalent to a CoInductive formulation </div>
+<span class="kwd">Definition</span> <span class="id"><a name="ldsim">ldsim</a></span> {<span class="id">sl</span> <span class="id">tl</span>: <span class="id"><a href="InteractionSemantics.html#Language">Language</a></span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">su</span>: <span class="id"><a href="InteractionSemantics.html#comp_unit">comp_unit</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span>) (<span class="id">tu</span>: <span class="id"><a href="InteractionSemantics.html#comp_unit">comp_unit</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sG</span> <span class="id">sge</span> <span class="id">tG</span> <span class="id">tge</span> <span class="id">sfl</span> <span class="id">tfl</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_genv">init_genv</a></span> <span class="id"><a href="LDSim.html#sl">sl</a></span> <span class="id"><a href="LDSim.html#su">su</a></span> <span class="id"><a href="LDSim.html#sge">sge</a></span> <span class="id"><a href="LDSim.html#sG">sG</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_genv">init_genv</a></span> <span class="id"><a href="LDSim.html#tl">tl</a></span> <span class="id"><a href="LDSim.html#tu">tu</a></span> <span class="id"><a href="LDSim.html#tge">tge</a></span> <span class="id"><a href="LDSim.html#tG">tG</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Globalenvs.html#Genv.genv_next">Genv.genv_next</a></span> <span class="id"><a href="LDSim.html#sge">sge</a></span> = <span class="id"><a href="Globalenvs.html#Genv.genv_next">Genv.genv_next</a></span> <span class="id"><a href="LDSim.html#tge">tge</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">I</span> <span class="id">I_order</span> <span class="id">match_state</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#config_ldsim">config_ldsim</a></span> <span class="id"><a href="LDSim.html#I">I</a></span> <span class="id"><a href="LDSim.html#I_order">I_order</a></span> <span class="id"><a href="LDSim.html#sfl">sfl</a></span> <span class="id"><a href="LDSim.html#tfl">tfl</a></span> <span class="id"><a href="LDSim.html#sG">sG</a></span> <span class="id"><a href="LDSim.html#tG">tG</a></span> <span class="id"><a href="LDSim.html#sge">sge</a></span> <span class="id"><a href="LDSim.html#tge">tge</a></span> <span class="id"><a href="LDSim.html#match_state">match_state</a></span>.<br/>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="no_overlap_unchg_freelist">no_overlap_unchg_freelist</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fl</span> <span class="id">m</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="LDSim.html#fl">fl</a></span> (<span class="id"><a href="MemAux.html#valid_block_bset">valid_block_bset</a></span> <span class="id"><a href="LDSim.html#m">m</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#unchg_freelist">unchg_freelist</a></span> <span class="id"><a href="LDSim.html#fl">fl</a></span> <span class="id"><a href="LDSim.html#m">m</a></span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="LDSim.html#fl">fl</a></span> (<span class="id"><a href="MemAux.html#valid_block_bset">valid_block_bset</a></span> <span class="id">m</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5982')">Proof.</div>
+<div class="proofscript" id="proof5982">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">H_in</span> <span class="id">H_contra</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="MemAux.html#valid_block_bset">valid_block_bset</a></span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="kwd">in</span> <span class="id">H_contra</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">unchanged_on_validity</span> <span class="kwd">in</span> <span class="id">H_contra</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="MemAux.html#in_fl">in_fl</a></span>. <span class="id">eexists</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Hint</span> <span class="kwd">Resolve</span> <span class="id">no_overlap_unchg_freelist</span>.</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

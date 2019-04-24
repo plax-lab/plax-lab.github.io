@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module helpers</title>
+<meta name="description" content="Documentation of Coq module helpers" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module helpers</h1>
+<div class="coq">
+<br/>
+<div class="doc">The ia32 compiler backend introduces 
+    helper functions / builtin functions for int64 operations. 
+    Here we collect these builtin/helper functions in order to restrict external behaviours.
+ </div>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="AST.html">AST</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Memory.html">Memory</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span> <span class="id"><a href="Events.html">Events</a></span> <span class="id"><a href="SplitLong.html">SplitLong</a></span> <span class="id"><a href="ValRels.html">ValRels</a></span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="i64ext">i64ext</a></span> : <span class="id"><a href="AST.html#external_function">external_function</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="I64_negl">I64_negl</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_builtin">EF_builtin</a></span> "<span class="id">__builtin_negl</span>" <span class="id"><a href="SplitLong.html#sig_l_l">sig_l_l</a></span>)<br/>
+| <span class="id"><a name="I64_addl">I64_addl</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_builtin">EF_builtin</a></span> "<span class="id">__builtin_addl</span>" <span class="id"><a href="SplitLong.html#sig_ll_l">sig_ll_l</a></span>)<br/>
+| <span class="id"><a name="I64_subl">I64_subl</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_builtin">EF_builtin</a></span> "<span class="id">__builtin_subl</span>" <span class="id"><a href="SplitLong.html#sig_ll_l">sig_ll_l</a></span>)<br/>
+| <span class="id"><a name="I64_mull">I64_mull</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_builtin">EF_builtin</a></span> "<span class="id">__builtin_mull</span>" <span class="id"><a href="SplitLong.html#sig_ii_l">sig_ii_l</a></span>)                   <br/>
+| <span class="id"><a name="I64_dtos">I64_dtos</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_dtos</span>" <span class="id"><a href="SplitLong.html#sig_f_l">sig_f_l</a></span>)<br/>
+| <span class="id"><a name="I64_dtou">I64_dtou</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_dtou</span>" <span class="id"><a href="SplitLong.html#sig_f_l">sig_f_l</a></span>)<br/>
+| <span class="id"><a name="I64_stod">I64_stod</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_stod</span>" <span class="id"><a href="SplitLong.html#sig_l_f">sig_l_f</a></span>)<br/>
+| <span class="id"><a name="I64_utod">I64_utod</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_utod</span>" <span class="id"><a href="SplitLong.html#sig_l_f">sig_l_f</a></span>)<br/>
+| <span class="id"><a name="I64_stof">I64_stof</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_stof</span>" <span class="id"><a href="SplitLong.html#sig_l_s">sig_l_s</a></span>)<br/>
+| <span class="id"><a name="I64_utof">I64_utof</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_utof</span>" <span class="id"><a href="SplitLong.html#sig_l_s">sig_l_s</a></span>)<br/>
+| <span class="id"><a name="I64_sdiv">I64_sdiv</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_sdiv</span>" <span class="id"><a href="SplitLong.html#sig_ll_l">sig_ll_l</a></span>)<br/>
+| <span class="id"><a name="I64_udiv">I64_udiv</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_udiv</span>" <span class="id"><a href="SplitLong.html#sig_ll_l">sig_ll_l</a></span>)<br/>
+| <span class="id"><a name="I64_smod">I64_smod</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_smod</span>" <span class="id"><a href="SplitLong.html#sig_ll_l">sig_ll_l</a></span>)<br/>
+| <span class="id"><a name="I64_umod">I64_umod</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_umod</span>" <span class="id"><a href="SplitLong.html#sig_ll_l">sig_ll_l</a></span>)<br/>
+| <span class="id"><a name="I64_shl">I64_shl</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_shl</span>" <span class="id"><a href="SplitLong.html#sig_li_l">sig_li_l</a></span>)<br/>
+| <span class="id"><a name="I64_shr">I64_shr</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_shr</span>" <span class="id"><a href="SplitLong.html#sig_li_l">sig_li_l</a></span>)<br/>
+| <span class="id"><a name="I64_sar">I64_sar</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_sar</span>" <span class="id"><a href="SplitLong.html#sig_li_l">sig_li_l</a></span>)<br/>
+| <span class="id"><a name="I64_umulh">I64_umulh</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_umulh</span>" <span class="id"><a href="SplitLong.html#sig_ll_l">sig_ll_l</a></span>)<br/>
+| <span class="id"><a name="I64_smulh">I64_smulh</a></span>: <span class="id"><a href="helpers.html#i64ext">i64ext</a></span> (<span class="id"><a href="AST.html#EF_runtime">EF_runtime</a></span> "<span class="id">__i64_smulh</span>" <span class="id"><a href="SplitLong.html#sig_ll_l">sig_ll_l</a></span>).<br/>
+<br/>
+<span class="kwd">Axiom</span> <span class="id"><a name="i64ext_effects">i64ext_effects</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ef</span> <span class="id">ge</span> <span class="id">vargs</span> <span class="id">m</span> <span class="id">tr</span> <span class="id">vres</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext">i64ext</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#ge">ge</a></span> <span class="id"><a href="helpers.html#vargs">vargs</a></span> <span class="id"><a href="helpers.html#m">m</a></span> <span class="id"><a href="helpers.html#tr">tr</a></span> <span class="id"><a href="helpers.html#vres">vres</a></span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">m</span>' = <span class="id"><a href="helpers.html#m">m</a></span> /\ <span class="id"><a href="helpers.html#tr">tr</a></span> = <span class="id"><a href="Events.html#E0">E0</a></span>.<br/>
+<br/>
+<span class="kwd">Axiom</span> <span class="id"><a name="i64ext_irr">i64ext_irr</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ef</span> <span class="id">ge</span> <span class="id">vargs</span> <span class="id">m</span> <span class="id">vres</span> <span class="id">ge</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext">i64ext</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#ge">ge</a></span> <span class="id"><a href="helpers.html#vargs">vargs</a></span> <span class="id"><a href="helpers.html#m">m</a></span> <span class="id"><a href="Events.html#E0">E0</a></span> <span class="id"><a href="helpers.html#vres">vres</a></span> <span class="id"><a href="helpers.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id">ge</span>' <span class="id"><a href="helpers.html#vargs">vargs</a></span> <span class="id">m</span>' <span class="id"><a href="Events.html#E0">E0</a></span> <span class="id"><a href="helpers.html#vres">vres</a></span> <span class="id">m</span>'.<br/>
+<br/>
+<span class="kwd">Axiom</span> <span class="id"><a name="i64ext_inject">i64ext_inject</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F</span> <span class="id">V</span> <span class="id">ef</span> (<span class="id">ge</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="helpers.html#F">F</a></span> <span class="id"><a href="helpers.html#V">V</a></span>) <span class="id">vargs</span> <span class="id">m</span> <span class="id">vres</span> <span class="id">j</span> <span class="id">vargs</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext">i64ext</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Events.html#meminj_preserves_globals">meminj_preserves_globals</a></span> <span class="id"><a href="helpers.html#ge">ge</a></span> <span class="id"><a href="helpers.html#j">j</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#ge">ge</a></span> <span class="id"><a href="helpers.html#vargs">vargs</a></span> <span class="id"><a href="helpers.html#m">m</a></span> <span class="id"><a href="Events.html#E0">E0</a></span> <span class="id"><a href="helpers.html#vres">vres</a></span> <span class="id"><a href="helpers.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Memory.html#Mem.inject">Mem.inject</a></span> <span class="id"><a href="helpers.html#j">j</a></span> <span class="id"><a href="helpers.html#m">m</a></span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Values.html#Val.inject_list">Val.inject_list</a></span> <span class="id"><a href="helpers.html#j">j</a></span> <span class="id"><a href="helpers.html#vargs">vargs</a></span> <span class="id">vargs</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">vres</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#ge">ge</a></span> <span class="id">vargs</span>' <span class="id">m</span>' <span class="id"><a href="Events.html#E0">E0</a></span> <span class="id">vres</span>' <span class="id">m</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Values.html#Val.inject">Val.inject</a></span> <span class="id"><a href="helpers.html#j">j</a></span> <span class="id"><a href="helpers.html#vres">vres</a></span> <span class="id">vres</span>'.<br/>
+<br/>
+<br/>
+<div class="doc">for defining AsmLang </div>
+<span class="kwd">Parameter</span> <span class="id"><a name="i64ext_sem">i64ext_sem</a></span>: <span class="id"><a href="AST.html#external_function">external_function</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+<br/>
+<span class="kwd">Axiom</span> <span class="id"><a name="i64ext_extcall">i64ext_extcall</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ef</span> <span class="id">args</span> <span class="id">res</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext_sem">i64ext_sem</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#args">args</a></span> <span class="id"><a href="helpers.html#res">res</a></span> &lt;-&gt; (<span class="id"><a href="helpers.html#i64ext">i64ext</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> /\ <span class="kwd">forall</span> <span class="id">ge</span> <span class="id">m</span>, <span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#ge">ge</a></span> <span class="id"><a href="helpers.html#args">args</a></span> <span class="id"><a href="helpers.html#m">m</a></span> <span class="id"><a href="Events.html#E0">E0</a></span> <span class="id"><a href="helpers.html#res">res</a></span> <span class="id"><a href="helpers.html#m">m</a></span>).<br/>
+<br/>
+<span class="kwd">Axiom</span> <span class="id"><a name="i64ext_args_related">i64ext_args_related</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ef</span> <span class="id">j</span> <span class="id">args</span> <span class="id">res</span> <span class="id">args</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Coqlib.html#list_forall2">list_forall2</a></span> (<span class="id"><a href="ValRels.html#val_related">val_related</a></span> <span class="id"><a href="helpers.html#j">j</a></span>) <span class="id"><a href="helpers.html#args">args</a></span> <span class="id">args</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext_sem">i64ext_sem</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#args">args</a></span> <span class="id"><a href="helpers.html#res">res</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">res</span>', <span class="id"><a href="helpers.html#i64ext_sem">i64ext_sem</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id">args</span>' <span class="id">res</span>' /\ <span class="id"><a href="ValRels.html#val_related">val_related</a></span> <span class="id"><a href="helpers.html#j">j</a></span> <span class="id"><a href="helpers.html#res">res</a></span> <span class="id">res</span>'.<br/>
+<br/>
+<span class="kwd">Axiom</span> <span class="id">i64ext_args_related</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ef</span> <span class="id">j</span> <span class="id">args</span> <span class="id">args</span>' <span class="id">res</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Coqlib.html#list_forall2">list_forall2</a></span> (<span class="id"><a href="ValRels.html#val_related">val_related</a></span> <span class="id"><a href="helpers.html#j">j</a></span>) <span class="id"><a href="helpers.html#args">args</a></span> <span class="id">args</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext_sem">i64ext_sem</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id">args</span>' <span class="id">res</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">res</span>, <span class="id"><a href="helpers.html#i64ext_sem">i64ext_sem</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#args">args</a></span> <span class="id"><a href="helpers.html#res">res</a></span> /\ <span class="id"><a href="ValRels.html#val_related">val_related</a></span> <span class="id"><a href="helpers.html#j">j</a></span> <span class="id"><a href="helpers.html#res">res</a></span> <span class="id">res</span>'.<br/>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="i64ext_extcall_forall">i64ext_extcall_forall</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">m</span> <span class="id">ef</span> <span class="id">args</span> <span class="id">res</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext">i64ext</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#ge">ge</a></span> <span class="id"><a href="helpers.html#args">args</a></span> <span class="id"><a href="helpers.html#m">m</a></span> <span class="id"><a href="Events.html#E0">E0</a></span> <span class="id"><a href="helpers.html#res">res</a></span> <span class="id"><a href="helpers.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">ge</span>' <span class="id">m</span>', <span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id">ge</span>' <span class="id"><a href="helpers.html#args">args</a></span> <span class="id">m</span>' <span class="id"><a href="Events.html#E0">E0</a></span> <span class="id"><a href="helpers.html#res">res</a></span> <span class="id">m</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7041')">Proof.</div>
+<div class="proofscript" id="proof7041">
+ <span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id"><a href="helpers.html#i64ext_irr">i64ext_irr</a></span>; <span class="tactic">eauto</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="extcall_i64ext_sem">extcall_i64ext_sem</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">m</span> <span class="id">ef</span> <span class="id">args</span> <span class="id">res</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext">i64ext</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#ge">ge</a></span> <span class="id"><a href="helpers.html#args">args</a></span> <span class="id"><a href="helpers.html#m">m</a></span> <span class="id"><a href="Events.html#E0">E0</a></span> <span class="id"><a href="helpers.html#res">res</a></span> <span class="id"><a href="helpers.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext_sem">i64ext_sem</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#args">args</a></span> <span class="id"><a href="helpers.html#res">res</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7042')">Proof.</div>
+<div class="proofscript" id="proof7042">
+ <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="helpers.html#i64ext_extcall">i64ext_extcall</a></span>. <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">eapply</span> <span class="id"><a href="helpers.html#i64ext_extcall_forall">i64ext_extcall_forall</a></span>; <span class="tactic">eauto</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="i64ext_det">i64ext_det</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ef</span> <span class="id">ge</span> <span class="id">args</span> <span class="id">E0</span> <span class="id">res</span> <span class="id">m</span> <span class="id">E</span>' <span class="id">res</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext">i64ext</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#ge">ge</a></span> <span class="id"><a href="helpers.html#args">args</a></span> <span class="id"><a href="helpers.html#m">m</a></span> <span class="id"><a href="helpers.html#E0">E0</a></span> <span class="id"><a href="helpers.html#res">res</a></span> <span class="id"><a href="helpers.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Events.html#external_call">external_call</a></span> <span class="id"><a href="helpers.html#ef">ef</a></span> <span class="id"><a href="helpers.html#ge">ge</a></span> <span class="id"><a href="helpers.html#args">args</a></span> <span class="id"><a href="helpers.html#m">m</a></span> <span class="id">E</span>' <span class="id">res</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#E0">E0</a></span> = <span class="id">E</span>' /\ <span class="id">m</span>' = <span class="id"><a href="helpers.html#m">m</a></span> /\ <span class="id"><a href="helpers.html#res">res</a></span> = <span class="id">res</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7043')">Proof.</div>
+<div class="proofscript" id="proof7043">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">exploit</span> <span class="id"><a href="helpers.html#i64ext_effects">i64ext_effects</a></span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [ []]. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="helpers.html#i64ext_effects">i64ext_effects</a></span>; <span class="tactic">try</span> <span class="tactic">exact</span> <span class="id">H0</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [ []]. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> (<span class="id"><a href="Events.html#external_call_spec">external_call_spec</a></span> <span class="id">ef</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H2</span>. <span class="id">exploit</span> <span class="id">ec_determ</span>. <span class="tactic">exact</span> <span class="id">H0</span>. <span class="tactic">exact</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">tauto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

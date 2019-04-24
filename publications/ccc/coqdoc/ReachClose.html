@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module ReachClose</title>
+<meta name="description" content="Documentation of Coq module ReachClose" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module ReachClose</h1>
+<div class="coq">
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html">Streams</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="MemAux.html">MemAux</a></span> <span class="id"><a href="MemClosures.html">MemClosures</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html">LDSimDefs</a></span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span>.<br/>
+<br/>
+<br/>
+<span class="kwd">Record</span> <span class="id"><a name="rc_inv">rc_inv</a></span> {<span class="id">L</span>: <span class="id"><a href="InteractionSemantics.html#Language">Language</a></span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Ge</span>: <span class="id"><a href="InteractionSemantics.html#G">G</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">ge</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> (<span class="id"><a href="InteractionSemantics.html#F">F</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span>) (<span class="id"><a href="InteractionSemantics.html#V">V</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">I</span> : <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span> -&gt; <span class="id"><a href="MemAux.html#freelist">freelist</a></span> -&gt; <span class="id"><a href="InteractionSemantics.html#core">core</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span> -&gt; <span class="id"><a href="GMemory.html#gmem">gmem</a></span> -&gt; <span class="kwd">Prop</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+<div class="doc"><span class="bracket"><span class="id">I</span> <span class="id">S</span> <span class="id">c</span> <span class="id">m</span></span> implies <span class="bracket"><span class="id">m</span></span> is reach-closed on <span class="bracket"><span class="id">S</span></span> </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="rc_closed">rc_closed</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S</span> <span class="id">fl</span> <span class="id">c</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemClosures.html#reach_closed">reach_closed</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span>;<br/>
+<div class="doc">initial states with reach-closed shared memory satisfies <span class="bracket"><span class="id">I</span></span> </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="rc_init">rc_init</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m</span> <span class="id">S</span> <span class="id">fl</span> <span class="id">fnid</span> <span class="id">args</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_gmem">init_gmem</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span> <span class="id"><a href="ReachClose.html#ge">ge</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.subset">Bset.subset</a></span> (<span class="kwd">fun</span> <span class="id">b</span> =&gt; <span class="id"><a href="Coqlib.html#Plt">Plt</a></span> <span class="id"><a href="ReachClose.html#b">b</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_next">Genv.genv_next</a></span> <span class="id"><a href="ReachClose.html#ge">ge</a></span>)) <span class="id"><a href="ReachClose.html#S">S</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.subset">Bset.subset</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> (<span class="id"><a href="MemAux.html#valid_block_bset">valid_block_bset</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> (<span class="id"><a href="MemAux.html#valid_block_bset">valid_block_bset</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemClosures.html#reach_closed">reach_closed</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#G_args">G_args</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#args">args</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_core">init_core</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span> <span class="id"><a href="ReachClose.html#Ge">Ge</a></span> <span class="id"><a href="ReachClose.html#fnid">fnid</a></span> <span class="id"><a href="ReachClose.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span>;<br/>
+<br/>
+<div class="doc">temporarily add this case, for general rely step </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="rc_rely_step">rc_rely_step</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S</span> <span class="id">fl</span> <span class="id">c</span> <span class="id">m</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.forward">GMem.forward</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#unchg_freelist">unchg_freelist</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemClosures.html#reach_closed">reach_closed</a></span> <span class="id">m</span>' <span class="id"><a href="ReachClose.html#S">S</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id">m</span>';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<div class="doc"><span class="bracket">(<span class="id">c</span>,<span class="id">m</span>) --<span class="id">fp</span>--&gt; (<span class="id">c</span>',<span class="id">m</span>')</span> implies
+        blocks in fp subset of <span class="bracket"><span class="id">S</span> <span class="id">U</span> <span class="id">F</span></span> </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="rc_step">rc_step</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S</span> <span class="id">fl</span> <span class="id">c</span> <span class="id">m</span> <span class="id">fp</span> <span class="id">c</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#step">step</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span> <span class="id"><a href="ReachClose.html#Ge">Ge</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> <span class="id"><a href="ReachClose.html#fp">fp</a></span> <span class="id">c</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#Guarantee">Guarantee</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fp">fp</a></span> <span class="id">m</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id">c</span>' <span class="id">m</span>';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<div class="doc"><span class="bracket">(<span class="id">c</span>,<span class="id">m</span>) <span class="tactic">at</span> <span class="id">external</span> (<span class="id">f</span>,<span class="id">args</span>)</span> implies
+        closure of blocks in <span class="bracket"><span class="id">args</span></span> subset of <span class="bracket"><span class="id">S</span></span> </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="rc_atext">rc_atext</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S</span> <span class="id">fl</span> <span class="id">c</span> <span class="id">m</span> <span class="id">fnid</span> <span class="id">sg</span> <span class="id">args</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#at_external">at_external</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span> <span class="id"><a href="ReachClose.html#Ge">Ge</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="ReachClose.html#fnid">fnid</a></span>, <span class="id"><a href="ReachClose.html#sg">sg</a></span>, <span class="id"><a href="ReachClose.html#args">args</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#G_args">G_args</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#args">args</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span>;<br/>
+<br/>
+<div class="doc"><span class="bracket">(<span class="id">c</span>,<span class="id">m</span>) -- <span class="id">ores</span> --&gt; (<span class="id">c</span>',<span class="id">m</span>')</span> and 
+        <span class="bracket"><span class="id">m</span>'</span> reach-closed on <span class="bracket"><span class="id">S</span></span> and
+        block in <span class="bracket"><span class="id">ores</span></span> belongs to S then
+        I |- resulting state  </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="rc_aftext">rc_aftext</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S</span> <span class="id">fl</span> <span class="id">c</span> <span class="id">m</span> <span class="id">ores</span> <span class="id">c</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#after_external">after_external</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id"><a href="ReachClose.html#ores">ores</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">c</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#G_oarg">G_oarg</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#ores">ores</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemClosures.html#reach_closed">reach_closed</a></span> <span class="id">m</span>' <span class="id"><a href="ReachClose.html#S">S</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#unchg_freelist">unchg_freelist</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id">c</span>' <span class="id">m</span>';<br/>
+<br/>
+<div class="doc"><span class="bracket">(<span class="id">c</span>,<span class="id">m</span>) --<span class="id">halt</span>--&gt; <span class="id">ores</span></span> then block in <span class="bracket"><span class="id">ores</span></span> belongs to <span class="bracket"><span class="id">S</span></span> </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="rc_halt">rc_halt</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S</span> <span class="id">fl</span> <span class="id">c</span> <span class="id">m</span> <span class="id">res</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ReachClose.html#I">I</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#fl">fl</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> <span class="id"><a href="ReachClose.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#halt">halt</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span> <span class="id"><a href="ReachClose.html#c">c</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="ReachClose.html#res">res</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#G_arg">G_arg</a></span> <span class="id"><a href="ReachClose.html#S">S</a></span> <span class="id"><a href="ReachClose.html#res">res</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;}.<br/>
+<br/>
+<div class="doc">A compilation unit is reach-closed if we could find such <span class="bracket"><span class="id">I</span></span> </div>
+<span class="kwd">Definition</span> <span class="id"><a name="reach_close">reach_close</a></span> {<span class="id">L</span>} (<span class="id">cu</span>: <span class="id"><a href="InteractionSemantics.html#comp_unit">comp_unit</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">Ge</span>, <span class="id"><a href="InteractionSemantics.html#init_genv">init_genv</a></span> <span class="id"><a href="ReachClose.html#L">L</a></span> <span class="id"><a href="ReachClose.html#cu">cu</a></span> <span class="id"><a href="ReachClose.html#ge">ge</a></span> <span class="id"><a href="ReachClose.html#Ge">Ge</a></span> -&gt; <span class="id">exists</span> <span class="id">I</span>, <span class="id"><a href="ReachClose.html#rc_inv">rc_inv</a></span> <span class="id"><a href="ReachClose.html#Ge">Ge</a></span> <span class="id"><a href="ReachClose.html#ge">ge</a></span> <span class="id"><a href="ReachClose.html#I">I</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Blockset</title>
+<meta name="description" content="Documentation of Coq module Blockset" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Blockset</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Values.html">Values</a></span>.<br/>
+<br/>
+<span class="kwd">Module</span> <span class="kwd">Type</span> <span class="id"><a name="BSET">BSET</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.t">t</a></span> : <span class="kwd">Type</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.emp">emp</a></span>: <span class="id"><a href="Blockset.html#BSET.t">t</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.subset">subset</a></span> : <span class="id"><a href="Blockset.html#BSET.t">t</a></span> -&gt; <span class="id"><a href="Blockset.html#BSET.t">t</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Axiom</span> <span class="id"><a name="BSET.emp_subset">emp_subset</a></span>: <span class="kwd">forall</span> <span class="id">bs</span>: <span class="id"><a href="Blockset.html#BSET.t">t</a></span>, <span class="id"><a href="Blockset.html#BSET.subset">subset</a></span> <span class="id"><a href="Blockset.html#BSET.emp">emp</a></span> <span class="id"><a href="Blockset.html#bs">bs</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.belongsto">belongsto</a></span> : <span class="id"><a href="Blockset.html#BSET.t">t</a></span> -&gt; <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.inj">inj</a></span> : <span class="kwd">Type</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.inj_emp">inj_emp</a></span>: <span class="id"><a href="Blockset.html#BSET.inj">inj</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.inj_id">inj_id</a></span>: <span class="id"><a href="Blockset.html#BSET.inj">inj</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.inj_subset">inj_subset</a></span>: <span class="id"><a href="Blockset.html#BSET.inj">inj</a></span> -&gt; <span class="id"><a href="Blockset.html#BSET.inj">inj</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.inj_comp">inj_comp</a></span>: <span class="id"><a href="Blockset.html#BSET.inj">inj</a></span> -&gt; <span class="id"><a href="Blockset.html#BSET.inj">inj</a></span> -&gt; <span class="id"><a href="Blockset.html#BSET.inj">inj</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Axiom</span> <span class="id"><a name="BSET.inj_subset_refl">inj_subset_refl</a></span>: <span class="kwd">forall</span> <span class="id">f</span>:<span class="id"><a href="Blockset.html#BSET.inj">inj</a></span>, <span class="id"><a href="Blockset.html#BSET.inj_subset">inj_subset</a></span> <span class="id"><a href="Blockset.html#f">f</a></span> <span class="id"><a href="Blockset.html#f">f</a></span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.inject">inject</a></span> : <span class="id"><a href="Blockset.html#BSET.inj">inj</a></span> -&gt; <span class="id"><a href="Blockset.html#BSET.t">t</a></span> -&gt; <span class="id"><a href="Blockset.html#BSET.t">t</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.inject_block">inject_block</a></span>: <span class="id"><a href="Blockset.html#BSET.inj">inj</a></span> -&gt; <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id"><a name="BSET.inj_to_meminj">inj_to_meminj</a></span>: <span class="id"><a href="Blockset.html#BSET.inj">inj</a></span> -&gt; <span class="id"><a href="Values.html#meminj">meminj</a></span>.<br/>
+<span class="kwd">End</span> <span class="id"><a href="Blockset.html#BSET">BSET</a></span>.<br/>
+<br/>
+<br/>
+<span class="kwd">Module</span> <span class="id"><a name="Bset">Bset</a></span> &lt;: <span class="id"><a href="Blockset.html#BSET">BSET</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.t">t</a></span> := <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.emp">emp</a></span> : <span class="id"><a href="Blockset.html#Bset.t">t</a></span> := <span class="kwd">fun</span> <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.subset">subset</a></span> (<span class="id">bs1</span> <span class="id">bs2</span>: <span class="id"><a href="Blockset.html#Bset.t">t</a></span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="Blockset.html#bs1">bs1</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> -&gt; <span class="id"><a href="Blockset.html#bs2">bs2</a></span> <span class="id"><a href="Blockset.html#b">b</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="Bset.emp_subset">emp_subset</a></span>: <span class="kwd">forall</span> <span class="id">bs</span>, <span class="id"><a href="Blockset.html#Bset.subset">subset</a></span> <span class="id"><a href="Blockset.html#Bset.emp">emp</a></span> <span class="id"><a href="Blockset.html#bs">bs</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5685')">Proof.</div>
+<div class="proofscript" id="proof5685">
+ <span class="tactic">firstorder</span>. Qed.</div>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.belongsto">belongsto</a></span> (<span class="id">bs</span>: <span class="id"><a href="Blockset.html#Bset.t">t</a></span>) (<span class="id">b</span>: <span class="id"><a href="Values.html#block">block</a></span>) : <span class="kwd">Prop</span> := <span class="id"><a href="Blockset.html#bs">bs</a></span> <span class="id"><a href="Blockset.html#b">b</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.inj">inj</a></span>:= <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Values.html#block">block</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.inj_emp">inj_emp</a></span> : <span class="id"><a href="Blockset.html#Bset.inj">inj</a></span> := <span class="kwd">fun</span> <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.inj_id">inj_id</a></span> : <span class="id"><a href="Blockset.html#Bset.inj">inj</a></span> := <span class="kwd">fun</span> <span class="id">b</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="Blockset.html#b">b</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.inj_subset">inj_subset</a></span> (<span class="id">j1</span> <span class="id">j2</span>: <span class="id"><a href="Blockset.html#Bset.inj">inj</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">b</span>', <span class="id"><a href="Blockset.html#j1">j1</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' -&gt; <span class="id"><a href="Blockset.html#j2">j2</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>'.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.inj_comp">inj_comp</a></span> (<span class="id">j1</span> <span class="id">j2</span>: <span class="id"><a href="Blockset.html#Bset.inj">inj</a></span>) : <span class="id"><a href="Blockset.html#Bset.inj">inj</a></span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">b</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="Blockset.html#j1">j1</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =&gt; <span class="kwd">match</span> <span class="id"><a href="Blockset.html#j2">j2</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="Bset.inj_subset_refl">inj_subset_refl</a></span>: <span class="kwd">forall</span> <span class="id">j</span>:<span class="id"><a href="Blockset.html#Bset.inj">inj</a></span>, <span class="id"><a href="Blockset.html#Bset.inj_subset">inj_subset</a></span> <span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#j">j</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5686')">Proof.</div>
+<div class="proofscript" id="proof5686">
+ <span class="tactic">firstorder</span>. Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.inj_inject">inj_inject</a></span> (<span class="id">j</span>: <span class="id"><a href="Blockset.html#Bset.inj">inj</a></span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b1</span> <span class="id">b2</span> <span class="id">b</span>', <span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#b1">b1</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' -&gt; <span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#b2">b2</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' -&gt; <span class="id"><a href="Blockset.html#b1">b1</a></span> = <span class="id"><a href="Blockset.html#b2">b2</a></span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id">inject_weak</span>' (<span class="id">j</span>: <span class="id"><a href="Blockset.html#Bset.inj">inj</a></span>) (<span class="id">bs1</span> <span class="id">bs2</span>: <span class="id"><a href="Blockset.html#Bset.t">t</a></span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inj_dom</span>': <span class="kwd">forall</span> <span class="id">b</span> <span class="id">b</span>', <span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' -&gt; <span class="id"><a href="Blockset.html#Bset.belongsto">belongsto</a></span> <span class="id"><a href="Blockset.html#bs1">bs1</a></span> <span class="id"><a href="Blockset.html#b">b</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="Bset.inj_range">inj_range</a></span>: <span class="kwd">forall</span> <span class="id">b</span>', <span class="id"><a href="Blockset.html#Bset.belongsto">belongsto</a></span> <span class="id"><a href="Blockset.html#bs2">bs2</a></span> <span class="id">b</span>' -&gt; <span class="id">exists</span> <span class="id">b</span>, <span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inj_range</span>': <span class="kwd">forall</span> <span class="id">b</span> <span class="id">b</span>', <span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' -&gt; <span class="id"><a href="Blockset.html#Bset.belongsto">belongsto</a></span> <span class="id"><a href="Blockset.html#bs2">bs2</a></span> <span class="id">b</span>';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="Bset.inj_injective">inj_injective</a></span>: <span class="kwd">forall</span> <span class="id">b1</span> <span class="id">b2</span> <span class="id">b</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#b1">b1</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#b2">b2</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#b1">b1</a></span> = <span class="id"><a href="Blockset.html#b2">b2</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.inject_weak">inject_weak</a></span> := <span class="id">inject_weak</span>'.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id">inject</span>' (<span class="id">j</span>: <span class="id"><a href="Blockset.html#Bset.inj">inj</a></span>) (<span class="id">bs1</span> <span class="id">bs2</span>: <span class="id"><a href="Blockset.html#Bset.t">t</a></span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="Bset.inj_weak">inj_weak</a></span>: <span class="id">inject_weak</span>' <span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#bs1">bs1</a></span> <span class="id"><a href="Blockset.html#bs2">bs2</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="Bset.inj_dom">inj_dom</a></span>: <span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="Blockset.html#Bset.belongsto">belongsto</a></span> <span class="id"><a href="Blockset.html#bs1">bs1</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> -&gt; <span class="id">exists</span> <span class="id">b</span>', <span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.inject">inject</a></span> := <span class="id">inject</span>'.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.inject_block">inject_block</a></span> (<span class="id">j</span>: <span class="id"><a href="Blockset.html#Bset.inj">inj</a></span>) (<span class="id">b</span> <span class="id">b</span>': <span class="id"><a href="Values.html#block">block</a></span>) : <span class="kwd">Prop</span> := <span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>'.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="Bset.inj_to_meminj">inj_to_meminj</a></span> (<span class="id">j</span>: <span class="id"><a href="Blockset.html#Bset.inj">inj</a></span>) : <span class="id"><a href="Values.html#meminj">meminj</a></span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">b</span> =&gt; <span class="kwd">match</span> <span class="id"><a href="Blockset.html#j">j</a></span> <span class="id"><a href="Blockset.html#b">b</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id">b</span>', <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z0">BinNums.Z0</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<span class="kwd">End</span> <span class="id"><a href="Blockset.html#Bset">Bset</a></span>.<br/>
+<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

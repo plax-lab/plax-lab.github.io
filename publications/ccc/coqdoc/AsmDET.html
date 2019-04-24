@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module AsmDET</title>
+<meta name="description" content="Documentation of Coq module AsmDET" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module AsmDET</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="helpers.html">helpers</a></span> <span class="id"><a href="Events.html">Events</a></span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span> <span class="id"><a href="AsmLang.html">AsmLang</a></span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="FMemory.html">FMemory</a></span> <span class="id"><a href="FMemLemmas.html">FMemLemmas</a></span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Ltac</span> <span class="id">Hsimpl</span>:=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H1</span>:?<span class="id">a</span>,<span class="id">H2</span>:?<span class="id">a</span>-&gt;?<span class="id">b</span>|-<span class="id">_</span>=&gt;<span class="id">specialize</span> (<span class="id">H2</span> <span class="id">H1</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:<span class="id">_</span>/\<span class="id">_</span>|-<span class="id">_</span>=&gt; <span class="tactic">destruct</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:<span class="id">exists</span> <span class="id">_</span>,<span class="id">_</span>|-<span class="id">_</span>=&gt;<span class="tactic">destruct</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Ltac</span> <span class="id">Esimpl</span>:=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:<span class="id">_</span>|-<span class="id">_</span>/\<span class="id">_</span>=&gt;<span class="tactic">split</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:<span class="id">_</span>|-<span class="id">exists</span> <span class="id">_</span>,<span class="id">_</span>=&gt;<span class="id">eexists</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<span class="kwd">Ltac</span> <span class="id">solv_eq</span>:=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| [<span class="id">H1</span>: ?<span class="id">P</span> , <span class="id">H2</span> : ?<span class="id">P</span> |- <span class="id">_</span>] =&gt; <span class="tactic">clear</span> <span class="id">H1</span><br/>
+&nbsp;&nbsp;| [<span class="id">H1</span>: ?<span class="id">P</span> = <span class="id">_</span>, <span class="id">H2</span>: ?<span class="id">P</span> = <span class="id">_</span> |- <span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="id">inv</span> <span class="id">H2</span><br/>
+&nbsp;&nbsp;| [<span class="id">H1</span>: ?<span class="id">P</span> = <span class="id">_</span> , <span class="id">H2</span>: <span class="id">_</span> = ?<span class="id">P</span> |- <span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="id">inv</span> <span class="id">H2</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span><br/>
+.<br/>
+<span class="kwd">Ltac</span> <span class="id">inv_eq</span>:=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:?<span class="id">P</span> , <span class="id">H1</span>: ?<span class="id">P</span> |- <span class="id">_</span> =&gt; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id">context</span>[<span class="kwd">match</span> ?<span class="id">x</span> <span class="kwd">with</span> <span class="id">_</span> =&gt; <span class="id">_</span> <span class="kwd">end</span>] |- <span class="id">_</span> =&gt; <span class="tactic">destruct</span> <span class="id">x</span> <span class="id">eqn</span>:?; <span class="tactic">try</span> (<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">fail</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: ?<span class="id">a</span> <span class="id">_</span> = ?<span class="id">a</span> <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="id">inv</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: ?<span class="id">a</span> <span class="id">_</span> <span class="id">_</span> = ?<span class="id">a</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="id">inv</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> |- <span class="id">_</span> =&gt; <span class="id">inv</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> |- <span class="id">_</span> =&gt; <span class="id">inv</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span> |- <span class="id">_</span>=&gt; <span class="id">inv</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> |- <span class="id">_</span>=&gt; <span class="id">inv</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="AsmLang.html#Stuck">Stuck</a></span> = <span class="kwd">Next</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="id">inv</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="kwd">Next</span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="AsmLang.html#Stuck">Stuck</a></span> |- <span class="id">_</span> =&gt; <span class="id">inv</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:?<span class="id">P</span> = ?<span class="id">Q</span>, <span class="id">H1</span>:<span class="id">context</span> [ ?<span class="id">P</span> ] |- <span class="id">_</span> =&gt; <span class="tactic">rewrite</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:?<span class="id">P</span> = ?<span class="id">Q</span> |- <span class="id">context</span> [ ?<span class="id">P</span> ] =&gt; <span class="tactic">rewrite</span> <span class="id">H</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *;<span class="tactic">try</span> <span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="embed_eq">embed_eq</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fm</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="FMemory.html#embed">embed</a></span> (<span class="id"><a href="FMemory.html#strip">strip</a></span> <span class="id"><a href="AsmDET.html#fm">fm</a></span>) (<span class="id"><a href="FMemory.html#Mem.freelist">Mem.freelist</a></span> <span class="id"><a href="AsmDET.html#fm">fm</a></span>) <span class="id"><a href="AsmDET.html#m">m</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmDET.html#m">m</a></span> = <span class="id"><a href="AsmDET.html#fm">fm</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6543')">Proof.</div>
+<div class="proofscript" id="proof6543">
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">fm</span>, <span class="id">m</span>; <span class="tactic">intro</span>; <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">unfold</span> <span class="id"><a href="FMemory.html#strip">strip</a></span> <span class="kwd">in</span> *; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">nextblockid</span> = <span class="id">nextblockid0</span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">generalize</span> <span class="id">valid_wd</span> <span class="id">valid_wd0</span>. <span class="tactic">clear</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Arith.PeanoNat.html#Nat.lt_total">Nat.lt_total</a></span> <span class="id">nextblockid</span> <span class="id">nextblockid0</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">valid_wd0</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">valid_wd</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">valid_wd</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">valid_wd0</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="tactic">f_equal</span>; <span class="tactic">apply</span> <span class="id"><a href="Axioms.html#proof_irr">Axioms.proof_irr</a></span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="extcall_arg_pair_fp_determ">extcall_arg_pair_fp_determ</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">rs</span> <span class="id">a</span> <span class="id">fp</span> <span class="id">fp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#extcall_arg_pair_fp">ASM_local.extcall_arg_pair_fp</a></span> <span class="id"><a href="AsmDET.html#rs">rs</a></span> <span class="id"><a href="AsmDET.html#a">a</a></span> <span class="id"><a href="AsmDET.html#fp">fp</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#extcall_arg_pair_fp">ASM_local.extcall_arg_pair_fp</a></span> <span class="id"><a href="AsmDET.html#rs">rs</a></span> <span class="id"><a href="AsmDET.html#a">a</a></span> <span class="id">fp</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmDET.html#fp">fp</a></span> = <span class="id">fp</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6544')">Proof.</div>
+<div class="proofscript" id="proof6544">
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">a</span>;<span class="tactic">intros</span>;<span class="id">inv</span> <span class="id">H</span>;<span class="id">inv</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H1</span>;<span class="id">inv</span> <span class="id">H2</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H3</span>;<span class="id">inv</span> <span class="id">H4</span>;<span class="id">inv</span> <span class="id">H2</span>;<span class="id">inv</span> <span class="id">H5</span>;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="extcall_arguments_fp_determ">extcall_arguments_fp_determ</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">rs</span> <span class="id">sg</span> <span class="id">fp1</span> <span class="id">fp2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#extcall_arguments_fp">ASM_local.extcall_arguments_fp</a></span> <span class="id"><a href="AsmDET.html#rs">rs</a></span> <span class="id"><a href="AsmDET.html#sg">sg</a></span> <span class="id"><a href="AsmDET.html#fp1">fp1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#extcall_arguments_fp">ASM_local.extcall_arguments_fp</a></span> <span class="id"><a href="AsmDET.html#rs">rs</a></span> <span class="id"><a href="AsmDET.html#sg">sg</a></span> <span class="id"><a href="AsmDET.html#fp2">fp2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmDET.html#fp1">fp1</a></span> = <span class="id"><a href="AsmDET.html#fp2">fp2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6545')">Proof.</div>
+<div class="proofscript" id="proof6545">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="ASM_local.html#extcall_arguments_fp">ASM_local.extcall_arguments_fp</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">rs</span> <span class="id">sg</span>.<br/>
+&nbsp;&nbsp;<span class="id">remember</span> (<span class="id"><a href="Conventions1.html#loc_arguments">Conventions1.loc_arguments</a></span> <span class="id">sg</span>) <span class="kwd">as</span> <span class="id">a</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">sg</span> <span class="id">Heqa</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">a</span>; <span class="tactic">intros</span>; <span class="id">inv</span> <span class="id">H</span>;<span class="id">inv</span> <span class="id">H0</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="AsmDET.html#extcall_arg_pair_fp_determ">extcall_arg_pair_fp_determ</a></span> <span class="kwd">in</span> <span class="id">H3</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHa</span> <span class="kwd">in</span> <span class="id">H4</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="extcall_arguments_determ">extcall_arguments_determ</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">rs</span> <span class="id">m</span> <span class="id">sg</span> <span class="id">res</span> <span class="id">res</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmLang.html#extcall_arguments">extcall_arguments</a></span> <span class="id"><a href="AsmDET.html#rs">rs</a></span> <span class="id"><a href="AsmDET.html#m">m</a></span> <span class="id"><a href="AsmDET.html#sg">sg</a></span> <span class="id"><a href="AsmDET.html#res">res</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmLang.html#extcall_arguments">extcall_arguments</a></span> <span class="id"><a href="AsmDET.html#rs">rs</a></span> <span class="id"><a href="AsmDET.html#m">m</a></span> <span class="id"><a href="AsmDET.html#sg">sg</a></span> <span class="id">res</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmDET.html#res">res</a></span> = <span class="id">res</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6546')">Proof.</div>
+<div class="proofscript" id="proof6546">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="AsmLang.html#extcall_arguments">extcall_arguments</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">remember</span> (<span class="id"><a href="Conventions1.html#loc_arguments">Conventions1.loc_arguments</a></span> <span class="id">sg</span>) <span class="kwd">as</span> <span class="id">a</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">sg</span> <span class="id">Heqa</span>.<br/>
+&nbsp;&nbsp;<span class="id">revert</span> <span class="id">rs</span> <span class="id">m</span> <span class="id">res</span> <span class="id">res</span>' <span class="id">H</span> <span class="id">H0</span>  .<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">a</span>;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>;<span class="id">inv</span> <span class="id">H0</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHa</span> <span class="kwd">in</span> <span class="id">H5</span>;<span class="tactic">eauto</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">f_equal</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">H6</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H2</span>;<span class="id">inv</span> <span class="id">H3</span>;<span class="tactic">auto</span>. <span class="id">inv</span> <span class="id">H</span>;<span class="id">inv</span> <span class="id">H1</span>;<span class="tactic">auto</span>. <span class="id">solv_eq</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>;<span class="id">inv</span> <span class="id">H0</span>;<span class="id">inv</span> <span class="id">H4</span>;<span class="id">inv</span> <span class="id">H6</span>;<span class="id">inv_eq</span>;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="eval_builtin_args_fp_determ">eval_builtin_args_fp_determ</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">A</span> <span class="id">ge</span> <span class="id">rs</span> <span class="id">i</span> <span class="id">args</span> <span class="id">fp1</span> <span class="id">fp2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="MemOpFP.html#eval_builtin_args_fp">MemOpFP.eval_builtin_args_fp</a></span> <span class="id"><a href="AsmDET.html#A">A</a></span> <span class="id"><a href="AsmDET.html#ge">ge</a></span> <span class="id"><a href="AsmDET.html#rs">rs</a></span> <span class="id"><a href="AsmDET.html#i">i</a></span> <span class="id"><a href="AsmDET.html#args">args</a></span> <span class="id"><a href="AsmDET.html#fp1">fp1</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemOpFP.html#eval_builtin_args_fp">MemOpFP.eval_builtin_args_fp</a></span> <span class="id"><a href="AsmDET.html#ge">ge</a></span> <span class="id"><a href="AsmDET.html#rs">rs</a></span> <span class="id"><a href="AsmDET.html#i">i</a></span> <span class="id"><a href="AsmDET.html#args">args</a></span> <span class="id"><a href="AsmDET.html#fp2">fp2</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmDET.html#fp1">fp1</a></span> = <span class="id"><a href="AsmDET.html#fp2">fp2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6547')">Proof.</div>
+<div class="proofscript" id="proof6547">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">args</span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>;<span class="id">inv</span> <span class="id">H0</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>;<span class="id">inv</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="kwd">forall</span> <span class="id">A</span> <span class="id">ge</span> <span class="id">rs</span> <span class="id">i</span> <span class="id">a</span> <span class="id">fp</span> <span class="id">fp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="MemOpFP.html#eval_builtin_arg_fp">MemOpFP.eval_builtin_arg_fp</a></span> <span class="id"><a href="AsmDET.html#A">A</a></span> <span class="id"><a href="AsmDET.html#ge">ge</a></span> <span class="id"><a href="AsmDET.html#rs">rs</a></span> <span class="id"><a href="AsmDET.html#i">i</a></span> <span class="id"><a href="AsmDET.html#a">a</a></span> <span class="id"><a href="AsmDET.html#fp">fp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemOpFP.html#eval_builtin_arg_fp">MemOpFP.eval_builtin_arg_fp</a></span> <span class="id"><a href="AsmDET.html#ge">ge</a></span> <span class="id"><a href="AsmDET.html#rs">rs</a></span> <span class="id"><a href="AsmDET.html#i">i</a></span> <span class="id"><a href="AsmDET.html#a">a</a></span> <span class="id">fp</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmDET.html#fp">fp</a></span> = <span class="id">fp</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">a</span>;<span class="tactic">intros</span>;<span class="id">inv</span> <span class="id">H</span>;<span class="id">inv</span> <span class="id">H0</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHa1</span> <span class="kwd">in</span> <span class="id">H3</span>;<span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">IHa2</span> <span class="kwd">in</span> <span class="id">H4</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H3</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="tactic">eapply</span> <span class="id">IHargs</span> <span class="kwd">in</span> <span class="id">H4</span>;<span class="tactic">eauto</span>. <span class="tactic">subst</span>;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="i64ext_sem_determ">i64ext_sem_determ</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span>  (<span class="id">ge</span> : <span class="id"><a href="Globalenvs.html#Senv.t">Globalenvs.Senv.t</a></span>) <span class="id">a</span> <span class="id">b</span> <span class="id">res</span> <span class="id">res</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext_sem">i64ext_sem</a></span> <span class="id"><a href="AsmDET.html#a">a</a></span> <span class="id"><a href="AsmDET.html#b">b</a></span> <span class="id"><a href="AsmDET.html#res">res</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="helpers.html#i64ext_sem">i64ext_sem</a></span> <span class="id"><a href="AsmDET.html#a">a</a></span> <span class="id"><a href="AsmDET.html#b">b</a></span> <span class="id">res</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmDET.html#res">res</a></span> = <span class="id">res</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6548')">Proof.</div>
+<div class="proofscript" id="proof6548">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">pose</span> <span class="id"><a href="helpers.html#i64ext_det">i64ext_det</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="helpers.html#i64ext_extcall">i64ext_extcall</a></span> <span class="kwd">in</span> <span class="id">H</span> <span class="kwd">as</span> [].<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="helpers.html#i64ext_extcall">i64ext_extcall</a></span> <span class="kwd">in</span> <span class="id">H0</span> <span class="kwd">as</span> [].<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H1</span> <span class="id">ge</span> <span class="id"><a href="Memory.html#Mem.empty">Memory.Mem.empty</a></span>).<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H2</span> <span class="id">ge</span> <span class="id"><a href="Memory.html#Mem.empty">Memory.Mem.empty</a></span>).<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="helpers.html#i64ext_det">i64ext_det</a></span> <span class="kwd">in</span> <span class="id">H1</span> <span class="kwd">as</span> [?[]];<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<span class="kwd">Theorem</span> <span class="id"><a name="Asm_det">Asm_det</a></span>: <span class="id"><a href="InteractionSemantics.html#lang_det">lang_det</a></span> <span class="id"><a href="AsmLang.html#AsmLang">AsmLang</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6549')">Proof.</div>
+<div class="proofscript" id="proof6549">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="InteractionSemantics.html#lang_det">lang_det</a></span>,<span class="id"><a href="InteractionSemantics.html#step_det">step_det</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H1</span>. <span class="tactic">apply</span> <span class="id"><a href="AsmDET.html#embed_eq">embed_eq</a></span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H3</span>;<span class="id">inv</span> <span class="id">H2</span>;<span class="id">inv_eq</span>;<span class="id">inv_eq</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;ASM_local.lock_prefixed&nbsp;in&nbsp;H13.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;ex_match2;try&nbsp;contradiction.<br/>
+&nbsp;&nbsp;}&nbsp;*)</span>&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="AsmLang.html#eval_builtin_args_determ">eval_builtin_args_determ</a></span> <span class="kwd">in</span> <span class="id">H13</span>;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H5</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="AsmDET.html#eval_builtin_args_fp_determ">eval_builtin_args_fp_determ</a></span> <span class="kwd">in</span> <span class="id">H6</span>;<span class="tactic">eauto</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="AsmDET.html#i64ext_sem_determ">i64ext_sem_determ</a></span> <span class="kwd">in</span> <span class="id">H7</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">subst</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id"><a href="Globalenvs.html#Genv.to_senv">Globalenvs.Genv.to_senv</a></span> <span class="id">ge</span>).<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="AsmDET.html#extcall_arguments_fp_determ">extcall_arguments_fp_determ</a></span> <span class="kwd">in</span> <span class="id">H4</span> ;<span class="tactic">eauto</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="AsmDET.html#extcall_arguments_determ">extcall_arguments_determ</a></span> <span class="kwd">in</span> <span class="id">H1</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">eauto</span>. <span class="tactic">f_equal</span>. <span class="tactic">f_equal</span>. <span class="tactic">f_equal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="AsmDET.html#i64ext_sem_determ">i64ext_sem_determ</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id"><a href="Globalenvs.html#Genv.to_senv">Globalenvs.Genv.to_senv</a></span> <span class="id">ge</span>).<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;ASM_local.lock_prefixed&nbsp;in&nbsp;*.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;ex_match2;try&nbsp;contradiction.<br/>
+&nbsp;&nbsp;}&nbsp;*)</span>Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

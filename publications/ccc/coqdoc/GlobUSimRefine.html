@@ -1,0 +1,610 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module GlobUSimRefine</title>
+<meta name="description" content="Documentation of Coq module GlobUSimRefine" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module GlobUSimRefine</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="Injections.html">Injections</a></span> <span class="id"><a href="GAST.html">GAST</a></span> <span class="id"><a href="ETrace.html">ETrace</a></span> <span class="id"><a href="GlobUSim.html">GlobUSim</a></span> <span class="id"><a href="NPSemantics.html">NPSemantics</a></span> <span class="id"><a href="SimEtr.html">SimEtr</a></span> <span class="id"><a href="GlobSim.html">GlobSim</a></span> <span class="id"><a href="GSimDefs.html">GSimDefs</a></span> <span class="id"><a href="GDefLemmas.html">GDefLemmas</a></span> <span class="id"><a href="USimDRF.html">USimDRF</a></span>.<br/>
+<br/>
+<h1> Simulation implies Refinement </h1>
+<br/>
+<div class="doc">This file defines the lemma <span class="bracket"><span class="id">USim_Refine</span></span>, which says when 
+    source program simulates target program ( <span class="bracket"><span class="id">S</span> &gt; <span class="id">T</span></span> ),
+    target program refines the source program. </div>
+<div class="doc">- <span class="bracket"><span class="id">S</span> &gt; <span class="id">T</span></span> =&gt; <span class="bracket"><span class="id">T</span> <span class="id">NP_refine</span> <span class="id">S</span></span>
+    - <span class="bracket"><span class="id">S</span> &gt; <span class="id">T</span></span> /\ <span class="bracket"><span class="id">Safe</span>(<span class="id">S</span>)</span> =&gt; <span class="bracket"><span class="id">Safe</span>(<span class="id">T</span>)</span>
+ </div>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "{-| <span class="id">PC</span> , <span class="id">T</span> }" := <br/>
+&nbsp;&nbsp;({|<span class="id"><a href="GlobDefs.html#Build_ProgConfig">thread_pool</a></span> := <span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id">PC</span>; <span class="id">cur_tid</span> := <span class="id">T</span>;<span class="id">gm</span> := <span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id">PC</span>; <span class="id">atom_bit</span> := <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">PC</span> |})  (<span class="tactic">at</span> <span class="id">level</span> 70,<span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="usim_diverge">usim_diverge</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Variable</span> <span class="id"><a name="usim_diverge.SGE">SGE</a></span> <span class="id"><a name="usim_diverge.TGE">TGE</a></span>:<span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Variable</span> <span class="id"><a name="usim_diverge.I">I</a></span>:<span class="kwd">Type</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Variable</span> <span class="id"><a name="usim_diverge.ord">ord</a></span>:<span class="id"><a href="GlobUSimRefine.html#usim_diverge.I">I</a></span>-&gt;<span class="id"><a href="GlobUSimRefine.html#usim_diverge.I">I</a></span>-&gt;<span class="kwd">Prop</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Variable</span> <span class="id"><a name="usim_diverge.R">R</a></span>:<span class="id"><a href="GlobUSimRefine.html#usim_diverge.I">I</a></span>-&gt;<span class="id"><a href="Injections.html#Mu">Mu</a></span>-&gt;<span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>-&gt;<span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>-&gt;@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.SGE">SGE</a></span>-&gt;@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.TGE">TGE</a></span>-&gt;<span class="kwd">Prop</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Hypothesis</span> <span class="id"><a name="usim_diverge.usim">usim</a></span>: <span class="id"><a href="GlobUSim.html#GConfigUSim">GConfigUSim</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.I">I</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.ord">ord</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span>.<br/>
+&nbsp;&nbsp;<br/>
+<div class="doc">In this section, Sdiverge and SEtr are auxiliary definition for proof and is defined in SimEtr.v </div>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="tau_plus_star_step">tau_plus_star_step</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_plus">tau_plus</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">pc</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">fp1</span> <span class="id">fp2</span> <span class="id">pc1</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> <span class="id"><a href="GlobUSimRefine.html#fp1">fp1</a></span> <span class="id"><a href="GlobUSimRefine.html#pc1">pc1</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span> <span class="id"><a href="GlobUSimRefine.html#pc1">pc1</a></span> <span class="id"><a href="ETrace.html#tau">tau</a></span> <span class="id"><a href="GlobUSimRefine.html#fp2">fp2</a></span> <span class="id">pc</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GlobUSimRefine.html#fp1">fp1</a></span> <span class="id"><a href="GlobUSimRefine.html#fp2">fp2</a></span> = <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9048')">Proof.</div>
+<div class="proofscript" id="proof9048">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> 1;<span class="tactic">intros</span>. <span class="id">Esimpl</span>;<span class="tactic">eauto</span>. <span class="id">constructor</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.emp_union_fp">FP.emp_union_fp</a></span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>. <span class="id">Esimpl</span>;<span class="tactic">eauto</span>. <span class="id">econstructor</span>;<span class="tactic">eauto</span>. <span class="tactic">rewrite</span>&lt;- <span class="id"><a href="Footprint.html#FP.fp_union_assoc">FP.fp_union_assoc</a></span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="usim_Sdiverge_inva">usim_Sdiverge_inva</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id"><a href="GlobUSimRefine.html#i">i</a></span> <span class="id"><a href="GlobUSimRefine.html#mu">mu</a></span> <span class="id"><a href="GlobUSimRefine.html#fpS">fpS</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT">fpT</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimEtr.html#Sdiverge">Sdiverge</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.TGE">TGE</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tpc1</span> <span class="id">fpT1</span> <span class="id">tpc2</span> <span class="id">fpT2</span> <span class="id">o</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="GlobUSimRefine.html#o">o</a></span> = <span class="id"><a href="ETrace.html#tau">tau</a></span> \/ <span class="id"><a href="GlobUSimRefine.html#o">o</a></span> = <span class="id"><a href="ETrace.html#sw">sw</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT1">fpT1</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc1">tpc1</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc1">tpc1</a></span> <span class="id"><a href="GlobUSimRefine.html#o">o</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT2">fpT2</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc2">tpc2</a></span> /\ <span class="id"><a href="SimEtr.html#Sdiverge">Sdiverge</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.TGE">TGE</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc2">tpc2</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">spc1</span> <span class="id">fpS1</span> <span class="id">spc2</span> <span class="id">fpS2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#fpS1">fpS1</a></span> <span class="id"><a href="GlobUSimRefine.html#spc1">spc1</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#spc1">spc1</a></span> <span class="id"><a href="GlobUSimRefine.html#o">o</a></span> <span class="id"><a href="GlobUSimRefine.html#fpS2">fpS2</a></span> <span class="id"><a href="GlobUSimRefine.html#spc2">spc2</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">i</span>' <span class="id">fpS</span>' <span class="id">fpT</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id">i</span>' <span class="id"><a href="GlobUSimRefine.html#mu">mu</a></span> <span class="id">fpS</span>' <span class="id">fpT</span>' <span class="id"><a href="GlobUSimRefine.html#spc2">spc2</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc2">tpc2</a></span>.<br/>
+<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9049')">Proof.</div>
+<div class="proofscript" id="proof9049">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSim.html#index_wf">index_wf</a></span> <span class="kwd">in</span> <span class="id">usim</span> <span class="kwd">as</span> <span class="id">ord_wf</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">i</span> <span class="kwd">using</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_ind">well_founded_ind</a></span> <span class="id">ord_wf</span>);<span class="tactic">intros</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">clear</span> <span class="id">H1</span>;<span class="tactic">subst</span>;<span class="tactic">destruct</span> <span class="id">H2</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">tpc</span> = <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">pc</span>' \/ <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">tpc</span> &lt;&gt; <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">pc</span>').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#classic">Classical_Prop.classic</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_tau_step">match_tau_step</a></span> <span class="kwd">in</span> <span class="id">H3</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H2</span>;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#tau_plus_star_step">tau_plus_star_step</a></span> <span class="kwd">in</span> <span class="id">H2</span>;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">try</span> <span class="id">eassumption</span>;<span class="tactic">eauto</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H5</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="ETrace.html#tau_star_cons">tau_star_cons</a></span> <span class="kwd">in</span> <span class="id">H3</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_ent_atom">match_ent_atom</a></span> <span class="kwd">in</span> <span class="id">H1</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">try</span> <span class="id">eassumption</span>;<span class="tactic">eauto</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_npsw_step">match_npsw_step</a></span> <span class="kwd">in</span> <span class="id">H3</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id">x2</span> <span class="id">pc</span>'.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H7</span> <span class="id">x3</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id">pc</span>' <span class="id">pc</span>'.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H3</span>;<span class="tactic">subst</span>;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_tp">match_tp</a></span> <span class="kwd">in</span> <span class="id">H9</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">thrddom_eq</span>'<span class="id">_comm</span> <span class="kwd">in</span> <span class="id">H12</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">GlobSim.thrddom_eq</span>'<span class="id">_valid_tid_preservation</span> <span class="kwd">in</span> <span class="id">H12</span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H7</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">pc</span>')).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(({-|<span class="id">pc</span>',<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">pc</span>'})=<span class="id">pc</span>'). <span class="tactic">destruct</span> <span class="id">pc</span>';<span class="tactic">simpl</span> <span class="kwd">in</span> *;<span class="tactic">subst</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H11</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">eauto</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intro</span> <span class="id">contra</span>;<span class="tactic">inversion</span> <span class="id">contra</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="tau_star_cons_Sdiverge">tau_star_cons_Sdiverge</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">pc</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimEtr.html#Sdiverge">Sdiverge</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span> <span class="id">pc</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimEtr.html#Sdiverge">Sdiverge</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9050')">Proof.</div>
+<div class="proofscript" id="proof9050">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> 1;<span class="tactic">intros</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">try</span> <span class="id">left</span>;<span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="tau_star_cons_step_non_evt_plus">tau_star_cons_step_non_evt_plus</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">fp</span> <span class="id">pc</span>' <span class="id">fp</span>' <span class="id">pc</span>'' <span class="id">o</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#o">o</a></span> = <span class="id"><a href="ETrace.html#tau">tau</a></span> \/ <span class="id"><a href="GlobUSimRefine.html#o">o</a></span> = <span class="id"><a href="ETrace.html#sw">sw</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> (@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span>) <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">pc</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id">pc</span>' <span class="id"><a href="GlobUSimRefine.html#o">o</a></span> <span class="id">fp</span>' <span class="id">pc</span>''-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimEtr.html#non_evt_plus">non_evt_plus</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">fp</span>') <span class="id">pc</span>''.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9051')">Proof.</div>
+<div class="proofscript" id="proof9051">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> 2;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.emp_union_fp">FP.emp_union_fp</a></span>. <span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id"><a href="Footprint.html#FP.fp_union_assoc">FP.fp_union_assoc</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span> 2. <span class="id">left</span>;<span class="tactic">eauto</span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="usim_Sdiverge_preserve">usim_Sdiverge_preserve</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id"><a href="GlobUSimRefine.html#i">i</a></span> <span class="id"><a href="GlobUSimRefine.html#mu">mu</a></span> <span class="id"><a href="GlobUSimRefine.html#fpS">fpS</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT">fpT</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimEtr.html#Sdiverge">Sdiverge</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.TGE">TGE</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimEtr.html#Sdiverge">Sdiverge</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.SGE">SGE</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9052')">Proof.</div>
+<div class="proofscript" id="proof9052">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="SimEtr.html#Pdiverge_sound">Pdiverge_sound</a></span>. <span class="id">revert</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">spc</span> <span class="id">tpc</span> <span class="id">H</span> <span class="id">H0</span>;<span class="id">cofix</span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#usim_Sdiverge_inva">usim_Sdiverge_inva</a></span> <span class="kwd">in</span> <span class="id">H0</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_cons_step_non_evt_plus">tau_star_cons_step_non_evt_plus</a></span> <span class="kwd">in</span> <span class="id">H5</span>;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H6</span>;<span class="tactic">auto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="tau_star_non_evt_star">tau_star_non_evt_star</a></span>{<span class="id">ge</span>}:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">step</span>:@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span>-&gt;<span class="id"><a href="ETrace.html#glabel">glabel</a></span>-&gt;<span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>-&gt;@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span>-&gt;<span class="kwd">Prop</span>) <span class="id">pc</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">pc</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">pc</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9053')">Proof.</div>
+<div class="proofscript" id="proof9053">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> 1;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="non_evt_star_cons">non_evt_star_cons</a></span>{<span class="id">ge</span>}:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">step</span>:@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span>-&gt;<span class="id"><a href="ETrace.html#glabel">glabel</a></span>-&gt;<span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>-&gt;@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span>-&gt;<span class="kwd">Prop</span>) <span class="id">s</span> <span class="id">s</span>' <span class="id">s</span>'' <span class="id">fp</span> <span class="id">fp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> <span class="id"><a href="GlobUSimRefine.html#s">s</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> <span class="id">s</span>' <span class="id">fp</span>' <span class="id">s</span>'' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> <span class="id"><a href="GlobUSimRefine.html#s">s</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">fp</span>')<span class="id">s</span>''.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9054')">Proof.</div>
+<div class="proofscript" id="proof9054">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> 1;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.emp_union_fp">FP.emp_union_fp</a></span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id"><a href="Footprint.html#FP.fp_union_assoc">FP.fp_union_assoc</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHnon_evt_star</span> <span class="kwd">in</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<span class="kwd">Inductive</span> <span class="id"><a name="non_evt_starN">non_evt_starN</a></span> {<span class="id">State</span>:<span class="kwd">Type</span>}:(<span class="id">State</span>-&gt;<span class="id"><a href="ETrace.html#glabel">glabel</a></span>-&gt;<span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>-&gt;<span class="id">State</span>-&gt;<span class="kwd">Prop</span>)-&gt;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>-&gt;<span class="id">State</span>-&gt;<span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>-&gt;<span class="id">State</span>-&gt;<span class="kwd">Prop</span>:=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="ne_star_refl">ne_star_refl</a></span>: <span class="kwd">forall</span> <span class="id">step</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GlobUSimRefine.html#non_evt_starN">non_evt_starN</a></span> <span class="id">State</span> <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> 0  <span class="id"><a href="GlobUSimRefine.html#s">s</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="GlobUSimRefine.html#s">s</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="ne_star_step">ne_star_step</a></span>: <span class="kwd">forall</span> <span class="id">step</span> <span class="id">n</span> <span class="id">s1</span> <span class="id">fp1</span> <span class="id">s2</span> <span class="id">fp2</span> <span class="id">s3</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#step">step</a></span> <span class="id"><a href="GlobUSimRefine.html#s1">s1</a></span> <span class="id"><a href="ETrace.html#tau">tau</a></span> <span class="id"><a href="GlobUSimRefine.html#fp1">fp1</a></span> <span class="id"><a href="GlobUSimRefine.html#s2">s2</a></span> \/ <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> <span class="id"><a href="GlobUSimRefine.html#s1">s1</a></span> <span class="id"><a href="ETrace.html#sw">sw</a></span> <span class="id"><a href="GlobUSimRefine.html#fp1">fp1</a></span> <span class="id"><a href="GlobUSimRefine.html#s2">s2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GlobUSimRefine.html#non_evt_starN">non_evt_starN</a></span> <span class="id">State</span> <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> <span class="id"><a href="GlobUSimRefine.html#n">n</a></span> <span class="id"><a href="GlobUSimRefine.html#s2">s2</a></span> <span class="id"><a href="GlobUSimRefine.html#fp2">fp2</a></span> <span class="id"><a href="GlobUSimRefine.html#s3">s3</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#non_evt_starN">non_evt_starN</a></span> <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a></span> <span class="id"><a href="GlobUSimRefine.html#n">n</a></span>)<span class="id"><a href="GlobUSimRefine.html#s1">s1</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GlobUSimRefine.html#fp1">fp1</a></span> <span class="id"><a href="GlobUSimRefine.html#fp2">fp2</a></span>) <span class="id"><a href="GlobUSimRefine.html#s3">s3</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="non_evt_star_N_equiv">non_evt_star_N_equiv</a></span>{<span class="id">State</span>:<span class="kwd">Type</span>}:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">step</span> <span class="id">s</span> <span class="id">fp</span> <span class="id">s</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="GlobUSimRefine.html#State">State</a></span> <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> <span class="id"><a href="GlobUSimRefine.html#s">s</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">s</span>' &lt;-&gt; <span class="id">exists</span> <span class="id">n</span>,<span class="id"><a href="GlobUSimRefine.html#non_evt_starN">non_evt_starN</a></span> <span class="id"><a href="GlobUSimRefine.html#step">step</a></span> <span class="id"><a href="GlobUSimRefine.html#n">n</a></span> <span class="id"><a href="GlobUSimRefine.html#s">s</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">s</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9055')">Proof.</div>
+<div class="proofscript" id="proof9055">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> 0;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">IHnon_evt_star</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a></span> <span class="id">x</span>). <span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H</span>;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<span class="kwd">Ltac</span> <span class="id">ccut</span> <span class="id">H</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">type</span> <span class="id">of</span> <span class="id">H</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| ?<span class="id">A</span> -&gt; ?<span class="id">B</span> =&gt; <span class="id">enough</span>(<span class="id">B</span>);[<span class="tactic">clear</span> <span class="id">H</span>|<span class="tactic">apply</span> <span class="id">H</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="usim_refine_done">usim_refine_done</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">j</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id"><a href="GlobUSimRefine.html#i">i</a></span> <span class="id"><a href="GlobUSimRefine.html#mu">mu</a></span> <span class="id"><a href="GlobUSimRefine.html#fpS">fpS</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT">fpT</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fpT1</span> <span class="id">tpc1</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#non_evt_starN">non_evt_starN</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#j">j</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT1">fpT1</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc1">tpc1</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#final_state">final_state</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc1">tpc1</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimEtr.html#SEtr">SEtr</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.SGE">SGE</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="ETrace.html#Behav_done">Behav_done</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9056')">Proof.</div>
+<div class="proofscript" id="proof9056">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">j</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_final">match_final</a></span> <span class="kwd">in</span> <span class="id">H1</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>. <span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span> <span class="kwd">in</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">i</span> <span class="kwd">using</span>(<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_induction">well_founded_induction</a></span> (<span class="id"><a href="GlobUSim.html#index_wf">index_wf</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.I">I</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.ord">ord</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.usim">usim</a></span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H4</span> <span class="kwd">as</span> [<span class="id">H4</span>|<span class="id">H4</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">tpc</span> = <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">s2</span> \/ <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">tpc</span> &lt;&gt; <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">s2</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#classic">Classical_Prop.classic</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_tau_step">match_tau_step</a></span> <span class="kwd">in</span> <span class="id">H4</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H5</span>;<span class="id">Hsimpl</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHj</span> <span class="kwd">in</span> <span class="id">H6</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H8</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H9</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="ETrace.html#tau_plus2star">tau_plus2star</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H10</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_ent_atom">match_ent_atom</a></span> <span class="kwd">in</span> <span class="id">H3</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>. <span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHj</span> <span class="kwd">in</span> <span class="id">H6</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H10</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H11</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> @<span class="id"><a href="ETrace.html#ne_star_step">ETrace.ne_star_step</a></span> <span class="id">_</span> (@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.SGE">SGE</a></span>) <span class="id">x0</span> <span class="id">x1</span> <span class="id">x2</span> <span class="id">fp</span> <span class="id">pc</span>'.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ccut</span> <span class="id">H14</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ccut</span> <span class="id">H15</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H14</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_npsw_step">match_npsw_step</a></span> <span class="kwd">in</span> <span class="id">H4</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id">x2</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H9</span> <span class="id">x3</span>). <span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_tp">match_tp</a></span> <span class="kwd">in</span> <span class="id">H11</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">thrddom_eq</span>'<span class="id">_comm</span> <span class="kwd">in</span> <span class="id">H13</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id">s2</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H4</span>;<span class="tactic">subst</span>;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">GlobSim.thrddom_eq</span>'<span class="id">_valid_tid_preservation</span> <span class="kwd">in</span> <span class="id">H13</span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H9</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(({-|<span class="id">s2</span>,<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>}) = <span class="id">s2</span>). <span class="tactic">destruct</span> <span class="id">s2</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H13</span> <span class="kwd">in</span> <span class="id">H12</span>;<span class="tactic">clear</span> <span class="id">H13</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHj</span> <span class="kwd">in</span> <span class="id">H6</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H12</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span> <span class="kwd">in</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id">x0</span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id">x1</span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>) ({-|<span class="id">x2</span>,<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>})).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span> 2;<span class="tactic">eauto</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H13</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H14</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H15</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intro</span> <span class="id">swnottau</span>;<span class="tactic">inversion</span> <span class="id">swnottau</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="usim_refine_abort">usim_refine_abort</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">j</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id"><a href="GlobUSimRefine.html#i">i</a></span> <span class="id"><a href="GlobUSimRefine.html#mu">mu</a></span> <span class="id"><a href="GlobUSimRefine.html#fpS">fpS</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT">fpT</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fpT1</span> <span class="id">tpc1</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#non_evt_starN">non_evt_starN</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#j">j</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT1">fpT1</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc1">tpc1</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_abort">np_abort</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc1">tpc1</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimEtr.html#SEtr">SEtr</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.SGE">SGE</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="ETrace.html#Behav_abort">Behav_abort</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9057')">Proof.</div>
+<div class="proofscript" id="proof9057">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">j</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_abort">match_abort</a></span> <span class="kwd">in</span> <span class="id">H</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>. <span class="id">contradiction</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">i</span> <span class="kwd">using</span>(<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_induction">well_founded_induction</a></span> (<span class="id"><a href="GlobUSim.html#index_wf">index_wf</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.I">I</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.ord">ord</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.usim">usim</a></span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H4</span> <span class="kwd">as</span> [<span class="id">H4</span>|<span class="id">H4</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">tpc</span> = <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">s2</span> \/ <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">tpc</span> &lt;&gt; <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">s2</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#classic">Classical_Prop.classic</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_tau_step">match_tau_step</a></span> <span class="kwd">in</span> <span class="id">H4</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H5</span>;<span class="id">Hsimpl</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHj</span> <span class="kwd">in</span> <span class="id">H6</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H8</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H9</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="ETrace.html#tau_plus2star">tau_plus2star</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H10</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_ent_atom">match_ent_atom</a></span> <span class="kwd">in</span> <span class="id">H3</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>. <span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHj</span> <span class="kwd">in</span> <span class="id">H6</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H10</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H11</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> @<span class="id"><a href="ETrace.html#ne_star_step">ETrace.ne_star_step</a></span> <span class="id">_</span> (@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.SGE">SGE</a></span>) <span class="id">x0</span> <span class="id">x1</span> <span class="id">x2</span> <span class="id">fp</span> <span class="id">pc</span>'.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ccut</span> <span class="id">H14</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ccut</span> <span class="id">H15</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H14</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_npsw_step">match_npsw_step</a></span> <span class="kwd">in</span> <span class="id">H4</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id">x2</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H9</span> <span class="id">x3</span>). <span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_tp">match_tp</a></span> <span class="kwd">in</span> <span class="id">H11</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">thrddom_eq</span>'<span class="id">_comm</span> <span class="kwd">in</span> <span class="id">H13</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id">s2</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H4</span>;<span class="tactic">subst</span>;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">GlobSim.thrddom_eq</span>'<span class="id">_valid_tid_preservation</span> <span class="kwd">in</span> <span class="id">H13</span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H9</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(({-|<span class="id">s2</span>,<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>}) = <span class="id">s2</span>). <span class="tactic">destruct</span> <span class="id">s2</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H13</span> <span class="kwd">in</span> <span class="id">H12</span>;<span class="tactic">clear</span> <span class="id">H13</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHj</span> <span class="kwd">in</span> <span class="id">H6</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H12</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span> <span class="kwd">in</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id">x0</span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id">x1</span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>) ({-|<span class="id">x2</span>,<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>})).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span> 2;<span class="tactic">eauto</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H13</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H14</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H15</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intro</span> <span class="id">swnottau</span>;<span class="tactic">inversion</span> <span class="id">swnottau</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="usim_refine_cons">usim_refine_cons</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">j</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id"><a href="GlobUSimRefine.html#i">i</a></span> <span class="id"><a href="GlobUSimRefine.html#mu">mu</a></span> <span class="id"><a href="GlobUSimRefine.html#fpS">fpS</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT">fpT</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fpT1</span> <span class="id">tpc1</span> <span class="id">v</span> <span class="id">tpc2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#non_evt_starN">non_evt_starN</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#j">j</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT1">fpT1</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc1">tpc1</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc1">tpc1</a></span> (<span class="id"><a href="ETrace.html#evt">evt</a></span> <span class="id"><a href="GlobUSimRefine.html#v">v</a></span>) <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc2">tpc2</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">k</span> <span class="id">fpS1</span> <span class="id">spc1</span> <span class="id">spc2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#fpS1">fpS1</a></span> <span class="id"><a href="GlobUSimRefine.html#spc1">spc1</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#spc1">spc1</a></span> (<span class="id"><a href="ETrace.html#evt">evt</a></span> <span class="id"><a href="GlobUSimRefine.html#v">v</a></span>) <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="GlobUSimRefine.html#spc2">spc2</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id"><a href="GlobUSimRefine.html#k">k</a></span> <span class="id"><a href="GlobUSimRefine.html#mu">mu</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="GlobUSimRefine.html#spc2">spc2</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc2">tpc2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9058')">Proof.</div>
+<div class="proofscript" id="proof9058">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">j</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> <span class="id">H1</span> <span class="kwd">as</span> <span class="id">T1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_npsw_step">match_npsw_step</a></span> <span class="kwd">in</span> <span class="id">H1</span> ;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id">x2</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">tpc2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H5</span> <span class="id">x3</span>);<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_tp">match_tp</a></span> <span class="kwd">in</span> <span class="id">H7</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">thrddom_eq</span>'<span class="id">_comm</span> <span class="kwd">in</span> <span class="id">H9</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id">tpc2</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">tpc2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">T1</span>;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">GlobSim.thrddom_eq</span>'<span class="id">_valid_tid_preservation</span> <span class="kwd">in</span> <span class="id">H9</span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H5</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">tpc2</span>));<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(({-|<span class="id">tpc2</span>,<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">tpc2</span>}) = <span class="id">tpc2</span>). <span class="tactic">destruct</span> <span class="id">tpc2</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H9</span> <span class="kwd">in</span> <span class="id">H8</span>;<span class="tactic">clear</span> <span class="id">H9</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id">x1</span> =<span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>). <span class="tactic">inversion</span> <span class="id">H5</span>;<span class="tactic">subst</span>;<span class="tactic">auto</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intro</span> <span class="id">evtnottau</span>;<span class="tactic">inversion</span> <span class="id">evtnottau</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">i</span> <span class="kwd">using</span>(<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_induction">well_founded_induction</a></span> (<span class="id"><a href="GlobUSim.html#index_wf">index_wf</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.I">I</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.ord">ord</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.usim">usim</a></span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H4</span> <span class="kwd">as</span> [<span class="id">H4</span>|<span class="id">H4</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">tpc</span> = <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">s2</span> \/ <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">tpc</span> &lt;&gt; <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">s2</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#classic">Classical_Prop.classic</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_tau_step">match_tau_step</a></span> <span class="kwd">in</span> <span class="id">H4</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H5</span>;<span class="id">Hsimpl</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHj</span> <span class="kwd">in</span> <span class="id">H6</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H2</span>;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H8</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="ETrace.html#tau_plus2star">tau_plus2star</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H9</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_ent_atom">match_ent_atom</a></span> <span class="kwd">in</span> <span class="id">H3</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>. <span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHj</span> <span class="kwd">in</span> <span class="id">H6</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H10</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> @<span class="id"><a href="ETrace.html#ne_star_step">ETrace.ne_star_step</a></span> <span class="id">_</span> (@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.SGE">SGE</a></span>) <span class="id">x0</span> <span class="id">x1</span> <span class="id">x2</span> <span class="id">x5</span> <span class="id">x6</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ccut</span> <span class="id">H14</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ccut</span> <span class="id">H15</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H14</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_npsw_step">match_npsw_step</a></span> <span class="kwd">in</span> <span class="id">H4</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id">x2</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H9</span> <span class="id">x3</span>). <span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_tp">match_tp</a></span> <span class="kwd">in</span> <span class="id">H11</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">thrddom_eq</span>'<span class="id">_comm</span> <span class="kwd">in</span> <span class="id">H13</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id">s2</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H4</span>;<span class="tactic">subst</span>;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">GlobSim.thrddom_eq</span>'<span class="id">_valid_tid_preservation</span> <span class="kwd">in</span> <span class="id">H13</span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H9</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(({-|<span class="id">s2</span>,<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>}) = <span class="id">s2</span>). <span class="tactic">destruct</span> <span class="id">s2</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H13</span> <span class="kwd">in</span> <span class="id">H12</span>;<span class="tactic">clear</span> <span class="id">H13</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHj</span> <span class="kwd">in</span> <span class="id">H6</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H12</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#tau_star_non_evt_star">tau_star_non_evt_star</a></span> <span class="kwd">in</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id">x0</span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id">x1</span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>) ({-|<span class="id">x2</span>,<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s2</span>})).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span> 2;<span class="tactic">eauto</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H13</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_cons">non_evt_star_cons</a></span> <span class="kwd">in</span> <span class="id">H13</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intro</span> <span class="id">swnottau</span>;<span class="tactic">inversion</span> <span class="id">swnottau</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="usim_refine">usim_refine</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#usim_diverge.R">R</a></span> <span class="id"><a href="GlobUSimRefine.html#i">i</a></span> <span class="id"><a href="GlobUSimRefine.html#mu">mu</a></span> <span class="id"><a href="GlobUSimRefine.html#fpS">fpS</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT">fpT</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimEtr.html#SEtr">SEtr</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.TGE">TGE</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span> <span class="id"><a href="GlobUSimRefine.html#b">b</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimEtr.html#SEtr">SEtr</a></span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge.SGE">SGE</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#b">b</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9059')">Proof.</div>
+<div class="proofscript" id="proof9059">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cofix</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span>  <span class="id"><a href="GlobUSimRefine.html#non_evt_star_N_equiv">non_evt_star_N_equiv</a></span> <span class="kwd">in</span> <span class="id">H1</span> <span class="kwd">as</span> [].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#usim_refine_done">usim_refine_done</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span>  <span class="id"><a href="GlobUSimRefine.html#non_evt_star_N_equiv">non_evt_star_N_equiv</a></span> <span class="kwd">in</span> <span class="id">H1</span> <span class="kwd">as</span> [].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#usim_refine_abort">usim_refine_abort</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#usim_Sdiverge_preserve">usim_Sdiverge_preserve</a></span> ;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#non_evt_star_N_equiv">non_evt_star_N_equiv</a></span> <span class="kwd">in</span> <span class="id">H1</span> <span class="kwd">as</span> [].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#usim_refine_cons">usim_refine_cons</a></span> <span class="kwd">in</span> <span class="id">H1</span>;<span class="tactic">try</span> <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;Qed.</div>
+<span class="kwd">End</span> <span class="id"><a href="GlobUSimRefine.html#usim_diverge">usim_diverge</a></span>.<br/>
+<br/>
+<h2> Main result: upward simulation implies NP-refinement </h2>
+<span class="kwd">Theorem</span> <span class="id"><a name="USim_Refine">USim_Refine</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> (<span class="id">L</span>: @<span class="id"><a href="GAST.html#langs">langs</a></span> <span class="id"><a href="GlobUSimRefine.html#NL">NL</a></span>) (<span class="id">sprog</span> <span class="id">tprog</span>: <span class="id"><a href="GAST.html#prog">prog</a></span> <span class="id"><a href="GlobUSimRefine.html#L">L</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSim.html#GlobUSim">GlobUSim</a></span> <span class="id"><a href="GlobUSimRefine.html#sprog">sprog</a></span> <span class="id"><a href="GlobUSimRefine.html#tprog">tprog</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_prog_refine">np_prog_refine</a></span> <span class="id"><a href="GlobUSimRefine.html#sprog">sprog</a></span> <span class="id"><a href="GlobUSimRefine.html#tprog">tprog</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9060')">Proof.</div>
+<div class="proofscript" id="proof9060">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobUSim.html#GlobUSim">GlobUSim</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H</span> <span class="id">mu</span> <span class="id">sgm</span> <span class="id">sge</span> <span class="id">spc</span> <span class="id">tgm</span> <span class="id">tge</span> <span class="id">tpc</span> <span class="id">t</span> <span class="id">H0</span> <span class="id">H1</span> <span class="id">H2</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> (<span class="id">I</span>&amp;<span class="id">ord</span>&amp;<span class="id">R</span>&amp;<span class="id">i</span>&amp;<span class="id">HSim</span>&amp;<span class="id">Hmatch</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="NPSemantics.html#np_config_refine">np_config_refine</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="SimEtr.html#SEtr_exists">SEtr_exists</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="SimEtr.html#SEtr_sound">SEtr_sound</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">subst</span>;<span class="tactic">auto</span>. <span class="tactic">inversion</span> <span class="id">H3</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">subst</span>. <span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.init_inv">ThreadPool.init_inv</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSimRefine.html#usim_refine">usim_refine</a></span>;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="np_safe_config_cons">np_safe_config_cons</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">l</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#star">star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> <span class="id"><a href="GlobUSimRefine.html#l">l</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">pc</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="NPSemantics.html#np_safe_config">np_safe_config</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_safe_config">np_safe_config</a></span> <span class="id">pc</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9061')">Proof.</div>
+<div class="proofscript" id="proof9061">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> 1. <span class="tactic">apply</span> <span class="id">H3</span> <span class="kwd">in</span> <span class="id">H</span>;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="np_safe_config_safe_state">np_safe_config_safe_state</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="NPSemantics.html#np_safe_config">np_safe_config</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> &lt;-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#safe_state">safe_state</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="NPSemantics.html#np_abort">np_abort</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9062')">Proof.</div>
+<div class="proofscript" id="proof9062">
+&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="ETrace.html#safe_state">safe_state</a></span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#np_safe_config_cons">np_safe_config_cons</a></span> <span class="kwd">in</span> <span class="id">H0</span> <span class="kwd">as</span> [];<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">revert</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">cofix</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="ETrace.html#safe_state">safe_state</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eapply</span> <span class="id">H</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">assert</span>(<span class="id"><a href="ETrace.html#safe_state">safe_state</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="NPSemantics.html#np_abort">np_abort</a></span> <span class="id">s</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="ETrace.html#safe_state">safe_state</a></span>. <span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id"><a href="ETrace.html#star_step">star_step</a></span> <span class="kwd">in</span> <span class="id">H0</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<span class="kwd">Inductive</span> <span class="id"><a name="starN">starN</a></span> {<span class="id">ge</span>}: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span> -&gt; @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge</span>-&gt;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="ETrace.html#glabel">glabel</a></span> -&gt;<span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>-&gt;@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge</span> -&gt;<span class="kwd">Prop</span>:=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="star0">star0</a></span>:<span class="kwd">forall</span> <span class="id">s</span>,<span class="id"><a href="GlobUSimRefine.html#starN">starN</a></span> 0 <span class="id"><a href="GlobUSimRefine.html#s">s</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="GlobUSimRefine.html#s">s</a></span><br/>
+&nbsp;&nbsp;| <span class="id">star_step</span>':<span class="kwd">forall</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">e</span> <span class="id">fp1</span> <span class="id">s2</span> <span class="id">l</span> <span class="id">fp2</span> <span class="id">s3</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#s1">s1</a></span> <span class="id"><a href="GlobUSimRefine.html#e">e</a></span> <span class="id"><a href="GlobUSimRefine.html#fp1">fp1</a></span> <span class="id"><a href="GlobUSimRefine.html#s2">s2</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#starN">starN</a></span> <span class="id"><a href="GlobUSimRefine.html#i">i</a></span> <span class="id"><a href="GlobUSimRefine.html#s2">s2</a></span> <span class="id"><a href="GlobUSimRefine.html#l">l</a></span> <span class="id"><a href="GlobUSimRefine.html#fp2">fp2</a></span> <span class="id"><a href="GlobUSimRefine.html#s3">s3</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#starN">starN</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a></span> <span class="id"><a href="GlobUSimRefine.html#i">i</a></span>) <span class="id"><a href="GlobUSimRefine.html#s1">s1</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#cons">cons</a></span> <span class="id"><a href="GlobUSimRefine.html#e">e</a></span> <span class="id"><a href="GlobUSimRefine.html#l">l</a></span>) (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GlobUSimRefine.html#fp1">fp1</a></span> <span class="id"><a href="GlobUSimRefine.html#fp2">fp2</a></span>) <span class="id"><a href="GlobUSimRefine.html#s3">s3</a></span>.<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="star_starN_equiv">star_starN_equiv</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">pc</span>' <span class="id">l</span> <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#star">star</a></span> (@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GlobUSimRefine.html#ge">ge</a></span>) <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> <span class="id"><a href="GlobUSimRefine.html#l">l</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">pc</span>' &lt;-&gt; <span class="id">exists</span> <span class="id">i</span>,<span class="id"><a href="GlobUSimRefine.html#starN">starN</a></span> <span class="id"><a href="GlobUSimRefine.html#i">i</a></span> <span class="id"><a href="GlobUSimRefine.html#pc">pc</a></span> <span class="id"><a href="GlobUSimRefine.html#l">l</a></span> <span class="id"><a href="GlobUSimRefine.html#fp">fp</a></span> <span class="id">pc</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9063')">Proof.</div>
+<div class="proofscript" id="proof9063">
+&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">intro</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">eexists</span>;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">IHstar</span>. <span class="id">eexists</span>;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">revert</span> <span class="id">pc</span> <span class="id">pc</span>' <span class="id">l</span> <span class="id">fp</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">x</span>;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>;<span class="tactic">subst</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id">USim_Safe_config</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sge</span> <span class="id">tge</span> <span class="id">I</span> <span class="id">ord</span> <span class="id">match_state</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GlobUSim.html#GConfigUSim">GConfigUSim</a></span> <span class="id"><a href="GlobUSimRefine.html#sge">sge</a></span> <span class="id"><a href="GlobUSimRefine.html#tge">tge</a></span> <span class="id"><a href="GlobUSimRefine.html#I">I</a></span> <span class="id"><a href="GlobUSimRefine.html#ord">ord</a></span> <span class="id"><a href="GlobUSimRefine.html#match_state">match_state</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#match_state">match_state</a></span> <span class="id"><a href="GlobUSimRefine.html#i">i</a></span> <span class="id"><a href="GlobUSimRefine.html#mu">mu</a></span> <span class="id"><a href="GlobUSimRefine.html#fpS">fpS</a></span> <span class="id"><a href="GlobUSimRefine.html#fpT">fpT</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#safe_state">safe_state</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="NPSemantics.html#np_abort">np_abort</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9064')">Proof.</div>
+<div class="proofscript" id="proof9064">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="ETrace.html#safe_state">safe_state</a></span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobUSimRefine.html#star_starN_equiv">star_starN_equiv</a></span> <span class="kwd">in</span> <span class="id">H1</span> <span class="kwd">as</span> [].<br/>
+&nbsp;&nbsp;<span class="id">revert</span> <span class="id">sge</span> <span class="id">tge</span> <span class="id">I</span> <span class="id">ord</span> <span class="id">match_state</span> <span class="id">H</span> <span class="id">i</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">spc</span> <span class="id">tpc</span> <span class="id">l</span> <span class="id">fp</span> <span class="id">s</span>' <span class="id">H0</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">x</span>.<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">subst</span>;<span class="tactic">clear</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobUSim.html#match_abort">match_abort</a></span> <span class="kwd">in</span> <span class="id">H0</span> <span class="kwd">as</span> [];<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="USimDRF.html#GUSim_progress">GUSim_progress</a></span> <span class="kwd">in</span> <span class="id">H3</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hsimpl</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="USim_Safe_Config">USim_Safe_Config</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">sprog</span> <span class="id">tprog</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GlobUSim.html#GlobUSim">GlobUSim</a></span> <span class="id"><a href="GlobUSimRefine.html#NL">NL</a></span> <span class="id"><a href="GlobUSimRefine.html#L">L</a></span> <span class="id"><a href="GlobUSimRefine.html#sprog">sprog</a></span> <span class="id"><a href="GlobUSimRefine.html#tprog">tprog</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sgm</span> <span class="id">sge</span> <span class="id">spc</span> <span class="id">tgm</span> <span class="id">tge</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#InitRel">InitRel</a></span> <span class="id"><a href="GlobUSimRefine.html#mu">mu</a></span> <span class="id"><a href="GlobUSimRefine.html#sge">sge</a></span> <span class="id"><a href="GlobUSimRefine.html#tge">tge</a></span> <span class="id"><a href="GlobUSimRefine.html#sgm">sgm</a></span> <span class="id"><a href="GlobUSimRefine.html#tgm">tgm</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="GlobUSimRefine.html#sprog">sprog</a></span> <span class="id"><a href="GlobUSimRefine.html#sgm">sgm</a></span> <span class="id"><a href="GlobUSimRefine.html#sge">sge</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span> <span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span>.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>)-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="GlobUSimRefine.html#tprog">tprog</a></span> <span class="id"><a href="GlobUSimRefine.html#tgm">tgm</a></span> <span class="id"><a href="GlobUSimRefine.html#tge">tge</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>)-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobUSimRefine.html#spc">spc</a></span>.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>) = <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>)-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_safe_config">np_safe_config</a></span> <span class="id"><a href="GlobUSimRefine.html#tpc">tpc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9065')">Proof.</div>
+<div class="proofscript" id="proof9065">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span>&lt;- <span class="id">H3</span> <span class="kwd">in</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="id">edestruct</span> <span class="id">H</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">Hsimpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span>  <span class="id"><a href="GlobUSimRefine.html#np_safe_config_safe_state">np_safe_config_safe_state</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">USim_Safe_config</span>';<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

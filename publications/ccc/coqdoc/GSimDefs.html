@@ -1,0 +1,297 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module GSimDefs</title>
+<meta name="description" content="Documentation of Coq module GSimDefs" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module GSimDefs</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html">List</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Values.html">Values</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="Injections.html">Injections</a></span>.<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="pc_valid_tid">pc_valid_tid</a></span> {<span class="id">ge</span>}(<span class="id">pc</span>:@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GSimDefs.html#ge">ge</a></span>)(<span class="id">t</span>:<span class="id"><a href="GlobDefs.html#tid">tid</a></span>):<span class="kwd">Prop</span>:=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.valid_tid">ThreadPool.valid_tid</a></span> <span class="id"><a href="GSimDefs.html#pc">pc</a></span>.(<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span>) <span class="id"><a href="GSimDefs.html#t">t</a></span> /\ ~<span class="id"><a href="GlobDefs.html#ThreadPool.halted">ThreadPool.halted</a></span> <span class="id"><a href="GSimDefs.html#pc">pc</a></span>.(<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span>) <span class="id"><a href="GSimDefs.html#t">t</a></span>.<br/>
+<div class="doc">This file defines matching conditions used in the
+    global simulations. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="cs_match">cs_match</a></span> {<span class="id">ge1</span> <span class="id">ge2</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>} :<br/>
+&nbsp;&nbsp;@<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id">ge1</span> -&gt; @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id">ge2</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="match_cs_emp">match_cs_emp</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">cs1</span> <span class="id">cs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.is_emp">CallStack.is_emp</a></span> <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.is_emp">CallStack.is_emp</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span><br/>
+| <span class="id"><a name="match_cs_cons">match_cs_cons</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c1</span> <span class="id">cs1</span> <span class="id">c2</span> <span class="id">cs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> (<span class="id"><a href="GSimDefs.html#c1">c1</a></span>::<span class="id"><a href="GSimDefs.html#cs1">cs1</a></span>) (<span class="id"><a href="GSimDefs.html#c2">c2</a></span>::<span class="id"><a href="GSimDefs.html#cs2">cs2</a></span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="ocs_match">ocs_match</a></span> {<span class="id">ge1</span> <span class="id">ge2</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>} :<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> (@<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id">ge1</span>) -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> (@<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id">ge2</span>)-&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="match_ocs_none">match_ocs_none</a></span>: <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span><br/>
+| <span class="id"><a name="match_ocs_some">match_ocs_some</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">cs1</span> <span class="id">cs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span>) (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span>).<br/>
+<br/>
+<div class="doc">ThreadPool has same domain (valid thread id)
+    and valid threads has the same call-stack length </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="thrddom_eq">thrddom_eq</a></span> {<span class="id">ge1</span> <span class="id">ge2</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>} :<br/>
+&nbsp;&nbsp;@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge1</span>-&gt; @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge2</span>-&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="Thrddom_eq">Thrddom_eq</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">pc1</span> <span class="id">pc2</span> <span class="id">tp1</span> <span class="id">tp2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#tp1">tp1</a></span> = <span class="id"><a href="GSimDefs.html#pc1">pc1</a></span>.(<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#tp2">tp2</a></span> = <span class="id"><a href="GSimDefs.html#pc2">pc2</a></span>.(<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">t</span>, <span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GSimDefs.html#tp1">tp1</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GSimDefs.html#tp2">tp2</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span>)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#thrddom_eq">thrddom_eq</a></span> <span class="id"><a href="GSimDefs.html#pc1">pc1</a></span> <span class="id"><a href="GSimDefs.html#pc2">pc2</a></span>.<br/>
+<br/>
+<br/>
+<div class="doc">weaker version of thrddom_eq </div>
+<span class="kwd">Inductive</span> <span class="id">cs_match</span>' {<span class="id">ge1</span> <span class="id">ge2</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>} : @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id">ge1</span> -&gt; @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id">ge2</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id">match_cs_emp</span>' : <span class="kwd">forall</span> <span class="id">cs1</span> <span class="id">cs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.is_emp">CallStack.is_emp</a></span> <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.is_emp">CallStack.is_emp</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cs_match</span>' <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span><br/>
+| <span class="id">match_cs_non_emp</span>' : <span class="kwd">forall</span> <span class="id">cs1</span> <span class="id">cs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;~ <span class="id"><a href="GlobDefs.html#CallStack.is_emp">CallStack.is_emp</a></span> <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;~ <span class="id"><a href="GlobDefs.html#CallStack.is_emp">CallStack.is_emp</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cs_match</span>' <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">cs_match_cs_match</span>' :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge1</span> <span class="id">ge2</span> (<span class="id">cs1</span>: @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GSimDefs.html#ge1">ge1</a></span>) (<span class="id">cs2</span>: @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GSimDefs.html#ge2">ge2</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cs_match</span>' <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8242')">Proof.</div>
+<div class="proofscript" id="proof8242">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1.<br/>
+&nbsp;&nbsp;- <span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">eapply</span> <span class="id">match_cs_non_emp</span>'; <span class="tactic">intro</span> <span class="id">C</span>; <span class="tactic">inversion</span> <span class="id">C</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">ocs_match</span>' {<span class="id">ge1</span> <span class="id">ge2</span> : <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>}<br/>
+&nbsp;&nbsp;: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> (@<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id">ge1</span>) -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> (@<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id">ge2</span>) -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id">match_ocs_none</span>' : <span class="id">ocs_match</span>' <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span><br/>
+| <span class="id">match_ocs_some</span>' : <span class="kwd">forall</span> <span class="id">cs1</span> <span class="id">cs2</span> : <span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cs_match</span>' <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span> -&gt; <span class="id">ocs_match</span>' (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GSimDefs.html#cs1">cs1</a></span>) (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GSimDefs.html#cs2">cs2</a></span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">ocs_match_ocs_match</span>' :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge1</span> <span class="id">ge2</span> (<span class="id">ocs1</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> (@<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GSimDefs.html#ge1">ge1</a></span>)) (<span class="id">ocs2</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> (@<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GSimDefs.html#ge2">ge2</a></span>)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> <span class="id"><a href="GSimDefs.html#ocs1">ocs1</a></span> <span class="id"><a href="GSimDefs.html#ocs2">ocs2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ocs_match</span>' <span class="id"><a href="GSimDefs.html#ocs1">ocs1</a></span> <span class="id"><a href="GSimDefs.html#ocs2">ocs2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8243')">Proof.</div>
+<div class="proofscript" id="proof8243">
+&nbsp;&nbsp;<span class="tactic">inversion</span> 1.<br/>
+&nbsp;&nbsp;- <span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">apply</span> <span class="id">match_ocs_some</span>', <span class="id">cs_match_cs_match</span>'; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">thrddom_eq</span>' {<span class="id">ge1</span> <span class="id">ge2</span> : <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>} :<br/>
+&nbsp;&nbsp;@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge1</span> -&gt; @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge2</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id">Thrddom_eq</span>' : <span class="kwd">forall</span> (<span class="id">pc1</span> <span class="id">pc2</span> : <span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span>) (<span class="id">tp1</span> <span class="id">tp2</span> : <span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#tp1">tp1</a></span> = <span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GSimDefs.html#pc1">pc1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#tp2">tp2</a></span> = <span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GSimDefs.html#pc2">pc2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">t</span> : <span class="id"><a href="GlobDefs.html#tid">tid</a></span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ocs_match</span>' (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GSimDefs.html#tp1">tp1</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GSimDefs.html#tp2">tp2</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span>)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">thrddom_eq</span>' <span class="id"><a href="GSimDefs.html#pc1">pc1</a></span> <span class="id"><a href="GSimDefs.html#pc2">pc2</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">thrddom_eq_thrddom_eq</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge1</span> <span class="id">ge2</span> (<span class="id">pc1</span>: @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GSimDefs.html#ge1">ge1</a></span>) (<span class="id">pc2</span>: @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GSimDefs.html#ge2">ge2</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#thrddom_eq">thrddom_eq</a></span> <span class="id"><a href="GSimDefs.html#pc1">pc1</a></span> <span class="id"><a href="GSimDefs.html#pc2">pc2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">thrddom_eq</span>' <span class="id"><a href="GSimDefs.html#pc1">pc1</a></span> <span class="id"><a href="GSimDefs.html#pc2">pc2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8244')">Proof.</div>
+<div class="proofscript" id="proof8244">
+&nbsp;&nbsp;<span class="tactic">inversion</span> 1; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">intros</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">ocs_match_ocs_match</span>'; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="atombit_eq">atombit_eq</a></span> {<span class="id">ge1</span> <span class="id">ge2</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>} :<br/>
+&nbsp;&nbsp;@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge1</span>-&gt; @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge2</span>-&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="Atombit_eq">Atombit_eq</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">pc1</span> <span class="id">pc2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#pc1">pc1</a></span>.(<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span>) = <span class="id"><a href="GSimDefs.html#pc2">pc2</a></span>.(<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#atombit_eq">atombit_eq</a></span> <span class="id"><a href="GSimDefs.html#pc1">pc1</a></span> <span class="id"><a href="GSimDefs.html#pc2">pc2</a></span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="tid_eq">tid_eq</a></span> {<span class="id">ge1</span> <span class="id">ge2</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>} :<br/>
+&nbsp;&nbsp;@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge1</span> -&gt; @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge2</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="Tid_eq">Tid_eq</a></span>: <span class="kwd">forall</span> <span class="id">pc1</span> <span class="id">pc2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#pc1">pc1</a></span>.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>) = <span class="id"><a href="GSimDefs.html#pc2">pc2</a></span>.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>) -&gt; <span class="id"><a href="GSimDefs.html#tid_eq">tid_eq</a></span> <span class="id"><a href="GSimDefs.html#pc1">pc1</a></span> <span class="id"><a href="GSimDefs.html#pc2">pc2</a></span>.<br/>
+<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="fpG">fpG</a></span> : <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> -&gt; <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span> -&gt; <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span> -&gt; <span class="id"><a href="GlobDefs.html#tid">tid</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="FPG">FPG</a></span> : <span class="kwd">forall</span> <span class="id">fp</span> <span class="id">Shared</span> <span class="id">ge</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span> (<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> (<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="id"><a href="GSimDefs.html#fp">fp</a></span>.(<span class="id"><a href="Footprint.html#FP.cmps">FP.cmps</a></span>) <span class="id"><a href="GSimDefs.html#fp">fp</a></span>.(<span class="id"><a href="Footprint.html#FP.reads">FP.reads</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="id"><a href="GSimDefs.html#fp">fp</a></span>.(<span class="id"><a href="Footprint.html#FP.writes">FP.writes</a></span>) <span class="id"><a href="GSimDefs.html#fp">fp</a></span>.(<span class="id"><a href="Footprint.html#FP.frees">FP.frees</a></span>))) <span class="id"><a href="GSimDefs.html#b">b</a></span> <span class="id"><a href="GSimDefs.html#ofs">ofs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="id"><a href="GSimDefs.html#Shared">Shared</a></span> <span class="id"><a href="GSimDefs.html#b">b</a></span> \/ <span class="id"><a href="GlobDefs.html#FLists.bbelongsto">FLists.bbelongsto</a></span> (<span class="id"><a href="GlobDefs.html#GlobEnv.freelists">GlobEnv.freelists</a></span> <span class="id"><a href="GSimDefs.html#ge">ge</a></span>) <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id"><a href="GSimDefs.html#b">b</a></span> ) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="GSimDefs.html#fp">fp</a></span> <span class="id"><a href="GSimDefs.html#Shared">Shared</a></span> <span class="id"><a href="GSimDefs.html#ge">ge</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fpG_emp">fpG_emp</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S</span> <span class="id">GE</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="GSimDefs.html#S">S</a></span> <span class="id"><a href="GSimDefs.html#GE">GE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8245')">Proof.</div>
+<div class="proofscript" id="proof8245">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="kwd">in</span> *; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">exfalso</span>. <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">locs</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fpG_union">fpG_union</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fp1</span> <span class="id">fp2</span> <span class="id">S</span> <span class="id">GE</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="GSimDefs.html#fp1">fp1</a></span> <span class="id"><a href="GSimDefs.html#S">S</a></span> <span class="id"><a href="GSimDefs.html#GE">GE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="GSimDefs.html#fp2">fp2</a></span> <span class="id"><a href="GSimDefs.html#S">S</a></span> <span class="id"><a href="GSimDefs.html#GE">GE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#fpG">fpG</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GSimDefs.html#fp1">fp1</a></span> <span class="id"><a href="GSimDefs.html#fp2">fp2</a></span>) <span class="id"><a href="GSimDefs.html#S">S</a></span> <span class="id"><a href="GSimDefs.html#GE">GE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8246')">Proof.</div>
+<div class="proofscript" id="proof8246">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.  <span class="tactic">clear</span> <span class="id">H</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H2</span> <span class="id">b</span> <span class="id">ofs</span>).<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H7</span> <span class="id">b</span> <span class="id">ofs</span>).<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#Locs.belongsto_dec">Locs.belongsto_dec</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> (<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> (<span class="id"><a href="Footprint.html#FP.cmps">FP.cmps</a></span> <span class="id">fp1</span>) (<span class="id"><a href="Footprint.html#FP.reads">FP.reads</a></span> <span class="id">fp1</span>)) (<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> (<span class="id"><a href="Footprint.html#FP.writes">FP.writes</a></span> <span class="id">fp1</span>) (<span class="id"><a href="Footprint.html#FP.frees">FP.frees</a></span> <span class="id">fp1</span>)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">b</span> <span class="id">ofs</span>);<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#Locs.belongsto_dec">Locs.belongsto_dec</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> (<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> (<span class="id"><a href="Footprint.html#FP.cmps">FP.cmps</a></span> <span class="id">fp2</span>) (<span class="id"><a href="Footprint.html#FP.reads">FP.reads</a></span> <span class="id">fp2</span>)) (<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> (<span class="id"><a href="Footprint.html#FP.writes">FP.writes</a></span> <span class="id">fp2</span>) (<span class="id"><a href="Footprint.html#FP.frees">FP.frees</a></span> <span class="id">fp2</span>)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">b</span> <span class="id">ofs</span>);<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exfalso</span>. <span class="tactic">clear</span> <span class="id">H2</span> <span class="id">H7</span> <span class="id">S</span> <span class="id">GE</span> <span class="id">t</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span>, <span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.cmps">FP.cmps</a></span> <span class="id">fp1</span> <span class="id">b</span> <span class="id">ofs</span>); <span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.cmps">FP.cmps</a></span> <span class="id">fp2</span> <span class="id">b</span> <span class="id">ofs</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.reads">FP.reads</a></span> <span class="id">fp1</span> <span class="id">b</span> <span class="id">ofs</span>); <span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.reads">FP.reads</a></span> <span class="id">fp2</span> <span class="id">b</span> <span class="id">ofs</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.writes">FP.writes</a></span> <span class="id">fp1</span> <span class="id">b</span> <span class="id">ofs</span>); <span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.writes">FP.writes</a></span> <span class="id">fp2</span> <span class="id">b</span> <span class="id">ofs</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.frees">FP.frees</a></span> <span class="id">fp1</span> <span class="id">b</span> <span class="id">ofs</span>); <span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.frees">FP.frees</a></span> <span class="id">fp2</span> <span class="id">b</span> <span class="id">ofs</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">contradiction</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fpG_subset">fpG_subset</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fp1</span> <span class="id">fp2</span> <span class="id">S</span> <span class="id">GE</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="GSimDefs.html#fp1">fp1</a></span> <span class="id"><a href="GSimDefs.html#S">S</a></span> <span class="id"><a href="GSimDefs.html#GE">GE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.subset">FP.subset</a></span> <span class="id"><a href="GSimDefs.html#fp2">fp2</a></span> <span class="id"><a href="GSimDefs.html#fp1">fp1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="GSimDefs.html#fp2">fp2</a></span> <span class="id"><a href="GSimDefs.html#S">S</a></span> <span class="id"><a href="GSimDefs.html#GE">GE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8247')">Proof.</div>
+<div class="proofscript" id="proof8247">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="tactic">clear</span> <span class="id">H</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id">H2</span> <span class="id">b</span> <span class="id">ofs</span>). <span class="tactic">clear</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H1</span>. <span class="id">pose</span> <span class="id">proof</span> (<span class="id"><a href="Footprint.html#Locs.belongsto_subset">Locs.belongsto_subset</a></span>).<br/>
+&nbsp;&nbsp;<span class="id">edestruct</span> <span class="id">H</span>. <span class="tactic">eapply</span> <span class="id">H0</span>. <span class="tactic">clear</span> <span class="id">H</span> <span class="id">H0</span> <span class="id">H2</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#Locs.subset">Locs.subset</a></span>, <span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span>, <span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="kwd">in</span> *. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> (<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span> [<span class="id">H</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>, <span class="id">_</span> |- <span class="id">_</span>]=&gt; <span class="id">specialize</span> (<span class="id">H</span> <span class="id">b0</span> <span class="id">ofs0</span>) <span class="kwd">end</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.cmps">FP.cmps</a></span> <span class="id">fp1</span> <span class="id">b0</span> <span class="id">ofs0</span>); <span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.cmps">FP.cmps</a></span> <span class="id">fp2</span> <span class="id">b0</span> <span class="id">ofs0</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.reads">FP.reads</a></span> <span class="id">fp1</span> <span class="id">b0</span> <span class="id">ofs0</span>); <span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.reads">FP.reads</a></span> <span class="id">fp2</span> <span class="id">b0</span> <span class="id">ofs0</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.writes">FP.writes</a></span> <span class="id">fp1</span> <span class="id">b0</span> <span class="id">ofs0</span>); <span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.writes">FP.writes</a></span> <span class="id">fp2</span> <span class="id">b0</span> <span class="id">ofs0</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.frees">FP.frees</a></span> <span class="id">fp1</span> <span class="id">b0</span> <span class="id">ofs0</span>); <span class="tactic">destruct</span> (<span class="id"><a href="Footprint.html#FP.frees">FP.frees</a></span> <span class="id">fp2</span> <span class="id">b0</span> <span class="id">ofs0</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">bool</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="LFPG">LFPG</a></span> (<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>) (<span class="id">geTgt</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>) (<span class="id">t</span>:<span class="id"><a href="GlobDefs.html#tid">tid</a></span>) (<span class="id">fpSrc</span> <span class="id">fpTgt</span>: <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#fpSrc">fpSrc</a></span> <span class="id"><a href="GSimDefs.html#fpTgt">fpTgt</a></span> /\ <span class="id"><a href="GSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="GSimDefs.html#fpTgt">fpTgt</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span>.(<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span>) <span class="id"><a href="GSimDefs.html#geTgt">geTgt</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="LFPG_union">LFPG_union</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">TGE</span> <span class="id">t</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">fpS</span>' <span class="id">fpT</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="GSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id">fpS</span>' <span class="id">fpT</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> <span class="id">fpS</span>') (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GSimDefs.html#fpT">fpT</a></span> <span class="id">fpT</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8248')">Proof.</div>
+<div class="proofscript" id="proof8248">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>, <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">fp_match_union</span>'; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GSimDefs.html#fpG_union">fpG_union</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="LFPG_union_S">LFPG_union_S</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">TGE</span> <span class="id">t</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">fpS</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="GSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> <span class="id">fpS</span>') <span class="id"><a href="GSimDefs.html#fpT">fpT</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8249')">Proof.</div>
+<div class="proofscript" id="proof8249">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">fp_match_union_S</span>'; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="LFPG_union_T">LFPG_union_T</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">TGE</span> <span class="id">t</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">fpT</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="GSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> <span class="id">fpT</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GSimDefs.html#fpT">fpT</a></span> <span class="id">fpT</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8250')">Proof.</div>
+<div class="proofscript" id="proof8250">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>; <span class="tactic">destruct</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">fp_match_union_T</span>'; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GSimDefs.html#fpG_union">fpG_union</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="LFPG_subset_S">LFPG_subset_S</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">TGE</span> <span class="id">t</span> <span class="id">fpS</span> <span class="id">fpS</span>' <span class="id">fpT</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="GSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.subset">FP.subset</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> <span class="id">fpS</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id">fpS</span>' <span class="id"><a href="GSimDefs.html#fpT">fpT</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8251')">Proof.</div>
+<div class="proofscript" id="proof8251">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">fp_match_subset_S</span>'; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="LFPG_subset_T">LFPG_subset_T</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">TGE</span> <span class="id">t</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">fpT</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="GSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.subset">FP.subset</a></span> <span class="id">fpT</span>' <span class="id"><a href="GSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#TGE">TGE</a></span> <span class="id"><a href="GSimDefs.html#t">t</a></span> <span class="id"><a href="GSimDefs.html#fpS">fpS</a></span> <span class="id">fpT</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8252')">Proof.</div>
+<div class="proofscript" id="proof8252">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">fp_match_subset_T</span>'; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GSimDefs.html#fpG_subset">fpG_subset</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="LocMatch_emp">LocMatch_emp</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> ,<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="Footprint.html#Locs.emp">Locs.emp</a></span> <span class="id"><a href="Footprint.html#Locs.emp">Locs.emp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8253')">Proof.</div>
+<div class="proofscript" id="proof8253">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">b</span>. <span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#Locs.emp">Locs.emp</a></span> <span class="kwd">in</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">compute</span> <span class="kwd">in</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="LFPG_emp">LFPG_emp</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">ge</span> <span class="id">id</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#LFPG">LFPG</a></span> <span class="id"><a href="GSimDefs.html#mu">mu</a></span> <span class="id"><a href="GSimDefs.html#ge">ge</a></span> <span class="id"><a href="GSimDefs.html#id">id</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8254')">Proof.</div>
+<div class="proofscript" id="proof8254">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>;<span class="tactic">apply</span> <span class="id"><a href="GSimDefs.html#LocMatch_emp">LocMatch_emp</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GSimDefs.html#fpG_emp">fpG_emp</a></span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Deadcode</title>
+<meta name="description" content="Documentation of Coq module Deadcode" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Deadcode</h1>
+<div class="coq">
+<br/>
+<div class="doc">Elimination of unneeded computations over RTL. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span> <span class="id">Maps</span> <span class="id">Errors</span> <span class="id">Integers</span> <span class="id">Floats</span> <span class="id">Lattice</span> <span class="id">Kildall</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span> <span class="id">Linking</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Memory</span> <span class="id">Registers</span> <span class="id">Op</span> <span class="id">RTL</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">ValueDomain</span> <span class="id">ValueAnalysis</span> <span class="id">NeedDomain</span> <span class="id">NeedOp</span>.<br/>
+<br/>
+<h1> Part 1: the static analysis </h1>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_need_all</span> (<span class="id">r</span>: <span class="id">reg</span>) (<span class="id">ne</span>: <span class="id">nenv</span>) : <span class="id">nenv</span> :=<br/>
+&nbsp;&nbsp;<span class="id">NE.set</span> <span class="id">r</span> <span class="id">All</span> <span class="id">ne</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_need</span> (<span class="id">r</span>: <span class="id">reg</span>) (<span class="id">nv</span>: <span class="id">nval</span>) (<span class="id">ne</span>: <span class="id">nenv</span>) : <span class="id">nenv</span> :=<br/>
+&nbsp;&nbsp;<span class="id">NE.set</span> <span class="id">r</span> (<span class="id">nlub</span> <span class="id">nv</span> (<span class="id">NE.get</span> <span class="id">r</span> <span class="id">ne</span>)) <span class="id">ne</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">add_needs_all</span> (<span class="id">rl</span>: <span class="id">list</span> <span class="id">reg</span>) (<span class="id">ne</span>: <span class="id">nenv</span>) : <span class="id">nenv</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">rl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">nil</span> =&gt; <span class="id">ne</span><br/>
+&nbsp;&nbsp;| <span class="id">r1</span> :: <span class="id">rs</span> =&gt; <span class="id">add_need_all</span> <span class="id">r1</span> (<span class="id">add_needs_all</span> <span class="id">rs</span> <span class="id">ne</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">add_needs</span> (<span class="id">rl</span>: <span class="id">list</span> <span class="id">reg</span>) (<span class="id">nvl</span>: <span class="id">list</span> <span class="id">nval</span>) (<span class="id">ne</span>: <span class="id">nenv</span>) : <span class="id">nenv</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">rl</span>, <span class="id">nvl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">nil</span>, <span class="id">_</span> =&gt; <span class="id">ne</span><br/>
+&nbsp;&nbsp;| <span class="id">r1</span> :: <span class="id">rs</span>, <span class="id">nil</span> =&gt; <span class="id">add_needs_all</span> <span class="id">rl</span> <span class="id">ne</span><br/>
+&nbsp;&nbsp;| <span class="id">r1</span> :: <span class="id">rs</span>, <span class="id">nv1</span> :: <span class="id">nvs</span> =&gt; <span class="id">add_need</span> <span class="id">r1</span> <span class="id">nv1</span> (<span class="id">add_needs</span> <span class="id">rs</span> <span class="id">nvs</span> <span class="id">ne</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_ros_need_all</span> (<span class="id">ros</span>: <span class="id">reg</span> + <span class="id">ident</span>) (<span class="id">ne</span>: <span class="id">nenv</span>) : <span class="id">nenv</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">ros</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">inl</span> <span class="id">r</span> =&gt; <span class="id">add_need_all</span> <span class="id">r</span> <span class="id">ne</span><br/>
+&nbsp;&nbsp;| <span class="id">inr</span> <span class="id">s</span> =&gt; <span class="id">ne</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_opt_need_all</span> (<span class="id">or</span>: <span class="id">option</span> <span class="id">reg</span>) (<span class="id">ne</span>: <span class="id">nenv</span>) : <span class="id">nenv</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">or</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">r</span> =&gt; <span class="id">add_need_all</span> <span class="id">r</span> <span class="id">ne</span><br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">ne</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">kill</span> (<span class="id">r</span>: <span class="id">reg</span>) (<span class="id">ne</span>: <span class="id">nenv</span>) : <span class="id">nenv</span> := <span class="id">NE.set</span> <span class="id">r</span> <span class="id">Nothing</span> <span class="id">ne</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">is_dead</span> (<span class="id">v</span>: <span class="id">nval</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">v</span> <span class="kwd">with</span> <span class="id">Nothing</span> =&gt; <span class="id">true</span> | <span class="id">_</span> =&gt; <span class="id">false</span> <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">is_int_zero</span> (<span class="id">v</span>: <span class="id">nval</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">v</span> <span class="kwd">with</span> <span class="id">I</span> <span class="id">n</span> =&gt; <span class="id">Int.eq</span> <span class="id">n</span> <span class="id">Int.zero</span> | <span class="id">_</span> =&gt; <span class="id">false</span> <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">transfer_builtin_arg</span> (<span class="id">nv</span>: <span class="id">nval</span>) (<span class="id">na</span>: <span class="id">NA.t</span>) (<span class="id">a</span>: <span class="id">builtin_arg</span> <span class="id">reg</span>) : <span class="id">NA.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">ne</span>, <span class="id">nm</span>) := <span class="id">na</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">a</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">BA</span> <span class="id">r</span> =&gt; (<span class="id">add_need</span> <span class="id">r</span> <span class="id">nv</span> <span class="id">ne</span>, <span class="id">nm</span>)<br/>
+&nbsp;&nbsp;| <span class="id">BA_int</span> <span class="id">_</span> | <span class="id">BA_long</span> <span class="id">_</span> | <span class="id">BA_float</span> <span class="id">_</span> | <span class="id">BA_single</span> <span class="id">_</span><br/>
+&nbsp;&nbsp;| <span class="id">BA_addrstack</span> <span class="id">_</span> | <span class="id">BA_addrglobal</span> <span class="id">_</span> <span class="id">_</span> =&gt; (<span class="id">ne</span>, <span class="id">nm</span>)<br/>
+&nbsp;&nbsp;| <span class="id">BA_loadstack</span> <span class="id">chunk</span> <span class="id">ofs</span> =&gt; (<span class="id">ne</span>, <span class="id">nmem_add</span> <span class="id">nm</span> (<span class="id">Stk</span> <span class="id">ofs</span>) (<span class="id">size_chunk</span> <span class="id">chunk</span>))<br/>
+&nbsp;&nbsp;| <span class="id">BA_loadglobal</span> <span class="id">chunk</span> <span class="id">id</span> <span class="id">ofs</span> =&gt; (<span class="id">ne</span>, <span class="id">nmem_add</span> <span class="id">nm</span> (<span class="id">Gl</span> <span class="id">id</span> <span class="id">ofs</span>) (<span class="id">size_chunk</span> <span class="id">chunk</span>))<br/>
+&nbsp;&nbsp;| <span class="id">BA_splitlong</span> <span class="id">hi</span> <span class="id">lo</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">transfer_builtin_arg</span> <span class="id">All</span> (<span class="id">transfer_builtin_arg</span> <span class="id">All</span> <span class="id">na</span> <span class="id">hi</span>) <span class="id">lo</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transfer_builtin_args</span> (<span class="id">na</span>: <span class="id">NA.t</span>) (<span class="id">al</span>: <span class="id">list</span> (<span class="id">builtin_arg</span> <span class="id">reg</span>)) : <span class="id">NA.t</span> :=<br/>
+&nbsp;&nbsp;<span class="id">List.fold_left</span> (<span class="id">transfer_builtin_arg</span> <span class="id">All</span>) <span class="id">al</span> <span class="id">na</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">kill_builtin_res</span> (<span class="id">res</span>: <span class="id">builtin_res</span> <span class="id">reg</span>) (<span class="id">ne</span>: <span class="id">NE.t</span>) : <span class="id">NE.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">res</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">BR</span> <span class="id">r</span> =&gt; <span class="id">kill</span> <span class="id">r</span> <span class="id">ne</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span>    =&gt; <span class="id">ne</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="id">Function</span> <span class="id">transfer_builtin</span> (<span class="id">app</span>: <span class="id">VA.t</span>) (<span class="id">ef</span>: <span class="id">external_function</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">args</span>: <span class="id">list</span> (<span class="id">builtin_arg</span> <span class="id">reg</span>)) (<span class="id">res</span>: <span class="id">builtin_res</span> <span class="id">reg</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">ne</span>: <span class="id">NE.t</span>) (<span class="id">nm</span>: <span class="id">nmem</span>) : <span class="id">NA.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">ef</span>, <span class="id">args</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">EF_vload</span> <span class="id">chunk</span>, <span class="id">a1</span>::<span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">transfer_builtin_arg</span> <span class="id">All</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">kill_builtin_res</span> <span class="id">res</span> <span class="id">ne</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">nmem_add</span> <span class="id">nm</span> (<span class="id">aaddr_arg</span> <span class="id">app</span> <span class="id">a1</span>) (<span class="id">size_chunk</span> <span class="id">chunk</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">a1</span><br/>
+&nbsp;&nbsp;| <span class="id">EF_vstore</span> <span class="id">chunk</span>, <span class="id">a1</span>::<span class="id">a2</span>::<span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">transfer_builtin_arg</span> <span class="id">All</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">transfer_builtin_arg</span> (<span class="id">store_argument</span> <span class="id">chunk</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">kill_builtin_res</span> <span class="id">res</span> <span class="id">ne</span>, <span class="id">nm</span>) <span class="id">a2</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">a1</span><br/>
+&nbsp;&nbsp;| <span class="id">EF_memcpy</span> <span class="id">sz</span> <span class="id">al</span>, <span class="id">dst</span>::<span class="id">src</span>::<span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">nmem_contains</span> <span class="id">nm</span> (<span class="id">aaddr_arg</span> <span class="id">app</span> <span class="id">dst</span>) <span class="id">sz</span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">transfer_builtin_args</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">kill_builtin_res</span> <span class="id">res</span> <span class="id">ne</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">nmem_add</span> (<span class="id">nmem_remove</span> <span class="id">nm</span> (<span class="id">aaddr_arg</span> <span class="id">app</span> <span class="id">dst</span>) <span class="id">sz</span>) (<span class="id">aaddr_arg</span> <span class="id">app</span> <span class="id">src</span>) <span class="id">sz</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">args</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> (<span class="id">ne</span>, <span class="id">nm</span>)<br/>
+&nbsp;&nbsp;| (<span class="id">EF_annot</span> <span class="id">_</span> <span class="id">_</span> | <span class="id">EF_annot_val</span> <span class="id">_</span> <span class="id">_</span>), <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">transfer_builtin_args</span> (<span class="id">kill_builtin_res</span> <span class="id">res</span> <span class="id">ne</span>, <span class="id">nm</span>) <span class="id">args</span><br/>
+&nbsp;&nbsp;| <span class="id">EF_debug</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span>, <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">kill_builtin_res</span> <span class="id">res</span> <span class="id">ne</span>, <span class="id">nm</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">transfer_builtin_args</span> (<span class="id">kill_builtin_res</span> <span class="id">res</span> <span class="id">ne</span>, <span class="id">nmem_all</span>) <span class="id">args</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transfer</span> (<span class="id">f</span>: <span class="id">function</span>) (<span class="id">approx</span>: <span class="id">PMap.t</span> <span class="id">VA.t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">pc</span>: <span class="id">node</span>) (<span class="id">after</span>: <span class="id">NA.t</span>) : <span class="id">NA.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">ne</span>, <span class="id">nm</span>) := <span class="id">after</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">f</span>.(<span class="id">fn_code</span>)!<span class="id">pc</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">NA.bot</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> (<span class="id">Inop</span> <span class="id">s</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">after</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> (<span class="id">Iop</span> <span class="id">op</span> <span class="id">args</span> <span class="id">res</span> <span class="id">s</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">nres</span> := <span class="id">nreg</span> <span class="id">ne</span> <span class="id">res</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">is_dead</span> <span class="id">nres</span> <span class="kwd">then</span> <span class="id">after</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">is_int_zero</span> <span class="id">nres</span> <span class="kwd">then</span> (<span class="id">kill</span> <span class="id">res</span> <span class="id">ne</span>, <span class="id">nm</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> (<span class="id">add_needs</span> <span class="id">args</span> (<span class="id">needs_of_operation</span> <span class="id">op</span> <span class="id">nres</span>) (<span class="id">kill</span> <span class="id">res</span> <span class="id">ne</span>), <span class="id">nm</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Some</span> (<span class="id">Iload</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">dst</span> <span class="id">s</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">ndst</span> := <span class="id">nreg</span> <span class="id">ne</span> <span class="id">dst</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">is_dead</span> <span class="id">ndst</span> <span class="kwd">then</span> <span class="id">after</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">is_int_zero</span> <span class="id">ndst</span> <span class="kwd">then</span> (<span class="id">kill</span> <span class="id">dst</span> <span class="id">ne</span>, <span class="id">nm</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> (<span class="id">add_needs_all</span> <span class="id">args</span> (<span class="id">kill</span> <span class="id">dst</span> <span class="id">ne</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">nmem_add</span> <span class="id">nm</span> (<span class="id">aaddressing</span> <span class="id">approx</span>!!<span class="id">pc</span> <span class="id">addr</span> <span class="id">args</span>) (<span class="id">size_chunk</span> <span class="id">chunk</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Some</span> (<span class="id">Istore</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">src</span> <span class="id">s</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">p</span> := <span class="id">aaddressing</span> <span class="id">approx</span>!!<span class="id">pc</span> <span class="id">addr</span> <span class="id">args</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">nmem_contains</span> <span class="id">nm</span> <span class="id">p</span> (<span class="id">size_chunk</span> <span class="id">chunk</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> (<span class="id">add_needs_all</span> <span class="id">args</span> (<span class="id">add_need</span> <span class="id">src</span> (<span class="id">store_argument</span> <span class="id">chunk</span>) <span class="id">ne</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">nmem_remove</span> <span class="id">nm</span> <span class="id">p</span> (<span class="id">size_chunk</span> <span class="id">chunk</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">after</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Icall</span> <span class="id">sig</span> <span class="id">ros</span> <span class="id">args</span> <span class="id">res</span> <span class="id">s</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">add_needs_all</span> <span class="id">args</span> (<span class="id">add_ros_need_all</span> <span class="id">ros</span> (<span class="id">kill</span> <span class="id">res</span> <span class="id">ne</span>)), <span class="id">nmem_all</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Itailcall</span> <span class="id">sig</span> <span class="id">ros</span> <span class="id">args</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">add_needs_all</span> <span class="id">args</span> (<span class="id">add_ros_need_all</span> <span class="id">ros</span> <span class="id">NE.bot</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">nmem_dead_stack</span> <span class="id">f</span>.(<span class="id">fn_stacksize</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Ibuiltin</span> <span class="id">ef</span> <span class="id">args</span> <span class="id">res</span> <span class="id">s</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">transfer_builtin</span> <span class="id">approx</span>!!<span class="id">pc</span> <span class="id">ef</span> <span class="id">args</span> <span class="id">res</span> <span class="id">ne</span> <span class="id">nm</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Icond</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">s1</span> <span class="id">s2</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">add_needs</span> <span class="id">args</span> (<span class="id">needs_of_condition</span> <span class="id">cond</span>) <span class="id">ne</span>, <span class="id">nm</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Ijumptable</span> <span class="id">arg</span> <span class="id">tbl</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">add_need_all</span> <span class="id">arg</span> <span class="id">ne</span>, <span class="id">nm</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Ireturn</span> <span class="id">optarg</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">add_opt_need_all</span> <span class="id">optarg</span> <span class="id">ne</span>, <span class="id">nmem_dead_stack</span> <span class="id">f</span>.(<span class="id">fn_stacksize</span>))<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Module</span> <span class="id">DS</span> := <span class="id">Backward_Dataflow_Solver</span>(<span class="id">NA</span>)(<span class="id">NodeSetBackward</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">analyze</span> (<span class="id">approx</span>: <span class="id">PMap.t</span> <span class="id">VA.t</span>) (<span class="id">f</span>: <span class="id">function</span>): <span class="id">option</span> (<span class="id">PMap.t</span> <span class="id">NA.t</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">DS.fixpoint</span> <span class="id">f</span>.(<span class="id">fn_code</span>) <span class="id">successors_instr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">transfer</span> <span class="id">f</span> <span class="id">approx</span>).<br/>
+<br/>
+<h1> Part 2: the code transformation </h1>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_instr</span> (<span class="id">approx</span>: <span class="id">PMap.t</span> <span class="id">VA.t</span>) (<span class="id">an</span>: <span class="id">PMap.t</span> <span class="id">NA.t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">pc</span>: <span class="id">node</span>) (<span class="id">instr</span>: <span class="id">instruction</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">instr</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Iop</span> <span class="id">op</span> <span class="id">args</span> <span class="id">res</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">nres</span> := <span class="id">nreg</span> (<span class="id">fst</span> <span class="id">an</span>!!<span class="id">pc</span>) <span class="id">res</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">is_dead</span> <span class="id">nres</span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Inop</span> <span class="id">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">is_int_zero</span> <span class="id">nres</span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Iop</span> (<span class="id">Ointconst</span> <span class="id">Int.zero</span>) <span class="id">nil</span> <span class="id">res</span> <span class="id">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">operation_is_redundant</span> <span class="id">op</span> <span class="id">nres</span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">args</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">arg</span> :: <span class="id">_</span> =&gt; <span class="id">Iop</span> <span class="id">Omove</span> (<span class="id">arg</span> :: <span class="id">nil</span>) <span class="id">res</span> <span class="id">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">nil</span> =&gt; <span class="id">instr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">instr</span><br/>
+&nbsp;&nbsp;| <span class="id">Iload</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">dst</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">ndst</span> := <span class="id">nreg</span> (<span class="id">fst</span> <span class="id">an</span>!!<span class="id">pc</span>) <span class="id">dst</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">is_dead</span> <span class="id">ndst</span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Inop</span> <span class="id">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">is_int_zero</span> <span class="id">ndst</span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Iop</span> (<span class="id">Ointconst</span> <span class="id">Int.zero</span>) <span class="id">nil</span> <span class="id">dst</span> <span class="id">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">instr</span><br/>
+&nbsp;&nbsp;| <span class="id">Istore</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">src</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">p</span> := <span class="id">aaddressing</span> <span class="id">approx</span>!!<span class="id">pc</span> <span class="id">addr</span> <span class="id">args</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">nmem_contains</span> (<span class="id">snd</span> <span class="id">an</span>!!<span class="id">pc</span>) <span class="id">p</span> (<span class="id">size_chunk</span> <span class="id">chunk</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">instr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">Inop</span> <span class="id">s</span><br/>
+&nbsp;&nbsp;| <span class="id">Ibuiltin</span> (<span class="id">EF_memcpy</span> <span class="id">sz</span> <span class="id">al</span>) (<span class="id">dst</span> :: <span class="id">src</span> :: <span class="id">nil</span>) <span class="id">res</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">nmem_contains</span> (<span class="id">snd</span> <span class="id">an</span>!!<span class="id">pc</span>) (<span class="id">aaddr_arg</span> <span class="id">approx</span>!!<span class="id">pc</span> <span class="id">dst</span>) <span class="id">sz</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">instr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">Inop</span> <span class="id">s</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">instr</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_function</span> (<span class="id">rm</span>: <span class="id">romem</span>) (<span class="id">f</span>: <span class="id">function</span>) : <span class="id">res</span> <span class="id">function</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">approx</span> := <span class="id">ValueAnalysis.analyze</span> <span class="id">rm</span> <span class="id">f</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">analyze</span> <span class="id">approx</span> <span class="id">f</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">an</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> {| <span class="id">fn_sig</span> := <span class="id">f</span>.(<span class="id">fn_sig</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fn_params</span> := <span class="id">f</span>.(<span class="id">fn_params</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fn_stacksize</span> := <span class="id">f</span>.(<span class="id">fn_stacksize</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fn_code</span> := <span class="id">PTree.map</span> (<span class="id">transf_instr</span> <span class="id">approx</span> <span class="id">an</span>) <span class="id">f</span>.(<span class="id">fn_code</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fn_entrypoint</span> := <span class="id">f</span>.(<span class="id">fn_entrypoint</span>) |}<br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Error</span> (<span class="id">msg</span> "<span class="id">Neededness</span> <span class="id">analysis</span> <span class="id">failed</span>")<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_fundef</span> (<span class="id">rm</span>: <span class="id">romem</span>) (<span class="id">fd</span>: <span class="id">fundef</span>) : <span class="id">res</span> <span class="id">fundef</span> :=<br/>
+&nbsp;&nbsp;<span class="id">AST.transf_partial_fundef</span> (<span class="id">transf_function</span> <span class="id">rm</span>) <span class="id">fd</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_program</span> (<span class="id">p</span>: <span class="id">program</span>) : <span class="id">res</span> <span class="id">program</span> :=<br/>
+&nbsp;&nbsp;<span class="id">transform_partial_program</span> (<span class="id">transf_fundef</span> (<span class="id">romem_for</span> <span class="id">p</span>)) <span class="id">p</span>.<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

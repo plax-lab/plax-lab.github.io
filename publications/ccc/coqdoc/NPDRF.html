@@ -1,0 +1,236 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module NPDRF</title>
+<meta name="description" content="Documentation of Coq module NPDRF" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module NPDRF</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="GAST.html">GAST</a></span> <span class="id"><a href="ETrace.html">ETrace</a></span> <span class="id"><a href="NPSemantics.html">NPSemantics</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="GlobSim.html">GlobSim</a></span>.<br/>
+<br/>
+<h1> NP-DRF </h1>
+<br/>
+<div class="doc">This file defines a non-preemptive version of data-race-free property </div>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "'[[' <span class="id">thdp</span> ',' <span class="id">t</span> ',' <span class="id">m</span> ',' <span class="id">b</span> ']]'" :=<br/>
+&nbsp;&nbsp;({| <span class="id"><a href="GlobDefs.html#Build_ProgConfig">thread_pool</a></span>:= <span class="id">thdp</span>; <span class="id">cur_tid</span>:= <span class="id">t</span>; <span class="id">gm</span>:= <span class="id">m</span>; <span class="id">atom_bit</span>:= <span class="id">b</span> |})<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="tactic">at</span> <span class="id">level</span> 70, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "'[[' <span class="id">thdp</span> ',' <span class="id">t</span> ',' <span class="id">m</span> ',' <span class="id">b</span> ']]@' <span class="id">G</span> " :=<br/>
+&nbsp;&nbsp;(<span class="id"><a href="GlobDefs.html#Build_ProgConfig">Build_ProgConfig</a></span> <span class="id">G</span> <span class="id">thdp</span> <span class="id">t</span> <span class="id">m</span> <span class="id">b</span>) (<span class="tactic">at</span> <span class="id">level</span> 70, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> " <span class="id">GE</span> '|-' <span class="id">pc1</span> '=[' <span class="id">l</span> '|' <span class="id">fp</span> ']=&gt;&gt;' <span class="id">pc2</span> " :=<br/>
+&nbsp;&nbsp;(@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id">GE</span> <span class="id">pc1</span> <span class="id">l</span> <span class="id">fp</span> <span class="id">pc2</span>) (<span class="tactic">at</span> <span class="id">level</span> 80, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="np_ent_atom">np_ent_atom</a></span> {<span class="id">GE</span>} : <span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> -&gt; <span class="id"><a href="GlobDefs.html#tid">tid</a></span> -&gt; <span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="np_ent_atom_intro">np_ent_atom_intro</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">thdp</span> <span class="id">tid</span> <span class="id">gm</span> <span class="id">thdp</span>' <span class="id">gm</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">GE</span> |- [[<span class="id"><a href="NPDRF.html#thdp">thdp</a></span>, <span class="id"><a href="NPDRF.html#tid">tid</a></span>, <span class="id"><a href="NPDRF.html#gm">gm</a></span>, <span class="id"><a href="GlobDefs.html#O">O</a></span>]] =[ <span class="id"><a href="ETrace.html#tau">tau</a></span> | <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>]=&gt;&gt; [[<span class="id">thdp</span>', <span class="id"><a href="NPDRF.html#tid">tid</a></span>, <span class="id">gm</span>', <span class="id"><a href="GlobDefs.html#I">I</a></span>]] -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_ent_atom">np_ent_atom</a></span> ([[<span class="id"><a href="NPDRF.html#thdp">thdp</a></span>, <span class="id"><a href="NPDRF.html#tid">tid</a></span>, <span class="id"><a href="NPDRF.html#gm">gm</a></span>, <span class="id"><a href="GlobDefs.html#O">O</a></span>]]) <span class="id"><a href="NPDRF.html#tid">tid</a></span> ([[<span class="id">thdp</span>', <span class="id"><a href="NPDRF.html#tid">tid</a></span>, <span class="id">gm</span>', <span class="id"><a href="GlobDefs.html#I">I</a></span>]]).<br/>
+<span class="kwd">Corollary</span> <span class="id"><a name="tau_step_bitchange_np_ent_atom">tau_step_bitchange_np_ent_atom</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">pc1</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#ge">ge</a></span>|- <span class="id"><a href="NPDRF.html#pc">pc</a></span> =[<span class="id"><a href="ETrace.html#tau">tau</a></span>|<span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>]=&gt;&gt;<span class="id"><a href="NPDRF.html#pc1">pc1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> &lt;&gt; <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_ent_atom">np_ent_atom</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span>.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>) <span class="id"><a href="NPDRF.html#pc1">pc1</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8229')">Proof.</div>
+<div class="proofscript" id="proof8229">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>;<span class="tactic">subst</span>;<span class="tactic">try</span> <span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<span class="kwd">Corollary</span> <span class="id"><a name="np_ent_atom_tau_step_bitchange">np_ent_atom_tau_step_bitchange</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">pc1</span> <span class="id">id</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_ent_atom">np_ent_atom</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> <span class="id"><a href="NPDRF.html#id">id</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="NPDRF.html#ge">ge</a></span>|-<span class="id"><a href="NPDRF.html#pc">pc</a></span> =[<span class="id"><a href="ETrace.html#tau">tau</a></span>|<span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>]=&gt;&gt;<span class="id"><a href="NPDRF.html#pc1">pc1</a></span>) /\ <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> &lt;&gt; <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span> /\ <span class="id"><a href="NPDRF.html#id">id</a></span> = <span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8230')">Proof.</div>
+<div class="proofscript" id="proof8230">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>;<span class="tactic">clear</span> <span class="id">H</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">compute</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>.<br/>
+Qed.</div>
+<div class="doc">this relation <span class="bracket"><span class="id">np_normal_tau</span> <span class="id">pc</span> <span class="id">t</span> <span class="id">b</span> <span class="id">fp</span> <span class="id">pc</span>'</span> states that 
+    - <span class="bracket"><span class="id">pc</span></span> could step to another configuration <span class="bracket"><span class="id">pc</span>'</span>, with zero or more tau steps of thread <span class="bracket"><span class="id">t</span></span>. 
+    - All intermediate states has atomic bit <span class="bracket"><span class="id">b</span></span>,
+    - and we accumulate the footprint of all step in <span class="bracket"><span class="id">fp</span></span>.
+ </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="np_normal_tau">np_normal_tau</a></span> {<span class="id">GE</span>} : @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">GE</span> -&gt; <span class="id"><a href="GlobDefs.html#tid">tid</a></span> -&gt; <span class="id"><a href="GlobDefs.html#Bit">Bit</a></span> -&gt; <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> -&gt; <span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="predict_nil">predict_nil</a></span>: <span class="kwd">forall</span> <span class="id">thdp</span> <span class="id">t</span> <span class="id">gm</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_normal_tau">np_normal_tau</a></span> ([[<span class="id"><a href="NPDRF.html#thdp">thdp</a></span>, <span class="id"><a href="NPDRF.html#t">t</a></span>, <span class="id"><a href="NPDRF.html#gm">gm</a></span>, <span class="id"><a href="NPDRF.html#b">b</a></span>]]) <span class="id"><a href="NPDRF.html#t">t</a></span> <span class="id"><a href="NPDRF.html#b">b</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> ([[<span class="id"><a href="NPDRF.html#thdp">thdp</a></span>, <span class="id"><a href="NPDRF.html#t">t</a></span>, <span class="id"><a href="NPDRF.html#gm">gm</a></span>, <span class="id"><a href="NPDRF.html#b">b</a></span>]])<br/>
+| <span class="id"><a name="predict_cons">predict_cons</a></span>: <span class="kwd">forall</span> <span class="id">thdp</span> <span class="id">t</span> <span class="id">gm</span> <span class="id">b</span> <span class="id">fp</span> <span class="id">thdp</span>' <span class="id">gm</span>' <span class="id">fp</span>' <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">GE</span> |- [[<span class="id"><a href="NPDRF.html#thdp">thdp</a></span>, <span class="id"><a href="NPDRF.html#t">t</a></span>, <span class="id"><a href="NPDRF.html#gm">gm</a></span>, <span class="id"><a href="NPDRF.html#b">b</a></span>]] =[ <span class="id"><a href="ETrace.html#tau">tau</a></span> | <span class="id"><a href="NPDRF.html#fp">fp</a></span> ]=&gt;&gt; [[<span class="id">thdp</span>', <span class="id"><a href="NPDRF.html#t">t</a></span>, <span class="id">gm</span>', <span class="id"><a href="NPDRF.html#b">b</a></span>]] -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_normal_tau">np_normal_tau</a></span> ([[<span class="id">thdp</span>', <span class="id"><a href="NPDRF.html#t">t</a></span>, <span class="id">gm</span>', <span class="id"><a href="NPDRF.html#b">b</a></span>]]) <span class="id"><a href="NPDRF.html#t">t</a></span> <span class="id"><a href="NPDRF.html#b">b</a></span> <span class="id">fp</span>' <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_normal_tau">np_normal_tau</a></span> ([[<span class="id"><a href="NPDRF.html#thdp">thdp</a></span>, <span class="id"><a href="NPDRF.html#t">t</a></span>, <span class="id"><a href="NPDRF.html#gm">gm</a></span>, <span class="id"><a href="NPDRF.html#b">b</a></span>]]) <span class="id"><a href="NPDRF.html#t">t</a></span> <span class="id"><a href="NPDRF.html#b">b</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id">fp</span>') <span class="id">pc</span>'.<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tau_step_bitpreservation_np_normal_tau">tau_step_bitpreservation_np_normal_tau</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">pc1</span> <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="NPDRF.html#ge">ge</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> <span class="id"><a href="ETrace.html#tau">tau</a></span> <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> =<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_normal_tau">np_normal_tau</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span>.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>) <span class="id"><a href="NPDRF.html#pc">pc</a></span>.(<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span>) <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8231')">Proof.</div>
+<div class="proofscript" id="proof8231">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">pc</span>,<span class="id">pc1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">compute</span> [<span class="id"><a href="GlobDefs.html#atom_bit">GlobDefs.atom_bit</a></span>] <span class="kwd">in</span> <span class="id">H0</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id">cur_tid0</span>=<span class="id">cur_tid</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>;<span class="tactic">subst</span>;<span class="tactic">try</span> <span class="id">contradiction</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">compute</span> [<span class="id"><a href="GlobDefs.html#cur_tid">GlobDefs.cur_tid</a></span>].<br/>
+&nbsp;&nbsp;<span class="tactic">compute</span> [<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span>].<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="NPDRF.html#predict_cons">predict_cons</a></span> <span class="kwd">in</span> <span class="id">H</span>;<span class="tactic">try</span> <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.fp_union_emp">FP.fp_union_emp</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="tau_N_bitpreservation_np_normal_tau">tau_N_bitpreservation_np_normal_tau</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">pc1</span> <span class="id">fp</span> ,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_N">tau_N</a></span> (@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="NPDRF.html#ge">ge</a></span>) <span class="id"><a href="NPDRF.html#i">i</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> = <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_normal_tau">np_normal_tau</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span>.(<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span>) <span class="id"><a href="NPDRF.html#pc">pc</a></span>.(<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span>) <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8232')">Proof.</div>
+<div class="proofscript" id="proof8232">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">i</span>.<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">pc1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>;<span class="tactic">clear</span> <span class="id">H</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">pose</span> <span class="id"><a href="GlobSim.html#GlobSim.tau_N_tau_step_bit_rule">GlobSim.tau_N_tau_step_bit_rule</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> <span class="id">H2</span> <span class="kwd">as</span> <span class="id">P1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">e</span> <span class="kwd">in</span> <span class="id">H2</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H2</span>. <span class="tactic">symmetry</span> <span class="kwd">in</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHi</span> <span class="kwd">in</span> <span class="id">H2</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">pose</span> @<span class="id"><a href="NPDRF.html#predict_cons">predict_cons</a></span> .<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">pc</span>,<span class="id">pc1</span>,<span class="id">s</span>'.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id">cur_tid</span>=<span class="id">cur_tid1</span>). <span class="tactic">inversion</span> <span class="id">P1</span>;<span class="tactic">subst</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id">atom_bit</span>=<span class="id">atom_bit1</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">P1</span>;<span class="tactic">subst</span>;<span class="tactic">try</span> <span class="id">contradiction</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobSim.html#GlobSim.tau_N_bit_I_preservation">GlobSim.tau_N_bit_I_preservation</a></span> <span class="kwd">in</span> <span class="id">H3</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">compute</span> <span class="kwd">in</span> <span class="id">H0</span>,<span class="id">H3</span>;<span class="tactic">rewrite</span> &lt;- <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H3</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">subst</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">n</span> <span class="kwd">in</span> <span class="id">P1</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="np_normal_tau_N_exists">np_normal_tau_N_exists</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">pc1</span> <span class="id">fp</span> <span class="id">id</span> <span class="id">bit</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_normal_tau">np_normal_tau</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> <span class="id"><a href="NPDRF.html#id">id</a></span> <span class="id"><a href="NPDRF.html#bit">bit</a></span> <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> = <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span> /\ <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> = <span class="id"><a href="NPDRF.html#bit">bit</a></span> /\ <span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> = <span class="id"><a href="NPDRF.html#id">id</a></span>  /\ <span class="id">exists</span> <span class="id">i</span>, <span class="id"><a href="ETrace.html#tau_N">tau_N</a></span> (@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="NPDRF.html#ge">ge</a></span>) <span class="id"><a href="NPDRF.html#i">i</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8233')">Proof.</div>
+<div class="proofscript" id="proof8233">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> 0;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">IHnp_normal_tau</span> <span class="kwd">as</span>[<span class="id">eq</span>[<span class="id">eq2</span>[<span class="id">eq3</span> [<span class="id">i</span> ] ] ] ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#S">S</a></span> <span class="id">i</span>);  <span class="id">econstructor</span> 2;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+<span class="kwd">Corollary</span> <span class="id"><a name="np_normal_iff_tau_star_bitpreservation">np_normal_iff_tau_star_bitpreservation</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">pc1</span> <span class="id">fp</span> <span class="id">id</span> <span class="id">bit</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_normal_tau">np_normal_tau</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> <span class="id"><a href="NPDRF.html#id">id</a></span> <span class="id"><a href="NPDRF.html#bit">bit</a></span> <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span> &lt;-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> = <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span>  /\ <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> = <span class="id"><a href="NPDRF.html#bit">bit</a></span> /\ <span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id"><a href="NPDRF.html#pc">pc</a></span> = <span class="id"><a href="NPDRF.html#id">id</a></span> /\  <span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> (@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="NPDRF.html#ge">ge</a></span>) <span class="id"><a href="NPDRF.html#pc">pc</a></span> <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id"><a href="NPDRF.html#pc1">pc1</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8234')">Proof.</div>
+<div class="proofscript" id="proof8234">
+&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="NPDRF.html#np_normal_tau_N_exists">np_normal_tau_N_exists</a></span> <span class="kwd">in</span> <span class="id">H</span> <span class="kwd">as</span>[<span class="id">eq1</span>[<span class="id">eq2</span>[<span class="id">eq3</span> ] ] ].<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="ETrace.html#tau_star_tau_N_equiv">tau_star_tau_N_equiv</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span>[<span class="id">eq1</span>[<span class="id">eq2</span>[<span class="id">eq3</span>] ] ].<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="ETrace.html#tau_star_tau_N_equiv">tau_star_tau_N_equiv</a></span> <span class="kwd">in</span> <span class="id">H</span> <span class="kwd">as</span>[].<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="NPDRF.html#tau_N_bitpreservation_np_normal_tau">tau_N_bitpreservation_np_normal_tau</a></span> <span class="kwd">in</span> <span class="id">H</span>;<span class="tactic">subst</span>;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<h2> The non-preemptive "prediction"s </h2>
+<br/>
+<div class="doc">We do prediction on a program configuration for some thread <span class="bracket"><span class="id">t</span></span> </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">np_predict</span></span> is the non-preemptive version of <span class="bracket"><span class="id">predict</span></span>. 
+    We predict two sections of footprints, the former is predicted outside atomic blocks, the latter (if exists) is predicted inside the atomic blocks. 
+    -- Note that np_normal_tau means one or multiple tau steps, so we may predict multiple steps in non-preemptive in one time.
+ </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="np_predict">np_predict</a></span> {<span class="id">ge</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>}: @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge</span> -&gt; <span class="id"><a href="GlobDefs.html#tid">tid</a></span> -&gt; <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> -&gt; <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="np_predict_only_tau">np_predict_only_tau</a></span>: <span class="kwd">forall</span> <span class="id">thdp</span> <span class="id">i</span>' <span class="id">gm</span> <span class="id">i</span> <span class="id">fp0</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_normal_tau">np_normal_tau</a></span> ([[<span class="id"><a href="NPDRF.html#thdp">thdp</a></span>, <span class="id"><a href="NPDRF.html#i">i</a></span>, <span class="id"><a href="NPDRF.html#gm">gm</a></span>, <span class="id"><a href="GlobDefs.html#O">O</a></span>]]) <span class="id"><a href="NPDRF.html#i">i</a></span> <span class="id"><a href="GlobDefs.html#O">O</a></span> <span class="id"><a href="NPDRF.html#fp0">fp0</a></span> <span class="id">pc</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_predict">np_predict</a></span> ([[<span class="id"><a href="NPDRF.html#thdp">thdp</a></span>, <span class="id">i</span>', <span class="id"><a href="NPDRF.html#gm">gm</a></span>, <span class="id"><a href="GlobDefs.html#O">O</a></span>]]) <span class="id"><a href="NPDRF.html#i">i</a></span> <span class="id"><a href="NPDRF.html#fp0">fp0</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span><br/>
+| <span class="id"><a name="np_predict_with_atom">np_predict_with_atom</a></span>: <span class="kwd">forall</span> <span class="id">thdp</span> <span class="id">i</span>' <span class="id">gm</span> <span class="id">i</span> <span class="id">fp0</span> <span class="id">pc</span>' <span class="id">pc</span>'' <span class="id">fp1</span> <span class="id">pc</span>''',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_normal_tau">np_normal_tau</a></span> ([[<span class="id"><a href="NPDRF.html#thdp">thdp</a></span>, <span class="id"><a href="NPDRF.html#i">i</a></span>, <span class="id"><a href="NPDRF.html#gm">gm</a></span>, <span class="id"><a href="GlobDefs.html#O">O</a></span>]]) <span class="id"><a href="NPDRF.html#i">i</a></span> <span class="id"><a href="GlobDefs.html#O">O</a></span> <span class="id"><a href="NPDRF.html#fp0">fp0</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_ent_atom">np_ent_atom</a></span> <span class="id">pc</span>' <span class="id"><a href="NPDRF.html#i">i</a></span> <span class="id">pc</span>'' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_normal_tau">np_normal_tau</a></span> <span class="id">pc</span>'' <span class="id"><a href="NPDRF.html#i">i</a></span> <span class="id"><a href="GlobDefs.html#I">I</a></span> <span class="id"><a href="NPDRF.html#fp1">fp1</a></span> <span class="id">pc</span>''' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_predict">np_predict</a></span> ([[<span class="id"><a href="NPDRF.html#thdp">thdp</a></span>, <span class="id">i</span>', <span class="id"><a href="NPDRF.html#gm">gm</a></span>, <span class="id"><a href="GlobDefs.html#O">O</a></span>]]) <span class="id"><a href="NPDRF.html#i">i</a></span> <span class="id"><a href="NPDRF.html#fp0">fp0</a></span> <span class="id"><a href="NPDRF.html#fp1">fp1</a></span>.<br/>
+<br/>
+<br/>
+<div class="doc">It is not conflicting if the footprints are both predicted inside atomic blocks.  </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="conflict_fps">conflict_fps</a></span>: <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> * <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> -&gt; <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> * <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="conflict_fps_00">conflict_fps_00</a></span>: <span class="kwd">forall</span> <span class="id">fp10</span> <span class="id">fp11</span> <span class="id">fp20</span> <span class="id">fp21</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.conflict">FP.conflict</a></span> <span class="id"><a href="NPDRF.html#fp10">fp10</a></span> <span class="id"><a href="NPDRF.html#fp20">fp20</a></span> -&gt; <span class="id"><a href="NPDRF.html#conflict_fps">conflict_fps</a></span> (<span class="id"><a href="NPDRF.html#fp10">fp10</a></span>, <span class="id"><a href="NPDRF.html#fp11">fp11</a></span>) (<span class="id"><a href="NPDRF.html#fp20">fp20</a></span>, <span class="id"><a href="NPDRF.html#fp21">fp21</a></span>)<br/>
+| <span class="id"><a name="conflict_fps_10">conflict_fps_10</a></span>: <span class="kwd">forall</span> <span class="id">fp10</span> <span class="id">fp11</span> <span class="id">fp20</span> <span class="id">fp21</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.conflict">FP.conflict</a></span> <span class="id"><a href="NPDRF.html#fp11">fp11</a></span> <span class="id"><a href="NPDRF.html#fp20">fp20</a></span> -&gt; <span class="id"><a href="NPDRF.html#conflict_fps">conflict_fps</a></span> (<span class="id"><a href="NPDRF.html#fp10">fp10</a></span>, <span class="id"><a href="NPDRF.html#fp11">fp11</a></span>) (<span class="id"><a href="NPDRF.html#fp20">fp20</a></span>, <span class="id"><a href="NPDRF.html#fp21">fp21</a></span>)<br/>
+| <span class="id"><a name="conflict_fps_01">conflict_fps_01</a></span>: <span class="kwd">forall</span> <span class="id">fp10</span> <span class="id">fp11</span> <span class="id">fp20</span> <span class="id">fp21</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.conflict">FP.conflict</a></span> <span class="id"><a href="NPDRF.html#fp10">fp10</a></span> <span class="id"><a href="NPDRF.html#fp21">fp21</a></span> -&gt; <span class="id"><a href="NPDRF.html#conflict_fps">conflict_fps</a></span> (<span class="id"><a href="NPDRF.html#fp10">fp10</a></span>, <span class="id"><a href="NPDRF.html#fp11">fp11</a></span>) (<span class="id"><a href="NPDRF.html#fp20">fp20</a></span>, <span class="id"><a href="NPDRF.html#fp21">fp21</a></span>).<br/>
+<br/>
+<div class="doc">The definition of data-race in non-preemptive.
+Configuration S is racy if two different threads of S are predicted to generated conflicting footprints and at least one thread is not predicted inside atomic block.
+</div>
+<span class="kwd">Inductive</span> <span class="id"><a name="np_race_config">np_race_config</a></span> {<span class="id">ge</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>} : @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="NP_Race_config">NP_Race_config</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">t1</span> <span class="id">fp10</span> <span class="id">fp11</span> <span class="id">t2</span> <span class="id">fp20</span> <span class="id">fp21</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#t1">t1</a></span> &lt;&gt; <span class="id"><a href="NPDRF.html#t2">t2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_predict">np_predict</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span> <span class="id"><a href="NPDRF.html#t1">t1</a></span> <span class="id"><a href="NPDRF.html#fp10">fp10</a></span> <span class="id"><a href="NPDRF.html#fp11">fp11</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_predict">np_predict</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span> <span class="id"><a href="NPDRF.html#t2">t2</a></span> <span class="id"><a href="NPDRF.html#fp20">fp20</a></span> <span class="id"><a href="NPDRF.html#fp21">fp21</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#conflict_fps">conflict_fps</a></span> (<span class="id"><a href="NPDRF.html#fp10">fp10</a></span>, <span class="id"><a href="NPDRF.html#fp11">fp11</a></span>) (<span class="id"><a href="NPDRF.html#fp20">fp20</a></span>, <span class="id"><a href="NPDRF.html#fp21">fp21</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_race_config">np_race_config</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span>.<br/>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">np_star_race_config</span></span> requires the prediction be made at switching points. </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="np_star_race_config">np_star_race_config</a></span> {<span class="id">ge</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>} : @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id">ge</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="NP_Race_point">NP_Race_point</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">l</span> <span class="id">fp</span> <span class="id">s</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span> <span class="id"><a href="NPDRF.html#l">l</a></span> <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#l">l</a></span> &lt;&gt; <span class="id"><a href="ETrace.html#tau">tau</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_race_config">np_race_config</a></span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_star_race_config">np_star_race_config</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span><br/>
+| <span class="id"><a name="NP_Race_progress">NP_Race_progress</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">l</span> <span class="id">fp</span> <span class="id">s</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span> <span class="id"><a href="NPDRF.html#l">l</a></span> <span class="id"><a href="NPDRF.html#fp">fp</a></span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_star_race_config">np_star_race_config</a></span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_star_race_config">np_star_race_config</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span>.<br/>
+<br/>
+<div class="doc">Either the prediction is made exactly after the initialization, or it is made after switching points. </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="np_race_prog">np_race_prog</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} {<span class="id">L</span>: @<span class="id"><a href="GAST.html#langs">langs</a></span> <span class="id"><a href="NPDRF.html#NL">NL</a></span>} : <span class="id"><a href="GAST.html#prog">prog</a></span> <span class="id">L</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="NPRace_init">NPRace_init</a></span>: <span class="kwd">forall</span> <span class="id">p</span> <span class="id">gm</span> <span class="id">ge</span> <span class="id">s</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="NPDRF.html#p">p</a></span> <span class="id"><a href="NPDRF.html#gm">gm</a></span> <span class="id"><a href="NPDRF.html#ge">ge</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span> <span class="id"><a href="NPDRF.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_race_config">np_race_config</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_race_prog">np_race_prog</a></span> <span class="id"><a href="NPDRF.html#p">p</a></span><br/>
+| <span class="id"><a name="NPRace_plus">NPRace_plus</a></span>: <span class="kwd">forall</span> <span class="id">p</span> <span class="id">gm</span> <span class="id">ge</span> <span class="id">s</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="NPDRF.html#p">p</a></span> <span class="id"><a href="NPDRF.html#gm">gm</a></span> <span class="id"><a href="NPDRF.html#ge">ge</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span> <span class="id"><a href="NPDRF.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_star_race_config">np_star_race_config</a></span> <span class="id"><a href="NPDRF.html#s">s</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#np_race_prog">np_race_prog</a></span> <span class="id"><a href="NPDRF.html#p">p</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="npdrf">npdrf</a></span> {<span class="id">NL</span>} {<span class="id">L</span>} <span class="id">p</span>: <span class="kwd">Prop</span> := ~ @<span class="id"><a href="NPDRF.html#np_race_prog">np_race_prog</a></span> <span class="id"><a href="NPDRF.html#NL">NL</a></span> <span class="id"><a href="NPDRF.html#L">L</a></span> <span class="id"><a href="NPDRF.html#p">p</a></span>.<br/>
+<br/>
+<br/>
+<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

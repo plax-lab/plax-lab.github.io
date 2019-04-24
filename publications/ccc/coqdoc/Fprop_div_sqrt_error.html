@@ -1,0 +1,298 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Fprop_div_sqrt_error</title>
+<meta name="description" content="Documentation of Coq module Fprop_div_sqrt_error" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Fprop_div_sqrt_error</h1>
+<div class="coq">
+<br/>
+<h1> Remainder of the division and square root are in the FLX format </h1>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Fcore</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Fcalc_ops</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Fprop_relative</span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id">Fprop_divsqrt_error</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">beta</span> : <span class="id">radix</span>.<br/>
+<span class="kwd">Notation</span> <span class="id">bpow</span> <span class="id">e</span> := (<span class="id">bpow</span> <span class="id">beta</span> <span class="id">e</span>).<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">prec</span> : <span class="id">Z</span>.<br/>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">generic_format_plus_prec</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fexp</span>, (<span class="kwd">forall</span> <span class="id">e</span>, (<span class="id">fexp</span> <span class="id">e</span>  &lt;= <span class="id">e</span> - <span class="id">prec</span>)%<span class="id">Z</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span> (<span class="id">fx</span> <span class="id">fy</span>: <span class="id">float</span> <span class="id">beta</span>),<br/>
+&nbsp;&nbsp;(<span class="id">x</span> = <span class="id">F2R</span> <span class="id">fx</span>)%<span class="id">R</span> -&gt; (<span class="id">y</span> = <span class="id">F2R</span> <span class="id">fy</span>)%<span class="id">R</span> -&gt; (<span class="id">Rabs</span> (<span class="id">x</span>+<span class="id">y</span>) &lt; <span class="id">bpow</span> (<span class="id">prec</span>+<span class="id">Fexp</span> <span class="id">fx</span>))%<span class="id">R</span> -&gt; (<span class="id">Rabs</span> (<span class="id">x</span>+<span class="id">y</span>) &lt; <span class="id">bpow</span> (<span class="id">prec</span>+<span class="id">Fexp</span> <span class="id">fy</span>))%<span class="id">R</span><br/>
+&nbsp;&nbsp;-&gt; <span class="id">generic_format</span> <span class="id">beta</span> <span class="id">fexp</span> (<span class="id">x</span>+<span class="id">y</span>)%<span class="id">R</span>.<br/>
+<span class="tactic">intros</span> <span class="id">fexp</span> <span class="id">Hfexp</span> <span class="id">x</span> <span class="id">y</span> <span class="id">fx</span> <span class="id">fy</span> <span class="id">Hx</span> <span class="id">Hy</span> <span class="id">H1</span> <span class="id">H2</span>.<br/>
+<span class="tactic">case</span> (<span class="id">Req_dec</span> (<span class="id">x</span>+<span class="id">y</span>) 0); <span class="tactic">intros</span> <span class="id">H</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">apply</span> <span class="id">generic_format_0</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Hx</span>, <span class="id">Hy</span>, &lt;- <span class="id">F2R_plus</span>.<br/>
+<span class="tactic">apply</span> <span class="id">generic_format_F2R</span>.<br/>
+<span class="tactic">intros</span> <span class="id">_</span>.<br/>
+<span class="id">case_eq</span> (<span class="id">Fplus</span> <span class="id">beta</span> <span class="id">fx</span> <span class="id">fy</span>).<br/>
+<span class="tactic">intros</span> <span class="id">mz</span> <span class="id">ez</span> <span class="id">Hz</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Hz</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Zle_trans</span> <span class="kwd">with</span> (<span class="id">Zmin</span> (<span class="id">Fexp</span> <span class="id">fx</span>) (<span class="id">Fexp</span> <span class="id">fy</span>)).<br/>
+<span class="tactic">rewrite</span> <span class="id">F2R_plus</span>, &lt;- <span class="id">Hx</span>, &lt;- <span class="id">Hy</span>.<br/>
+<span class="tactic">unfold</span> <span class="id">canonic_exp</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Zle_trans</span> <span class="kwd">with</span> (1:=<span class="id">Hfexp</span> <span class="id">_</span>).<br/>
+<span class="tactic">apply</span> <span class="id">Zplus_le_reg_l</span> <span class="kwd">with</span> <span class="id">prec</span>; <span class="id">ring_simplify</span>.<br/>
+<span class="tactic">apply</span> <span class="id">ln_beta_le_bpow</span> <span class="kwd">with</span> (1 := <span class="id">H</span>).<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">Zmin_case</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Fexp_Fplus</span>, <span class="id">Hz</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Zle_refl</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">ex_Fexp_canonic</span>: <span class="kwd">forall</span> <span class="id">fexp</span>, <span class="kwd">forall</span> <span class="id">x</span>, <span class="id">generic_format</span> <span class="id">beta</span> <span class="id">fexp</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;-&gt; <span class="id">exists</span> <span class="id">fx</span>:<span class="id">float</span> <span class="id">beta</span>, (<span class="id">x</span>=<span class="id">F2R</span> <span class="id">fx</span>)%<span class="id">R</span> /\ <span class="id">Fexp</span> <span class="id">fx</span> = <span class="id">canonic_exp</span> <span class="id">beta</span> <span class="id">fexp</span> <span class="id">x</span>.<br/>
+<span class="tactic">intros</span> <span class="id">fexp</span> <span class="id">x</span>; <span class="tactic">unfold</span> <span class="id">generic_format</span>.<br/>
+<span class="id">exists</span> (<span class="id">Float</span> <span class="id">beta</span> (<span class="id">Ztrunc</span> (<span class="id">scaled_mantissa</span> <span class="id">beta</span> <span class="id">fexp</span> <span class="id">x</span>)) (<span class="id">canonic_exp</span> <span class="id">beta</span> <span class="id">fexp</span> <span class="id">x</span>)).<br/>
+<span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Context</span> { <span class="id">prec_gt_0_</span> : <span class="id">Prec_gt_0</span> <span class="id">prec</span> }.<br/>
+<br/>
+<span class="kwd">Notation</span> <span class="id">format</span> := (<span class="id">generic_format</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>)).<br/>
+<span class="kwd">Notation</span> <span class="id">cexp</span> := (<span class="id">canonic_exp</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>)).<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">choice</span> : <span class="id">Z</span> -&gt; <span class="id">bool</span>.<br/>
+<br/>
+<br/>
+<div class="doc">Remainder of the division in FLX </div>
+<span class="kwd">Theorem</span> <span class="id">div_error_FLX</span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">rnd</span> { <span class="id">Zrnd</span> : <span class="id">Valid_rnd</span> <span class="id">rnd</span> } <span class="id">x</span> <span class="id">y</span>,<br/>
+&nbsp;&nbsp;<span class="id">format</span> <span class="id">x</span> -&gt; <span class="id">format</span> <span class="id">y</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">format</span> (<span class="id">x</span> - <span class="id">round</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) <span class="id">rnd</span> (<span class="id">x</span>/<span class="id">y</span>) * <span class="id">y</span>)%<span class="id">R</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5351')">Proof with</div>
+<div class="proofscript" id="proof5351">
+ <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">typeclass_instances</span>.<br/>
+<span class="tactic">intros</span> <span class="id">rnd</span> <span class="id">Zrnd</span> <span class="id">x</span> <span class="id">y</span> <span class="id">Hx</span> <span class="id">Hy</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">Req_dec</span> <span class="id">y</span> 0) <span class="kwd">as</span> [<span class="id">Zy</span>|<span class="id">Zy</span>].<br/>
+<span class="id">now</span> <span class="tactic">rewrite</span> <span class="id">Zy</span>, <span class="id">Rmult_0_r</span>, <span class="id">Rminus_0_r</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">Req_dec</span> (<span class="id">round</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) <span class="id">rnd</span> (<span class="id">x</span>/<span class="id">y</span>)) 0) <span class="kwd">as</span> [<span class="id">Hr</span>|<span class="id">Hr</span>].<br/>
+<span class="tactic">rewrite</span> <span class="id">Hr</span>; <span class="id">ring_simplify</span> (<span class="id">x</span>-0*<span class="id">y</span>)%<span class="id">R</span>; <span class="tactic">assumption</span>.<br/>
+<span class="tactic">assert</span> (<span class="id">Zx</span>: <span class="id">x</span> &lt;&gt; <span class="id">R0</span>).<br/>
+<span class="id">contradict</span> <span class="id">Hr</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Hr</span>.<br/>
+<span class="tactic">unfold</span> <span class="id">Rdiv</span>.<br/>
+<span class="id">now</span> <span class="tactic">rewrite</span> <span class="id">Rmult_0_l</span>, <span class="id">round_0</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">ex_Fexp_canonic</span> <span class="id">_</span> <span class="id">x</span> <span class="id">Hx</span>) <span class="kwd">as</span> (<span class="id">fx</span>,(<span class="id">Hx1</span>,<span class="id">Hx2</span>)).<br/>
+<span class="tactic">destruct</span> (<span class="id">ex_Fexp_canonic</span> <span class="id">_</span> <span class="id">y</span> <span class="id">Hy</span>) <span class="kwd">as</span> (<span class="id">fy</span>,(<span class="id">Hy1</span>,<span class="id">Hy2</span>)).<br/>
+<span class="tactic">destruct</span> (<span class="id">ex_Fexp_canonic</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) (<span class="id">round</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) <span class="id">rnd</span> (<span class="id">x</span> / <span class="id">y</span>))) <span class="kwd">as</span> (<span class="id">fr</span>,(<span class="id">Hr1</span>,<span class="id">Hr2</span>)).<br/>
+<span class="tactic">apply</span> <span class="id">generic_format_round</span>...<br/>
+<span class="tactic">unfold</span> <span class="id">Rminus</span>; <span class="tactic">apply</span> <span class="id">generic_format_plus_prec</span> <span class="kwd">with</span> <span class="id">fx</span> (<span class="id">Fopp</span> <span class="id">beta</span> (<span class="id">Fmult</span> <span class="id">beta</span> <span class="id">fr</span> <span class="id">fy</span>)); <span class="tactic">trivial</span>.<br/>
+<span class="tactic">intros</span> <span class="id">e</span>; <span class="tactic">apply</span> <span class="id">Zle_refl</span>.<br/>
+<span class="id">now</span> <span class="tactic">rewrite</span> <span class="id">F2R_opp</span>, <span class="id">F2R_mult</span>, &lt;- <span class="id">Hr1</span>, &lt;- <span class="id">Hy1</span>.<br/>
+&nbsp;*)</span><span class="tactic">destruct</span> (<span class="id">relative_error_FLX_ex</span> <span class="id">beta</span> <span class="id">prec</span> (<span class="id">prec_gt_0</span> <span class="id">prec</span>) <span class="id">rnd</span> (<span class="id">x</span> / <span class="id">y</span>)%<span class="id">R</span>) <span class="kwd">as</span> (<span class="id">eps</span>,(<span class="id">Heps1</span>,<span class="id">Heps2</span>)).<br/>
+<span class="tactic">rewrite</span> <span class="id">Heps2</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Rabs_Ropp</span>.<br/>
+<span class="tactic">replace</span> (-(<span class="id">x</span> + - (<span class="id">x</span> / <span class="id">y</span> * (1 + <span class="id">eps</span>) * <span class="id">y</span>)))%<span class="id">R</span> <span class="kwd">with</span> (<span class="id">x</span> * <span class="id">eps</span>)%<span class="id">R</span> <span class="tactic">by</span> <span class="id">now</span> <span class="id">field</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Rabs_mult</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rlt_le_trans</span> <span class="kwd">with</span> (<span class="id">Rabs</span> <span class="id">x</span> * 1)%<span class="id">R</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_lt_compat_l</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">Rabs_pos_lt</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rlt_le_trans</span> <span class="kwd">with</span> (1 := <span class="id">Heps1</span>).<br/>
+<span class="id">change</span> <span class="id">R1</span> <span class="kwd">with</span> (<span class="id">bpow</span> 0).<br/>
+<span class="tactic">apply</span> <span class="id">bpow_le</span>.<br/>
+<span class="tactic">generalize</span> (<span class="id">prec_gt_0</span> <span class="id">prec</span>).<br/>
+<span class="tactic">clear</span> ; <span class="tactic">omega</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Rmult_1_r</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Hx2</span>.<br/>
+<span class="tactic">unfold</span> <span class="id">canonic_exp</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">ln_beta</span> <span class="id">beta</span> <span class="id">x</span>) <span class="kwd">as</span> (<span class="id">ex</span>, <span class="id">Hex</span>).<br/>
+<span class="tactic">simpl</span>.<br/>
+<span class="id">specialize</span> (<span class="id">Hex</span> <span class="id">Zx</span>).<br/>
+<span class="tactic">apply</span> <span class="id">Rlt_le</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rlt_le_trans</span> <span class="kwd">with</span> (1 := <span class="id">proj2</span> <span class="id">Hex</span>).<br/>
+<span class="tactic">apply</span> <span class="id">bpow_le</span>.<br/>
+<span class="tactic">unfold</span> <span class="id">FLX_exp</span>.<br/>
+<span class="id">ring_simplify</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Zle_refl</span>.<br/>
+&nbsp;*)</span><span class="tactic">replace</span> (<span class="id">Fexp</span> (<span class="id">Fopp</span> <span class="id">beta</span> (<span class="id">Fmult</span> <span class="id">beta</span> <span class="id">fr</span> <span class="id">fy</span>))) <span class="kwd">with</span> (<span class="id">Fexp</span> <span class="id">fr</span> + <span class="id">Fexp</span> <span class="id">fy</span>)%<span class="id">Z</span>.<br/>
+2: <span class="tactic">unfold</span> <span class="id">Fopp</span>, <span class="id">Fmult</span>; <span class="tactic">destruct</span> <span class="id">fr</span>; <span class="tactic">destruct</span> <span class="id">fy</span>; <span class="id">now</span> <span class="tactic">simpl</span>.<br/>
+<span class="tactic">replace</span> (<span class="id">x</span> + - (<span class="id">round</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) <span class="id">rnd</span> (<span class="id">x</span> / <span class="id">y</span>) * <span class="id">y</span>))%<span class="id">R</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;(<span class="id">y</span> * (-(<span class="id">round</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) <span class="id">rnd</span> (<span class="id">x</span> / <span class="id">y</span>) - <span class="id">x</span>/<span class="id">y</span>)))%<span class="id">R</span>.<br/>
+2: <span class="id">field</span>; <span class="tactic">assumption</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Rabs_mult</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rlt_le_trans</span> <span class="kwd">with</span> (<span class="id">Rabs</span> <span class="id">y</span> * <span class="id">bpow</span> (<span class="id">Fexp</span> <span class="id">fr</span>))%<span class="id">R</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_lt_compat_l</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">Rabs_pos_lt</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Rabs_Ropp</span>.<br/>
+<span class="tactic">replace</span> (<span class="id">bpow</span> (<span class="id">Fexp</span> <span class="id">fr</span>)) <span class="kwd">with</span> (<span class="id">ulp</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) (<span class="id">F2R</span> <span class="id">fr</span>)).<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Hr1</span>.<br/>
+<span class="tactic">apply</span> <span class="id">error_lt_ulp_round</span>...<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_integral_contrapositive_currified</span>; <span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">Rinv_neq_0_compat</span>; <span class="tactic">assumption</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">ulp_neq_0</span>.<br/>
+2: <span class="id">now</span> <span class="tactic">rewrite</span> &lt;- <span class="id">Hr1</span>.<br/>
+<span class="tactic">apply</span> <span class="tactic">f_equal</span>.<br/>
+<span class="id">now</span> <span class="tactic">rewrite</span> <span class="id">Hr2</span>, &lt;- <span class="id">Hr1</span>.<br/>
+<span class="tactic">replace</span> (<span class="id">prec</span>+(<span class="id">Fexp</span> <span class="id">fr</span>+<span class="id">Fexp</span> <span class="id">fy</span>))%<span class="id">Z</span> <span class="kwd">with</span> ((<span class="id">prec</span>+<span class="id">Fexp</span> <span class="id">fy</span>)+<span class="id">Fexp</span> <span class="id">fr</span>)%<span class="id">Z</span> <span class="tactic">by</span> <span class="tactic">ring</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">bpow_plus</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_le_compat_r</span>.<br/>
+<span class="tactic">apply</span> <span class="id">bpow_ge_0</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Hy2</span>; <span class="tactic">unfold</span> <span class="id">canonic_exp</span>, <span class="id">FLX_exp</span>.<br/>
+<span class="id">ring_simplify</span> (<span class="id">prec</span> + (<span class="id">ln_beta</span> <span class="id">beta</span> <span class="id">y</span> - <span class="id">prec</span>))%<span class="id">Z</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">ln_beta</span> <span class="id">beta</span> <span class="id">y</span>); <span class="tactic">simpl</span>.<br/>
+<span class="id">left</span>; <span class="id">now</span> <span class="tactic">apply</span> <span class="id">a</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Remainder of the square in FLX (with p&gt;1) and rounding to nearest </div>
+<span class="kwd">Variable</span> <span class="id">Hp1</span> : <span class="id">Zlt</span> 1 <span class="id">prec</span>.<br/>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">sqrt_error_FLX_N</span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span>, <span class="id">format</span> <span class="id">x</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">format</span> (<span class="id">x</span> - <span class="id">Rsqr</span> (<span class="id">round</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) (<span class="id">Znearest</span> <span class="id">choice</span>) (<span class="id">sqrt</span> <span class="id">x</span>)))%<span class="id">R</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5352')">Proof with</div>
+<div class="proofscript" id="proof5352">
+ <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">typeclass_instances</span>.<br/>
+<span class="tactic">intros</span> <span class="id">x</span> <span class="id">Hx</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">total_order_T</span> <span class="id">x</span> 0) <span class="kwd">as</span> [[<span class="id">Hxz</span>|<span class="id">Hxz</span>]|<span class="id">Hxz</span>].<br/>
+<span class="tactic">unfold</span> <span class="id">sqrt</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">Rcase_abs</span> <span class="id">x</span>).<br/>
+<span class="tactic">rewrite</span> <span class="id">round_0</span>...<br/>
+<span class="tactic">unfold</span> <span class="id">Rsqr</span>.<br/>
+<span class="id">now</span> <span class="tactic">rewrite</span> <span class="id">Rmult_0_l</span>, <span class="id">Rminus_0_r</span>.<br/>
+<span class="tactic">elim</span> (<span class="id">Rlt_irrefl</span> 0).<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">Rgt_ge_trans</span> <span class="kwd">with</span> <span class="id">x</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Hxz</span>, <span class="id">sqrt_0</span>, <span class="id">round_0</span>...<br/>
+<span class="tactic">unfold</span> <span class="id">Rsqr</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Rmult_0_l</span>, <span class="id">Rminus_0_r</span>.<br/>
+<span class="tactic">apply</span> <span class="id">generic_format_0</span>.<br/>
+<span class="tactic">case</span> (<span class="id">Req_dec</span> (<span class="id">round</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) (<span class="id">Znearest</span> <span class="id">choice</span>) (<span class="id">sqrt</span> <span class="id">x</span>)) 0); <span class="tactic">intros</span> <span class="id">Hr</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Hr</span>; <span class="tactic">unfold</span> <span class="id">Rsqr</span>; <span class="id">ring_simplify</span> (<span class="id">x</span>-0*0)%<span class="id">R</span>; <span class="tactic">assumption</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">ex_Fexp_canonic</span> <span class="id">_</span> <span class="id">x</span> <span class="id">Hx</span>) <span class="kwd">as</span> (<span class="id">fx</span>,(<span class="id">Hx1</span>,<span class="id">Hx2</span>)).<br/>
+<span class="tactic">destruct</span> (<span class="id">ex_Fexp_canonic</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) (<span class="id">round</span> <span class="id">beta</span> (<span class="id">FLX_exp</span> <span class="id">prec</span>) (<span class="id">Znearest</span> <span class="id">choice</span>) (<span class="id">sqrt</span> <span class="id">x</span>))) <span class="kwd">as</span> (<span class="id">fr</span>,(<span class="id">Hr1</span>,<span class="id">Hr2</span>)).<br/>
+<span class="tactic">apply</span> <span class="id">generic_format_round</span>...<br/>
+<span class="tactic">unfold</span> <span class="id">Rminus</span>; <span class="tactic">apply</span> <span class="id">generic_format_plus_prec</span> <span class="kwd">with</span> <span class="id">fx</span> (<span class="id">Fopp</span> <span class="id">beta</span> (<span class="id">Fmult</span> <span class="id">beta</span> <span class="id">fr</span> <span class="id">fr</span>)); <span class="tactic">trivial</span>.<br/>
+<span class="tactic">intros</span> <span class="id">e</span>; <span class="tactic">apply</span> <span class="id">Zle_refl</span>.<br/>
+<span class="tactic">unfold</span> <span class="id">Rsqr</span>; <span class="id">now</span> <span class="tactic">rewrite</span> <span class="id">F2R_opp</span>,<span class="id">F2R_mult</span>, &lt;- <span class="id">Hr1</span>.<br/>
+&nbsp;*)</span><span class="tactic">apply</span> <span class="id">Rle_lt_trans</span> <span class="kwd">with</span> <span class="id">x</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rabs_minus_le</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rle_0_sqr</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">relative_error_N_FLX_ex</span> <span class="id">beta</span> <span class="id">prec</span> (<span class="id">prec_gt_0</span> <span class="id">prec</span>) <span class="id">choice</span> (<span class="id">sqrt</span> <span class="id">x</span>)) <span class="kwd">as</span> (<span class="id">eps</span>,(<span class="id">Heps1</span>,<span class="id">Heps2</span>)).<br/>
+<span class="tactic">rewrite</span> <span class="id">Heps2</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Rsqr_mult</span>, <span class="id">Rsqr_sqrt</span>, <span class="id">Rmult_comm</span>. 2: <span class="id">now</span> <span class="tactic">apply</span> <span class="id">Rlt_le</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_le_compat_r</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">Rlt_le</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rle_trans</span> <span class="kwd">with</span> (5²/4²)%<span class="id">R</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Rsqr_div</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rsqr_le_abs_1</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rle_trans</span> <span class="kwd">with</span> (1 := <span class="id">Rabs_triang</span> <span class="id">_</span> <span class="id">_</span>).<br/>
+<span class="tactic">rewrite</span> <span class="id">Rabs_R1</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rplus_le_reg_l</span> <span class="kwd">with</span> (-1)%<span class="id">R</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Rplus_assoc</span>, <span class="id">Rplus_opp_l</span>, <span class="id">Rplus_0_l</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rle_trans</span> <span class="kwd">with</span> (1 := <span class="id">Heps1</span>).<br/>
+<span class="tactic">rewrite</span> <span class="id">Rabs_pos_eq</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_le_reg_l</span> <span class="kwd">with</span> 2%<span class="id">R</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> (<span class="id">Z2R_lt</span> 0 2).<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Rmult_assoc</span>, <span class="id">Rinv_r</span>, <span class="id">Rmult_1_l</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rle_trans</span> <span class="kwd">with</span> (<span class="id">bpow</span> (-1)).<br/>
+<span class="tactic">apply</span> <span class="id">bpow_le</span>.<br/>
+<span class="tactic">omega</span>.<br/>
+<span class="tactic">replace</span> (2 * (-1 + 5 / 4))%<span class="id">R</span> <span class="kwd">with</span> (/2)%<span class="id">R</span> <span class="tactic">by</span> <span class="id">field</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rinv_le</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> (<span class="id">Z2R_lt</span> 0 2).<br/>
+<span class="tactic">apply</span> (<span class="id">Z2R_le</span> 2).<br/>
+<span class="tactic">unfold</span> <span class="id">Zpower_pos</span>. <span class="tactic">simpl</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Zmult_1_r</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Zle_bool_imp_le</span>.<br/>
+<span class="tactic">apply</span> <span class="id">beta</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rgt_not_eq</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> (<span class="id">Z2R_lt</span> 0 2).<br/>
+<span class="tactic">unfold</span> <span class="id">Rdiv</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_le_pos</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> (<span class="id">Z2R_le</span> 0 5).<br/>
+<span class="tactic">apply</span> <span class="id">Rlt_le</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rinv_0_lt_compat</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> (<span class="id">Z2R_lt</span> 0 4).<br/>
+<span class="tactic">apply</span> <span class="id">Rgt_not_eq</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> (<span class="id">Z2R_lt</span> 0 4).<br/>
+<span class="tactic">unfold</span> <span class="id">Rsqr</span>.<br/>
+<span class="tactic">replace</span> (5 * 5 / (4 * 4))%<span class="id">R</span> <span class="kwd">with</span> (25 * /16)%<span class="id">R</span> <span class="tactic">by</span> <span class="id">field</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_le_reg_r</span> <span class="kwd">with</span> 16%<span class="id">R</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> (<span class="id">Z2R_lt</span> 0 16).<br/>
+<span class="tactic">rewrite</span> <span class="id">Rmult_assoc</span>, <span class="id">Rinv_l</span>, <span class="id">Rmult_1_r</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> (<span class="id">Z2R_le</span> 25 32).<br/>
+<span class="tactic">apply</span> <span class="id">Rgt_not_eq</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> (<span class="id">Z2R_lt</span> 0 16).<br/>
+<span class="tactic">rewrite</span> <span class="id">Hx2</span>; <span class="tactic">unfold</span> <span class="id">canonic_exp</span>, <span class="id">FLX_exp</span>.<br/>
+<span class="id">ring_simplify</span> (<span class="id">prec</span> + (<span class="id">ln_beta</span> <span class="id">beta</span> <span class="id">x</span> - <span class="id">prec</span>))%<span class="id">Z</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">ln_beta</span> <span class="id">beta</span> <span class="id">x</span>); <span class="tactic">simpl</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- (<span class="id">Rabs_right</span> <span class="id">x</span>).<br/>
+<span class="tactic">apply</span> <span class="id">a</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">Rgt_not_eq</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">Rgt_ge</span>.<br/>
+&nbsp;*)</span><span class="tactic">replace</span> (<span class="id">Fexp</span> (<span class="id">Fopp</span> <span class="id">beta</span> (<span class="id">Fmult</span> <span class="id">beta</span> <span class="id">fr</span> <span class="id">fr</span>))) <span class="kwd">with</span> (<span class="id">Fexp</span> <span class="id">fr</span> + <span class="id">Fexp</span> <span class="id">fr</span>)%<span class="id">Z</span>.<br/>
+2: <span class="tactic">unfold</span> <span class="id">Fopp</span>, <span class="id">Fmult</span>; <span class="tactic">destruct</span> <span class="id">fr</span>; <span class="id">now</span> <span class="tactic">simpl</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Hr1</span>.<br/>
+<span class="tactic">replace</span> (<span class="id">x</span> + - <span class="id">Rsqr</span> (<span class="id">F2R</span> <span class="id">fr</span>))%<span class="id">R</span> <span class="kwd">with</span> (-((<span class="id">F2R</span> <span class="id">fr</span> - <span class="id">sqrt</span> <span class="id">x</span>)*(<span class="id">F2R</span> <span class="id">fr</span> + <span class="id">sqrt</span> <span class="id">x</span>)))%<span class="id">R</span>.<br/>
+2: <span class="tactic">rewrite</span> &lt;- (<span class="id">sqrt_sqrt</span> <span class="id">x</span>) <span class="tactic">at</span> 3; <span class="tactic">auto</span>.<br/>
+2: <span class="tactic">unfold</span> <span class="id">Rsqr</span>; <span class="tactic">ring</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Rabs_Ropp</span>, <span class="id">Rabs_mult</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rle_lt_trans</span> <span class="kwd">with</span> ((/2*<span class="id">bpow</span> (<span class="id">Fexp</span> <span class="id">fr</span>))* <span class="id">Rabs</span> (<span class="id">F2R</span> <span class="id">fr</span> + <span class="id">sqrt</span> <span class="id">x</span>))%<span class="id">R</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_le_compat_r</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rabs_pos</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rle_trans</span> <span class="kwd">with</span> (/2*<span class="id">ulp</span> <span class="id">beta</span>  (<span class="id">FLX_exp</span> <span class="id">prec</span>) (<span class="id">F2R</span> <span class="id">fr</span>))%<span class="id">R</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Hr1</span>.<br/>
+<span class="tactic">apply</span> <span class="id">error_le_half_ulp_round</span>...<br/>
+<span class="id">right</span>; <span class="tactic">rewrite</span> <span class="id">ulp_neq_0</span>.<br/>
+2: <span class="id">now</span> <span class="tactic">rewrite</span> &lt;- <span class="id">Hr1</span>.<br/>
+<span class="tactic">apply</span> <span class="tactic">f_equal</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Hr2</span>, &lt;- <span class="id">Hr1</span>; <span class="tactic">trivial</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Rmult_assoc</span>, <span class="id">Rmult_comm</span>.<br/>
+<span class="tactic">replace</span> (<span class="id">prec</span>+(<span class="id">Fexp</span> <span class="id">fr</span>+<span class="id">Fexp</span> <span class="id">fr</span>))%<span class="id">Z</span> <span class="kwd">with</span> (<span class="id">Fexp</span> <span class="id">fr</span> + (<span class="id">prec</span>+<span class="id">Fexp</span> <span class="id">fr</span>))%<span class="id">Z</span> <span class="tactic">by</span> <span class="tactic">ring</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">bpow_plus</span>, <span class="id">Rmult_assoc</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_lt_compat_l</span>.<br/>
+<span class="tactic">apply</span> <span class="id">bpow_gt_0</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rmult_lt_reg_l</span> <span class="kwd">with</span> 2%<span class="id">R</span>.<br/>
+<span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">real</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rle_lt_trans</span> <span class="kwd">with</span> (<span class="id">Rabs</span> (<span class="id">F2R</span> <span class="id">fr</span> + <span class="id">sqrt</span> <span class="id">x</span>)).<br/>
+<span class="id">right</span>; <span class="id">field</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rle_lt_trans</span> <span class="kwd">with</span> (1:=<span class="id">Rabs_triang</span> <span class="id">_</span> <span class="id">_</span>).<br/>
+&nbsp;.&nbsp;*)</span><span class="tactic">assert</span> (<span class="id">Rabs</span> (<span class="id">F2R</span> <span class="id">fr</span>) &lt; <span class="id">bpow</span> (<span class="id">prec</span> + <span class="id">Fexp</span> <span class="id">fr</span>))%<span class="id">R</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Hr2</span>; <span class="tactic">unfold</span> <span class="id">canonic_exp</span>; <span class="tactic">rewrite</span> <span class="id">Hr1</span>.<br/>
+<span class="tactic">unfold</span> <span class="id">FLX_exp</span>.<br/>
+<span class="id">ring_simplify</span> (<span class="id">prec</span> + (<span class="id">ln_beta</span> <span class="id">beta</span> (<span class="id">F2R</span> <span class="id">fr</span>) - <span class="id">prec</span>))%<span class="id">Z</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">ln_beta</span> <span class="id">beta</span> (<span class="id">F2R</span> <span class="id">fr</span>)); <span class="tactic">simpl</span>.<br/>
+<span class="tactic">apply</span> <span class="id">a</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Hr1</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;.&nbsp;*)</span><span class="tactic">apply</span> <span class="id">Rlt_le_trans</span> <span class="kwd">with</span> (<span class="id">bpow</span> (<span class="id">prec</span> + <span class="id">Fexp</span> <span class="id">fr</span>)+ <span class="id">Rabs</span> (<span class="id">sqrt</span> <span class="id">x</span>))%<span class="id">R</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">Rplus_lt_compat_r</span>.<br/>
+&nbsp;.&nbsp;*)</span><span class="tactic">rewrite</span> <span class="id">Rmult_plus_distr_r</span>, <span class="id">Rmult_1_l</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rplus_le_compat_l</span>.<br/>
+<span class="tactic">assert</span> (<span class="id">sqrt</span> <span class="id">x</span> &lt;&gt; 0)%<span class="id">R</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rgt_not_eq</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">sqrt_lt_R0</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">ln_beta</span> <span class="id">beta</span> (<span class="id">sqrt</span> <span class="id">x</span>)) <span class="kwd">as</span> (<span class="id">es</span>,<span class="id">Es</span>).<br/>
+<span class="id">specialize</span> (<span class="id">Es</span> <span class="id">H0</span>).<br/>
+<span class="tactic">apply</span> <span class="id">Rle_trans</span> <span class="kwd">with</span> (<span class="id">bpow</span> <span class="id">es</span>).<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">Rlt_le</span>.<br/>
+<span class="tactic">apply</span> <span class="id">bpow_le</span>.<br/>
+<span class="tactic">case</span> (<span class="id">Zle_or_lt</span> <span class="id">es</span> (<span class="id">prec</span> + <span class="id">Fexp</span> <span class="id">fr</span>)) ; <span class="tactic">trivial</span>.<br/>
+<span class="tactic">intros</span> <span class="id">H1</span>.<br/>
+<span class="id">absurd</span> (<span class="id">Rabs</span> (<span class="id">F2R</span> <span class="id">fr</span>) &lt; <span class="id">bpow</span> (<span class="id">es</span> - 1))%<span class="id">R</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rle_not_lt</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Hr1</span>.<br/>
+<span class="tactic">apply</span> <span class="id">abs_round_ge_generic</span>...<br/>
+<span class="tactic">apply</span> <span class="id">generic_format_bpow</span>.<br/>
+<span class="tactic">unfold</span> <span class="id">FLX_exp</span>; <span class="tactic">omega</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Es</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Rlt_le_trans</span> <span class="kwd">with</span> (1:=<span class="id">H</span>).<br/>
+<span class="tactic">apply</span> <span class="id">bpow_le</span>.<br/>
+<span class="tactic">omega</span>.<br/>
+<span class="id">now</span> <span class="tactic">apply</span> <span class="id">Rlt_le</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">Fprop_divsqrt_error</span>.<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

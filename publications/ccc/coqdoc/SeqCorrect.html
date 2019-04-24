@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module SeqCorrect</title>
+<meta name="description" content="Documentation of Coq module SeqCorrect" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module SeqCorrect</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html">Streams</a></span> <span class="id"><a href="Errors.html">Errors</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html">Injections</a></span> <span class="id"><a href="MemAux.html">MemAux</a></span> <span class="id"><a href="MemClosures.html">MemClosures</a></span> <span class="id"><a href="LDSimDefs.html">LDSimDefs</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span> <span class="id"><a href="LDSim.html">LDSim</a></span>.<br/>
+<br/>
+<h1> SeqCorrect </h1>
+<div class="doc">a sequential compiler <span class="bracket"><span class="id">comp</span></span> is correct w.r.t. the source language <span class="bracket"><span class="id">sl</span></span> and target language <span class="bracket"><span class="id">tl</span></span> if:
+    for any source compilation unit <span class="bracket"><span class="id">su</span></span> and the compiled compilation unit <span class="bracket"><span class="id">tu</span></span> that
+    <span class="bracket"><span class="id">comp</span> <span class="id">su</span> = <span class="id">OK</span> <span class="id">tu</span></span>,
+    <span class="bracket"><span class="id">su</span></span> and <span class="bracket"><span class="id">tu</span></span> satisfies the module local downward simulation, 
+    and the <span class="bracket"><span class="id">internal_fn</span></span> (the set of functions which could be called by other modules) 
+    of <span class="bracket"><span class="id">su</span></span> and <span class="bracket"><span class="id">tu</span></span> are equal </div>
+<span class="kwd">Definition</span> <span class="id"><a name="seq_correct">seq_correct</a></span> {<span class="id">sl</span> <span class="id">tl</span>: <span class="id"><a href="InteractionSemantics.html#Language">Language</a></span>} (<span class="id">comp</span>: @<span class="id"><a href="InteractionSemantics.html#seq_comp">seq_comp</a></span> <span class="id"><a href="SeqCorrect.html#sl">sl</a></span> <span class="id"><a href="SeqCorrect.html#tl">tl</a></span>): <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">su</span> <span class="id">tu</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SeqCorrect.html#comp">comp</a></span> <span class="id"><a href="SeqCorrect.html#su">su</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="SeqCorrect.html#tu">tu</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSim.html#ldsim">ldsim</a></span> <span class="id"><a href="SeqCorrect.html#su">su</a></span> <span class="id"><a href="SeqCorrect.html#tu">tu</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#internal_fn">internal_fn</a></span> <span class="id"><a href="SeqCorrect.html#sl">sl</a></span> <span class="id"><a href="SeqCorrect.html#su">su</a></span>) = (<span class="id"><a href="InteractionSemantics.html#internal_fn">internal_fn</a></span> <span class="id"><a href="SeqCorrect.html#tl">tl</a></span> <span class="id"><a href="SeqCorrect.html#tu">tu</a></span>).<br/>
+<br/>
+<br/>
+<span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">error_monad_scope</span>.<br/>
+&nbsp;<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="comp_compose">comp_compose</a></span> {<span class="id">l1</span> <span class="id">l2</span> <span class="id">l3</span>: <span class="id"><a href="InteractionSemantics.html#Language">Language</a></span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">comp12</span>: @<span class="id"><a href="InteractionSemantics.html#seq_comp">seq_comp</a></span> <span class="id"><a href="SeqCorrect.html#l1">l1</a></span> <span class="id"><a href="SeqCorrect.html#l2">l2</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">comp23</span>: @<span class="id"><a href="InteractionSemantics.html#seq_comp">seq_comp</a></span> <span class="id"><a href="SeqCorrect.html#l2">l2</a></span> <span class="id"><a href="SeqCorrect.html#l3">l3</a></span>) : @<span class="id"><a href="InteractionSemantics.html#seq_comp">seq_comp</a></span> <span class="id"><a href="SeqCorrect.html#l1">l1</a></span> <span class="id"><a href="SeqCorrect.html#l3">l3</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> (<span class="id">cu1</span>: <span class="id"><a href="InteractionSemantics.html#comp_unit">comp_unit</a></span> <span class="id"><a href="SeqCorrect.html#l1">l1</a></span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="SeqCorrect.html#comp12">comp12</a></span> <span class="id"><a href="SeqCorrect.html#cu1">cu1</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="Errors.html#Error">Error</a></span> <span class="id">msg</span> =&gt; <span class="id"><a href="Errors.html#Error">Error</a></span> <span class="id">msg</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id">cu2</span> =&gt; <span class="id"><a href="SeqCorrect.html#comp23">comp23</a></span> <span class="id">cu2</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

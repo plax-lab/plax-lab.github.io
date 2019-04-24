@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module SimplLocals</title>
+<meta name="description" content="Documentation of Coq module SimplLocals" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module SimplLocals</h1>
+<div class="coq">
+<br/>
+<div class="doc">Pulling local scalar variables whose address is not taken
+  into temporary variables. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">FSets</span>.<br/>
+<span class="kwd">Require</span> <span class="id">FSetAVL</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span> <span class="id">Ordered</span> <span class="id">Errors</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span> <span class="id">Linking</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Ctypes</span> <span class="id">Cop</span> <span class="id">Clight</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Compopts</span>.<br/>
+<br/>
+<span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">error_monad_scope</span>.<br/>
+<span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">string_scope</span>.<br/>
+<br/>
+<span class="kwd">Module</span> <span class="id">VSet</span> := <span class="id">FSetAVL.Make</span>(<span class="id">OrderedPositive</span>).<br/>
+<br/>
+<div class="doc">The set of local variables that can be lifted to temporaries,
+  because they are scalar and their address is not taken. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">compilenv</span> := <span class="id">VSet.t</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">is_liftable_var</span> (<span class="id">cenv</span>: <span class="id">compilenv</span>) (<span class="id">a</span>: <span class="id">expr</span>) : <span class="id">option</span> <span class="id">ident</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">a</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Evar</span> <span class="id">id</span> <span class="id">ty</span> =&gt; <span class="kwd">if</span> <span class="id">VSet.mem</span> <span class="id">id</span> <span class="id">cenv</span> <span class="kwd">then</span> <span class="id">Some</span> <span class="id">id</span> <span class="kwd">else</span> <span class="id">None</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Smart constructor for casts </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">make_cast</span> (<span class="id">a</span>: <span class="id">expr</span>) (<span class="id">tto</span>: <span class="id">type</span>) : <span class="id">expr</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">classify_cast</span> (<span class="id">typeof</span> <span class="id">a</span>) <span class="id">tto</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">cast_case_pointer</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">cast_case_i2i</span> <span class="id">I32</span> <span class="id">_</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">cast_case_f2f</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">cast_case_s2s</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">cast_case_l2l</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">cast_case_struct</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">cast_case_union</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">cast_case_void</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">Ecast</span> <span class="id">a</span> <span class="id">tto</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Insertion of debug annotations </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">Sdebug_temp</span> (<span class="id">id</span>: <span class="id">ident</span>) (<span class="id">ty</span>: <span class="id">type</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">Sbuiltin</span> <span class="id">None</span> (<span class="id">EF_debug</span> 2%<span class="id">positive</span> <span class="id">id</span> (<span class="id">typ_of_type</span> <span class="id">ty</span> :: <span class="id">nil</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Tcons</span> (<span class="id">typeconv</span> <span class="id">ty</span>) <span class="id">Tnil</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Etempvar</span> <span class="id">id</span> <span class="id">ty</span> :: <span class="id">nil</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">Sdebug_var</span> (<span class="id">id</span>: <span class="id">ident</span>) (<span class="id">ty</span>: <span class="id">type</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">Sbuiltin</span> <span class="id">None</span> (<span class="id">EF_debug</span> 5%<span class="id">positive</span> <span class="id">id</span> (<span class="id">AST.Tint</span> :: <span class="id">nil</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Tcons</span> (<span class="id">Tpointer</span> <span class="id">ty</span> <span class="id">noattr</span>) <span class="id">Tnil</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Eaddrof</span> (<span class="id">Evar</span> <span class="id">id</span> <span class="id">ty</span>) (<span class="id">Tpointer</span> <span class="id">ty</span> <span class="id">noattr</span>) :: <span class="id">nil</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">Sset_debug</span> (<span class="id">id</span>: <span class="id">ident</span>) (<span class="id">ty</span>: <span class="id">type</span>) (<span class="id">a</span>: <span class="id">expr</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Compopts.debug</span> <span class="id">tt</span><br/>
+&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">Ssequence</span> (<span class="id">Sset</span> <span class="id">id</span> (<span class="id">make_cast</span> <span class="id">a</span> <span class="id">ty</span>)) (<span class="id">Sdebug_temp</span> <span class="id">id</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">Sset</span> <span class="id">id</span> (<span class="id">make_cast</span> <span class="id">a</span> <span class="id">ty</span>).<br/>
+<br/>
+<div class="doc">Rewriting of expressions and statements. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">simpl_expr</span> (<span class="id">cenv</span>: <span class="id">compilenv</span>) (<span class="id">a</span>: <span class="id">expr</span>) : <span class="id">expr</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">a</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Econst_int</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">Econst_float</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">Econst_single</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">Econst_long</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">Evar</span> <span class="id">id</span> <span class="id">ty</span> =&gt; <span class="kwd">if</span> <span class="id">VSet.mem</span> <span class="id">id</span> <span class="id">cenv</span> <span class="kwd">then</span> <span class="id">Etempvar</span> <span class="id">id</span> <span class="id">ty</span> <span class="kwd">else</span> <span class="id">Evar</span> <span class="id">id</span> <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Etempvar</span> <span class="id">id</span> <span class="id">ty</span> =&gt; <span class="id">Etempvar</span> <span class="id">id</span> <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ederef</span> <span class="id">a1</span> <span class="id">ty</span> =&gt; <span class="id">Ederef</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a1</span>) <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Eaddrof</span> <span class="id">a1</span> <span class="id">ty</span> =&gt; <span class="id">Eaddrof</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a1</span>) <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Eunop</span> <span class="id">op</span> <span class="id">a1</span> <span class="id">ty</span> =&gt; <span class="id">Eunop</span> <span class="id">op</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a1</span>) <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ebinop</span> <span class="id">op</span> <span class="id">a1</span> <span class="id">a2</span> <span class="id">ty</span> =&gt; <span class="id">Ebinop</span> <span class="id">op</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a1</span>) (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a2</span>) <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ecast</span> <span class="id">a1</span> <span class="id">ty</span> =&gt; <span class="id">Ecast</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a1</span>) <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Efield</span> <span class="id">a1</span> <span class="id">fld</span> <span class="id">ty</span> =&gt; <span class="id">Efield</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a1</span>) <span class="id">fld</span> <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Esizeof</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">Ealignof</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">simpl_exprlist</span> (<span class="id">cenv</span>: <span class="id">compilenv</span>) (<span class="id">al</span>: <span class="id">list</span> <span class="id">expr</span>) : <span class="id">list</span> <span class="id">expr</span> :=<br/>
+&nbsp;&nbsp;<span class="id">List.map</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span>) <span class="id">al</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">check_temp</span> (<span class="id">cenv</span>: <span class="id">compilenv</span>) (<span class="id">id</span>: <span class="id">ident</span>) : <span class="id">res</span> <span class="id">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">VSet.mem</span> <span class="id">id</span> <span class="id">cenv</span><br/>
+&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">Error</span> (<span class="id">MSG</span> "<span class="id">bad</span> <span class="id">temporary</span> " :: <span class="id">CTX</span> <span class="id">id</span> :: <span class="id">nil</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">OK</span> <span class="id">tt</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">check_opttemp</span> (<span class="id">cenv</span>: <span class="id">compilenv</span>) (<span class="id">optid</span>: <span class="id">option</span> <span class="id">ident</span>) : <span class="id">res</span> <span class="id">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">optid</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">id</span> =&gt; <span class="id">check_temp</span> <span class="id">cenv</span> <span class="id">id</span><br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">OK</span> <span class="id">tt</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">simpl_stmt</span> (<span class="id">cenv</span>: <span class="id">compilenv</span>) (<span class="id">s</span>: <span class="id">statement</span>) : <span class="id">res</span> <span class="id">statement</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">s</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Sskip</span> =&gt; <span class="id">OK</span> <span class="id">Sskip</span><br/>
+&nbsp;&nbsp;| <span class="id">Sassign</span> <span class="id">a1</span> <span class="id">a2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">is_liftable_var</span> <span class="id">cenv</span> <span class="id">a1</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">id</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Sset_debug</span> <span class="id">id</span> (<span class="id">typeof</span> <span class="id">a1</span>) (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a2</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Sassign</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a1</span>) (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a2</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Sset</span> <span class="id">id</span> <span class="id">a</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">x</span> &lt;- <span class="id">check_temp</span> <span class="id">cenv</span> <span class="id">id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Sset</span> <span class="id">id</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Scall</span> <span class="id">optid</span> <span class="id">a</span> <span class="id">al</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">x</span> &lt;- <span class="id">check_opttemp</span> <span class="id">cenv</span> <span class="id">optid</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Scall</span> <span class="id">optid</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a</span>) (<span class="id">simpl_exprlist</span> <span class="id">cenv</span> <span class="id">al</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Sbuiltin</span> <span class="id">optid</span> <span class="id">ef</span> <span class="id">tyargs</span> <span class="id">al</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">x</span> &lt;- <span class="id">check_opttemp</span> <span class="id">cenv</span> <span class="id">optid</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Sbuiltin</span> <span class="id">optid</span> <span class="id">ef</span> <span class="id">tyargs</span> (<span class="id">simpl_exprlist</span> <span class="id">cenv</span> <span class="id">al</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Ssequence</span> <span class="id">s1</span> <span class="id">s2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">s1</span>' &lt;- <span class="id">simpl_stmt</span> <span class="id">cenv</span> <span class="id">s1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">s2</span>' &lt;- <span class="id">simpl_stmt</span> <span class="id">cenv</span> <span class="id">s2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Ssequence</span> <span class="id">s1</span>' <span class="id">s2</span>')<br/>
+&nbsp;&nbsp;| <span class="id">Sifthenelse</span> <span class="id">a</span> <span class="id">s1</span> <span class="id">s2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">s1</span>' &lt;- <span class="id">simpl_stmt</span> <span class="id">cenv</span> <span class="id">s1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">s2</span>' &lt;- <span class="id">simpl_stmt</span> <span class="id">cenv</span> <span class="id">s2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Sifthenelse</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a</span>) <span class="id">s1</span>' <span class="id">s2</span>')<br/>
+&nbsp;&nbsp;| <span class="id">Sloop</span> <span class="id">s1</span> <span class="id">s2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">s1</span>' &lt;- <span class="id">simpl_stmt</span> <span class="id">cenv</span> <span class="id">s1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">s2</span>' &lt;- <span class="id">simpl_stmt</span> <span class="id">cenv</span> <span class="id">s2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Sloop</span> <span class="id">s1</span>' <span class="id">s2</span>')<br/>
+&nbsp;&nbsp;| <span class="id">Sbreak</span> =&gt; <span class="id">OK</span> <span class="id">Sbreak</span><br/>
+&nbsp;&nbsp;| <span class="id">Scontinue</span> =&gt; <span class="id">OK</span> <span class="id">Scontinue</span><br/>
+&nbsp;&nbsp;| <span class="id">Sreturn</span> <span class="id">opta</span> =&gt; <span class="id">OK</span> (<span class="id">Sreturn</span> (<span class="id">option_map</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span>) <span class="id">opta</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Sswitch</span> <span class="id">a</span> <span class="id">ls</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">ls</span>' &lt;- <span class="id">simpl_lblstmt</span> <span class="id">cenv</span> <span class="id">ls</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Sswitch</span> (<span class="id">simpl_expr</span> <span class="id">cenv</span> <span class="id">a</span>) <span class="id">ls</span>')<br/>
+&nbsp;&nbsp;| <span class="id">Slabel</span> <span class="id">lbl</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">s</span>' &lt;- <span class="id">simpl_stmt</span> <span class="id">cenv</span> <span class="id">s</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Slabel</span> <span class="id">lbl</span> <span class="id">s</span>')<br/>
+&nbsp;&nbsp;| <span class="id">Sgoto</span> <span class="id">lbl</span> =&gt; <span class="id">OK</span> (<span class="id">Sgoto</span> <span class="id">lbl</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">simpl_lblstmt</span> (<span class="id">cenv</span>: <span class="id">compilenv</span>) (<span class="id">ls</span>: <span class="id">labeled_statements</span>) : <span class="id">res</span> <span class="id">labeled_statements</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">ls</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">LSnil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> <span class="id">LSnil</span><br/>
+&nbsp;&nbsp;| <span class="id">LScons</span> <span class="id">c</span> <span class="id">s</span> <span class="id">ls1</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">s</span>' &lt;- <span class="id">simpl_stmt</span> <span class="id">cenv</span> <span class="id">s</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">ls1</span>' &lt;- <span class="id">simpl_lblstmt</span> <span class="id">cenv</span> <span class="id">ls1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">LScons</span> <span class="id">c</span> <span class="id">s</span>' <span class="id">ls1</span>')<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Function parameters that are not lifted to temporaries must be
+  stored in the corresponding local variable at function entry. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">store_params</span> (<span class="id">cenv</span>: <span class="id">compilenv</span>) (<span class="id">params</span>: <span class="id">list</span> (<span class="id">ident</span> * <span class="id">type</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">s</span>: <span class="id">statement</span>): <span class="id">statement</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">params</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">nil</span> =&gt; <span class="id">s</span><br/>
+&nbsp;&nbsp;| (<span class="id">id</span>, <span class="id">ty</span>) :: <span class="id">params</span>' =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">VSet.mem</span> <span class="id">id</span> <span class="id">cenv</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">store_params</span> <span class="id">cenv</span> <span class="id">params</span>' <span class="id">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">Ssequence</span> (<span class="id">Sassign</span> (<span class="id">Evar</span> <span class="id">id</span> <span class="id">ty</span>) (<span class="id">Etempvar</span> <span class="id">id</span> <span class="id">ty</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">store_params</span> <span class="id">cenv</span> <span class="id">params</span>' <span class="id">s</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Compute the set of variables whose address is taken </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">addr_taken_expr</span> (<span class="id">a</span>: <span class="id">expr</span>): <span class="id">VSet.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">a</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Econst_int</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Econst_float</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Econst_single</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Econst_long</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Evar</span> <span class="id">id</span> <span class="id">ty</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Etempvar</span> <span class="id">id</span> <span class="id">ty</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ederef</span> <span class="id">a1</span> <span class="id">ty</span> =&gt; <span class="id">addr_taken_expr</span> <span class="id">a1</span><br/>
+&nbsp;&nbsp;| <span class="id">Eaddrof</span> (<span class="id">Evar</span> <span class="id">id</span> <span class="id">ty1</span>) <span class="id">ty</span> =&gt; <span class="id">VSet.singleton</span> <span class="id">id</span><br/>
+&nbsp;&nbsp;| <span class="id">Eaddrof</span> <span class="id">a1</span> <span class="id">ty</span> =&gt; <span class="id">addr_taken_expr</span> <span class="id">a1</span><br/>
+&nbsp;&nbsp;| <span class="id">Eunop</span> <span class="id">op</span> <span class="id">a1</span> <span class="id">ty</span> =&gt; <span class="id">addr_taken_expr</span> <span class="id">a1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ebinop</span> <span class="id">op</span> <span class="id">a1</span> <span class="id">a2</span> <span class="id">ty</span> =&gt; <span class="id">VSet.union</span> (<span class="id">addr_taken_expr</span> <span class="id">a1</span>) (<span class="id">addr_taken_expr</span> <span class="id">a2</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ecast</span> <span class="id">a1</span> <span class="id">ty</span> =&gt; <span class="id">addr_taken_expr</span> <span class="id">a1</span><br/>
+&nbsp;&nbsp;| <span class="id">Efield</span> <span class="id">a1</span> <span class="id">fld</span> <span class="id">ty</span> =&gt; <span class="id">addr_taken_expr</span> <span class="id">a1</span><br/>
+&nbsp;&nbsp;| <span class="id">Esizeof</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ealignof</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">addr_taken_exprlist</span> (<span class="id">l</span>: <span class="id">list</span> <span class="id">expr</span>) : <span class="id">VSet.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">l</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">nil</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">a</span> :: <span class="id">l</span>' =&gt; <span class="id">VSet.union</span> (<span class="id">addr_taken_expr</span> <span class="id">a</span>) (<span class="id">addr_taken_exprlist</span> <span class="id">l</span>')<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">addr_taken_stmt</span> (<span class="id">s</span>: <span class="id">statement</span>) : <span class="id">VSet.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">s</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Sskip</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Sassign</span> <span class="id">a</span> <span class="id">b</span> =&gt; <span class="id">VSet.union</span> (<span class="id">addr_taken_expr</span> <span class="id">a</span>) (<span class="id">addr_taken_expr</span> <span class="id">b</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Sset</span> <span class="id">id</span> <span class="id">a</span> =&gt; <span class="id">addr_taken_expr</span> <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">Scall</span> <span class="id">optid</span> <span class="id">a</span> <span class="id">bl</span> =&gt; <span class="id">VSet.union</span> (<span class="id">addr_taken_expr</span> <span class="id">a</span>) (<span class="id">addr_taken_exprlist</span> <span class="id">bl</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Sbuiltin</span> <span class="id">optid</span> <span class="id">ef</span> <span class="id">tyargs</span> <span class="id">bl</span> =&gt; <span class="id">addr_taken_exprlist</span> <span class="id">bl</span><br/>
+&nbsp;&nbsp;| <span class="id">Ssequence</span> <span class="id">s1</span> <span class="id">s2</span> =&gt; <span class="id">VSet.union</span> (<span class="id">addr_taken_stmt</span> <span class="id">s1</span>) (<span class="id">addr_taken_stmt</span> <span class="id">s2</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Sifthenelse</span> <span class="id">a</span> <span class="id">s1</span> <span class="id">s2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">VSet.union</span> (<span class="id">addr_taken_expr</span> <span class="id">a</span>) (<span class="id">VSet.union</span> (<span class="id">addr_taken_stmt</span> <span class="id">s1</span>) (<span class="id">addr_taken_stmt</span> <span class="id">s2</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Sloop</span> <span class="id">s1</span> <span class="id">s2</span> =&gt; <span class="id">VSet.union</span> (<span class="id">addr_taken_stmt</span> <span class="id">s1</span>) (<span class="id">addr_taken_stmt</span> <span class="id">s2</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Sbreak</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Scontinue</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Sreturn</span> <span class="id">None</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Sreturn</span> (<span class="id">Some</span> <span class="id">a</span>) =&gt; <span class="id">addr_taken_expr</span> <span class="id">a</span><br/>
+&nbsp;&nbsp;| <span class="id">Sswitch</span> <span class="id">a</span> <span class="id">ls</span> =&gt; <span class="id">VSet.union</span> (<span class="id">addr_taken_expr</span> <span class="id">a</span>) (<span class="id">addr_taken_lblstmt</span> <span class="id">ls</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Slabel</span> <span class="id">lbl</span> <span class="id">s</span> =&gt; <span class="id">addr_taken_stmt</span> <span class="id">s</span><br/>
+&nbsp;&nbsp;| <span class="id">Sgoto</span> <span class="id">lbl</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">addr_taken_lblstmt</span> (<span class="id">ls</span>: <span class="id">labeled_statements</span>) : <span class="id">VSet.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">ls</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">LSnil</span> =&gt; <span class="id">VSet.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">LScons</span> <span class="id">c</span> <span class="id">s</span> <span class="id">ls</span>' =&gt; <span class="id">VSet.union</span> (<span class="id">addr_taken_stmt</span> <span class="id">s</span>) (<span class="id">addr_taken_lblstmt</span> <span class="id">ls</span>')<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">The compilation environment for a function is the set of local variables
+  that are scalars and whose addresses are not taken. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_local_variable</span> (<span class="id">atk</span>: <span class="id">VSet.t</span>) (<span class="id">id_ty</span>: <span class="id">ident</span> * <span class="id">type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">cenv</span>: <span class="id">compilenv</span>) : <span class="id">compilenv</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">id</span>, <span class="id">ty</span>) := <span class="id">id_ty</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">access_mode</span> <span class="id">ty</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">By_value</span> <span class="id">chunk</span> =&gt; <span class="kwd">if</span> <span class="id">VSet.mem</span> <span class="id">id</span> <span class="id">atk</span> <span class="kwd">then</span> <span class="id">cenv</span> <span class="kwd">else</span> <span class="id">VSet.add</span> <span class="id">id</span> <span class="id">cenv</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">cenv</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">cenv_for</span> (<span class="id">f</span>: <span class="id">function</span>) : <span class="id">compilenv</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">atk</span> := <span class="id">addr_taken_stmt</span> <span class="id">f</span>.(<span class="id">fn_body</span>) <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">List.fold_right</span> (<span class="id">add_local_variable</span> <span class="id">atk</span>) <span class="id">VSet.empty</span> (<span class="id">f</span>.(<span class="id">fn_params</span>) ++ <span class="id">f</span>.(<span class="id">fn_vars</span>)).<br/>
+<br/>
+<div class="doc">Transform a function </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_debug_var</span> (<span class="id">id_ty</span>: <span class="id">ident</span> * <span class="id">type</span>) (<span class="id">s</span>: <span class="id">statement</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">id</span>, <span class="id">ty</span>) := <span class="id">id_ty</span> <span class="kwd">in</span> <span class="id">Ssequence</span> (<span class="id">Sdebug_var</span> <span class="id">id</span> <span class="id">ty</span>) <span class="id">s</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_debug_vars</span> (<span class="id">vars</span>: <span class="id">list</span> (<span class="id">ident</span> * <span class="id">type</span>)) (<span class="id">s</span>: <span class="id">statement</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Compopts.debug</span> <span class="id">tt</span><br/>
+&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">List.fold_right</span> <span class="id">add_debug_var</span> <span class="id">s</span> <span class="id">vars</span><br/>
+&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">s</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_debug_param</span> (<span class="id">id_ty</span>: <span class="id">ident</span> * <span class="id">type</span>) (<span class="id">s</span>: <span class="id">statement</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">id</span>, <span class="id">ty</span>) := <span class="id">id_ty</span> <span class="kwd">in</span> <span class="id">Ssequence</span> (<span class="id">Sdebug_temp</span> <span class="id">id</span> <span class="id">ty</span>) <span class="id">s</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_debug_params</span> (<span class="id">params</span>: <span class="id">list</span> (<span class="id">ident</span> * <span class="id">type</span>)) (<span class="id">s</span>: <span class="id">statement</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Compopts.debug</span> <span class="id">tt</span><br/>
+&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">List.fold_right</span> <span class="id">add_debug_param</span> <span class="id">s</span> <span class="id">params</span><br/>
+&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">s</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">remove_lifted</span> (<span class="id">cenv</span>: <span class="id">compilenv</span>) (<span class="id">vars</span>: <span class="id">list</span> (<span class="id">ident</span> * <span class="id">type</span>)) :=<br/>
+&nbsp;&nbsp;<span class="id">List.filter</span> (<span class="kwd">fun</span> <span class="id">id_ty</span> =&gt; <span class="id">negb</span> (<span class="id">VSet.mem</span> (<span class="id">fst</span> <span class="id">id_ty</span>) <span class="id">cenv</span>)) <span class="id">vars</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_lifted</span> (<span class="id">cenv</span>: <span class="id">compilenv</span>) (<span class="id">vars1</span> <span class="id">vars2</span>: <span class="id">list</span> (<span class="id">ident</span> * <span class="id">type</span>)) :=<br/>
+&nbsp;&nbsp;<span class="id">List.filter</span> (<span class="kwd">fun</span> <span class="id">id_ty</span> =&gt; <span class="id">VSet.mem</span> (<span class="id">fst</span> <span class="id">id_ty</span>) <span class="id">cenv</span>) <span class="id">vars1</span> ++ <span class="id">vars2</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_function</span> (<span class="id">f</span>: <span class="id">function</span>) : <span class="id">res</span> <span class="id">function</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">cenv</span> := <span class="id">cenv_for</span> <span class="id">f</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">assertion</span> (<span class="id">list_disjoint_dec</span> <span class="id">ident_eq</span> (<span class="id">var_names</span> <span class="id">f</span>.(<span class="id">fn_params</span>)) (<span class="id">var_names</span> <span class="id">f</span>.(<span class="id">fn_temps</span>)));<br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">body</span>' &lt;- <span class="id">simpl_stmt</span> <span class="id">cenv</span> <span class="id">f</span>.(<span class="id">fn_body</span>);<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">vars</span>' := <span class="id">remove_lifted</span> <span class="id">cenv</span> (<span class="id">f</span>.(<span class="id">fn_params</span>) ++ <span class="id">f</span>.(<span class="id">fn_vars</span>)) <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">temps</span>' := <span class="id">add_lifted</span> <span class="id">cenv</span> <span class="id">f</span>.(<span class="id">fn_vars</span>) <span class="id">f</span>.(<span class="id">fn_temps</span>) <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">OK</span> {| <span class="id">fn_return</span> := <span class="id">f</span>.(<span class="id">fn_return</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fn_callconv</span> := <span class="id">f</span>.(<span class="id">fn_callconv</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fn_params</span> := <span class="id">f</span>.(<span class="id">fn_params</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fn_vars</span> := <span class="id">vars</span>';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fn_temps</span> := <span class="id">temps</span>';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fn_body</span> := <span class="id">add_debug_params</span> <span class="id">f</span>.(<span class="id">fn_params</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">store_params</span> <span class="id">cenv</span> <span class="id">f</span>.(<span class="id">fn_params</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">add_debug_vars</span> <span class="id">vars</span>' <span class="id">body</span>')) |}.<br/>
+<br/>
+<div class="doc">Whole-program transformation </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_fundef</span> (<span class="id">fd</span>: <span class="id">fundef</span>) : <span class="id">res</span> <span class="id">fundef</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">fd</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Internal</span> <span class="id">f</span> =&gt; <span class="tactic">do</span> <span class="id">tf</span> &lt;- <span class="id">transf_function</span> <span class="id">f</span>; <span class="id">OK</span> (<span class="id">Internal</span> <span class="id">tf</span>)<br/>
+&nbsp;&nbsp;| <span class="id">External</span> <span class="id">ef</span> <span class="id">targs</span> <span class="id">tres</span> <span class="id">cconv</span> =&gt; <span class="id">OK</span> (<span class="id">External</span> <span class="id">ef</span> <span class="id">targs</span> <span class="id">tres</span> <span class="id">cconv</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_program</span> (<span class="id">p</span>: <span class="id">program</span>) : <span class="id">res</span> <span class="id">program</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">p1</span> &lt;- <span class="id">AST.transform_partial_program</span> <span class="id">transf_fundef</span> <span class="id">p</span>;<br/>
+&nbsp;&nbsp;<span class="id">OK</span> {| <span class="id">prog_defs</span> := <span class="id">AST.prog_defs</span> <span class="id">p1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">prog_public</span> := <span class="id">AST.prog_public</span> <span class="id">p1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">prog_main</span> := <span class="id">AST.prog_main</span> <span class="id">p1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">prog_types</span> := <span class="id">prog_types</span> <span class="id">p</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">prog_comp_env</span> := <span class="id">prog_comp_env</span> <span class="id">p</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">prog_comp_env_eq</span> := <span class="id">prog_comp_env_eq</span> <span class="id">p</span> |}.<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

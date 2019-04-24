@@ -1,0 +1,866 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module ObjLemmas</title>
+<meta name="description" content="Documentation of Coq module ObjLemmas" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module ObjLemmas</h1>
+<div class="coq">
+<span class="id">From</span> <span class="id">mathcomp.ssreflect</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">fintype</span> <span class="id">ssrnat</span>.            <br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Maps.html">Maps</a></span> <span class="id"><a href="Axioms.html">Axioms</a></span>.  <br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AST.html">AST</a></span> <span class="id"><a href="Integers.html">Integers</a></span> <span class="id"><a href="Floats.html">Floats</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Events.html">Events</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span> <span class="id"><a href="Smallstep.html">Smallstep</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Locations.html">Locations</a></span> <span class="id"><a href="Stacklayout.html">Stacklayout</a></span> <span class="id"><a href="Conventions.html">Conventions</a></span>.<br/>
+&nbsp;<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Asm.html">Asm</a></span>. <br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="CUAST.html">CUAST</a></span> <span class="id"><a href="FMemOpFP.html">FMemOpFP</a></span> <span class="id"><a href="ValFP.html">ValFP</a></span> <span class="id"><a href="Op_fp.html">Op_fp</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html">String</a></span> <span class="id"><a href="val_casted.html">val_casted</a></span> <span class="id"><a href="helpers.html">helpers</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="FMemory.html">FMemory</a></span> <span class="id"><a href="TSOMem.html">TSOMem</a></span> <span class="id"><a href="MemAux.html">MemAux</a></span>. <br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="GAST.html">GAST</a></span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="ETrace.html">ETrace</a></span> <span class="id"><a href="Blockset.html">Blockset</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="loadframe.html">loadframe</a></span>. <br/>
+&nbsp;<br/>
+<span class="kwd">Require</span> <span class="id"><a href="CminorLang.html">CminorLang</a></span>. <br/>
+<span class="kwd">Require</span> <span class="id"><a href="SpecLang.html">SpecLang</a></span>. <br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="ASM_local.html">ASM_local</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AsmLang.html">AsmLang</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AsmTSO.html">AsmTSO</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html">Coq.Lists.Streams</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="RGRels.html">RGRels</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="LibTactics.html">LibTactics</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="code.html">code</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="ObjectSim.html">ObjectSim</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="InvRG.html">InvRG</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="TSOGlobSem.html">TSOGlobSem</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AuxTacLemmas.html">AuxTacLemmas</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="TSOMemLemmas.html">TSOMemLemmas</a></span> <span class="id"><a href="MemLemmas.html">MemLemmas</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="LockAcqProof.html">LockAcqProof</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="LockRelProof.html">LockRelProof</a></span>.<br/>
+&nbsp;&nbsp;<br/>
+<h1> Lemmas about object : <span class="bracket"><span class="id">spin</span>-<span class="id">lock</span></span> </h1>
+<span class="kwd">Lemma</span> <span class="id"><a name="ObjInit_inv">ObjInit_inv</a></span> : <br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sge</span> <span class="id">sG</span> <span class="id">tge</span> <span class="id">sm</span> <span class="id">tm</span> <span class="id">gm</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">HSpecLang_init_genv</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Htso_init_genv</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hge_equiv</span> : <span class="id"><a href="TSOGlobSem.html#genv_match">genv_match</a></span> (<span class="id"><a href="InteractionSemantics.html#F">InteractionSemantics.F</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#V">InteractionSemantics.V</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>) <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">HSpecLang_init_mem</span> : <span class="id"><a href="InteractionSemantics.html#init_gmem">InteractionSemantics.init_gmem</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Htso_init_mem</span> : <span class="id"><a href="AsmLang.html#init_mem">init_mem</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#gm">gm</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Htso_init_gmem</span> : <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> = <span class="id"><a href="TSOMem.html#tsomem_init">tsomem_init</a></span> <span class="id"><a href="ObjLemmas.html#gm">gm</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InvRG.html#obj_inv">obj_inv</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9957')">Proof.</div>
+<div class="proofscript" id="proof9957">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="InvRG.html#obj_inv">obj_inv</a></span>. <br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Htso_init_genv</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H2</span> <span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span>).<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H2</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H5</span> <span class="kwd">in</span> <span class="id">H10</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">H0</span> <span class="id">H1</span> <span class="id">H2</span> <span class="id">H3</span> <span class="id">H4</span> <span class="id">H5</span> <span class="id">H6</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">eexists</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Haddr_eq</span> : <span class="id"><a href="MemLemmas.html#ogenv_match_L_addr_eq">ogenv_match_L_addr_eq</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Haddr_eq</span> <span class="kwd">as</span> [<span class="id">L</span>' [<span class="id">H_t_addr_L</span> <span class="id">H_s_addr_L</span>]].<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H_t_addr_L</span> <span class="kwd">in</span> <span class="id">H9</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H9</span>; <span class="tactic">subst</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Hspec_init_gm</span> : <span class="id"><a href="MemLemmas.html#spec_init_lock_one">spec_init_lock_one</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">split</span>. <br/>
+&nbsp;&nbsp;<span class="id">right</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="TSOMem.html#tsomem_init">tsomem_init</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="InvRG.html#unlock_st">unlock_st</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hspec_init_gm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">right</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">eauto</span>.   <br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Htso_init_mem</span> <span class="id">H_t_addr_L</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">init_mem</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">init_gmem_generic</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Htso_init_mem</span> <span class="kwd">as</span> [<span class="id">fm</span> [<span class="id">Hstrip</span> <span class="id">Hinit_gm</span>]]; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hinit_gm</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">globals_initialized_fmem</span>. <br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_def</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">symmetry</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">globdef_initialized_fm</span> <span class="kwd">in</span> <span class="id">H10</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="id">split_and</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="TSOMemLemmas.html#load_fm_eq_load_gm">load_fm_eq_load_gm</a></span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">H_in_buffer</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H_in_buffer</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>; <span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hspec_init_gm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Htso_init_mem</span> <span class="id">H_t_addr_L</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">init_mem</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">init_gmem_generic</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Htso_init_mem</span> <span class="kwd">as</span> [<span class="id">fm</span> [<span class="id">Hstrip</span> <span class="id">Hinit_gm</span>]]; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hinit_gm</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">globals_initialized_fmem</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_def</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">symmetry</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">globdef_initialized_fm</span> <span class="kwd">in</span> <span class="id">H10</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="id">split_and</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="TSOMem.html#store_tsomem">store_tsomem</a></span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">tsomem_init</span>.<br/>
+&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Ht</span> : <span class="id"><a href="MemLemmas.html#perm_w_store">perm_w_store</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Ht</span> <span class="kwd">as</span> [<span class="id">gm</span> <span class="id">Ht</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Ht</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">tsomem_init</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">tryfalse</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="MemLemmas.html#spec_init_obj_mem">spec_init_obj_mem</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">intros</span>.  <br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">init_mem</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">init_gmem_generic</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Htso_init_mem</span> <span class="kwd">as</span> [<span class="id">fm</span> [<span class="id">Hstrip</span> <span class="id">Hinit_fm</span>]].<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hinit_fm</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">globals_initialized_fmem</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_def</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_symbol</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">symmetry</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">globdef_initialized_fm</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H10</span>. <br/>
+&nbsp;&nbsp;<span class="id">split_and</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">Hstrip</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="FMemory.html#strip">strip</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">H2</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Hrange</span> : <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H2</span> <span class="kwd">in</span> <span class="id">H1</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="FMemory.html#Mem.perm">Mem.perm</a></span> <span class="kwd">in</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Ht</span> : <span class="id"><a href="TSOMemLemmas.html#Mem_range_perm_cur_max">Mem_range_perm_cur_max</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">H2</span> <span class="id">Ht</span> <span class="id">Hrange</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Mem.range_perm</span>.<br/>
+&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Ht1</span> : <span class="id">H2</span> <span class="id">Hrange</span>.<br/>
+&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Ht2</span> : <span class="id">Ht</span> <span class="id">Hrange</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Ht1</span> <span class="id">Ht2</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Mem.perm</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Mem.perm_order</span>'.  <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> ((<span class="id"><a href="FMemory.html#Mem.mem_access">Mem.mem_access</a></span> <span class="id">fm</span>) !! <span class="id">L</span>' <span class="id">ofs</span> <span class="id"><a href="Memperm.html#Cur">Memperm.Cur</a></span>) <span class="id">eqn</span>:?; <span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> ((<span class="id"><a href="FMemory.html#Mem.mem_access">Mem.mem_access</a></span> <span class="id">fm</span>) !! <span class="id">L</span>' <span class="id">ofs</span> <span class="id"><a href="Memperm.html#Max">Memperm.Max</a></span>) <span class="id">eqn</span>:?; <span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;<span class="id">eexists</span>; <span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Ht</span> : <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">HSpecLang_init_mem</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">SpecLang.init_gmem</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">HSpecLang_init_mem</span> <span class="kwd">as</span> [<span class="id">fm</span> [<span class="id">Hstrip</span> <span class="id">Hinit_sm</span>]]; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hinit_sm</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">SpecLang.globals_initialized_fmem_speclang</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="code.html#lock_L">lock_L</a></span> = (<span class="id"><a href="Globalenvs.html#Genv.genv_defs">Genv.genv_defs</a></span> <span class="id">sge</span>) ! <span class="id">L</span>').<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">H_s_addr_L</span> <span class="id">HSpecLang_init_genv</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">HSpecLang_init_genv</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">subst</span>; <span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H3</span> <span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H3</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H_s_addr_L</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H10</span>; <span class="tactic">subst</span> <span class="id">b</span>'.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H6</span> <span class="kwd">in</span> <span class="id">H11</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H11</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;} <br/>
+&nbsp;&nbsp;<span class="tactic">symmetry</span> <span class="kwd">in</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Globalenvs.html#Genv.find_def">Genv.find_def</a></span> <span class="kwd">in</span> <span class="id">globdef_initialized_fm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">globdef_initialized_fm</span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="tactic">eauto</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="id">split_and</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="TSOMemLemmas.html#gmem_perm_strip_mem_perm_eq">gmem_perm_strip_mem_perm_eq</a></span> <span class="kwd">in</span> <span class="id">H6</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H4</span> <span class="kwd">in</span> <span class="id">H6</span>.<br/>
+&nbsp;&nbsp;<span class="id">split_and</span> <span class="id">H6</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">H1</span> <span class="id">H6</span> <span class="id">H12</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">omega</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Htso_init_mem</span> <span class="id">H_t_addr_L</span> <span class="id">H10</span> <span class="id">Ht</span>. <br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">init_mem</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">init_gmem_generic</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Htso_init_mem</span> <span class="kwd">as</span> [<span class="id">fm</span> [<span class="id">Hstrip</span> <span class="id">Hinit_gm</span>]]; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hinit_gm</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">globals_initialized_fmem</span>. <br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_def</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">symmetry</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">globdef_initialized_fm</span> <span class="kwd">in</span> <span class="id">H10</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="id">split_and</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">tsomem_init</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H2</span>; <span class="tactic">clear</span> - <span class="id">H2</span> <span class="id">Ht</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">omega</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="id_eq_lock_unit">id_eq_lock_unit</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">tge</span> <span class="id">id</span> <span class="id">args</span> <span class="id">tc</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hinit_genv</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hinit_core</span> : <span class="id"><a href="AsmTSO.html#init_core">init_core</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#id">id</a></span> <span class="id"><a href="ObjLemmas.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="ObjLemmas.html#tc">tc</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="ObjLemmas.html#id">id</a></span> = <span class="id"><a href="code.html#lock_acquire_ident">lock_acquire_ident</a></span> \/ <span class="id"><a href="ObjLemmas.html#id">id</a></span> = <span class="id"><a href="code.html#lock_release_ident">lock_release_ident</a></span>) /\ <span class="id"><a href="ObjLemmas.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9958')">Proof.</div>
+<div class="proofscript" id="proof9958">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">init_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">ASM_local.init_core</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Globalenvs.html#Genv.find_symbol">Genv.find_symbol</a></span> <span class="id">tge</span> <span class="id">id</span>) <span class="id">eqn</span>:<span class="id">Hfind_symbol</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id">tge</span> <span class="id">b</span>) <span class="id">eqn</span>:<span class="id">Hfptr</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">f</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hinit_genv</span>.   <br/>
+&nbsp;&nbsp;<span class="id">revert</span> <span class="id">H2</span> <span class="id">H3</span> <span class="id">H4</span> <span class="id">H5</span> <span class="id">Hfind_symbol</span> <span class="id">Hfptr</span> <span class="id">Hinit_core</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H2</span> <span class="id">id</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H2</span>; <span class="tactic">subst</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Globalenvs.html#Genv.find_symbol">Genv.find_symbol</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Globalenvs.html#Genv.globalenv">Genv.globalenv</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">id</span>; <span class="tactic">try</span> <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <br/>
+&nbsp;&nbsp;<span class="tactic">try</span> <span class="tactic">destruct</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#id">id</a></span>; <span class="tactic">try</span> <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">id</span>; <span class="tactic">try</span> <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">id</span>; <span class="tactic">try</span> <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H5</span> <span class="kwd">in</span> <span class="id">H7</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfind_symbol</span> <span class="kwd">in</span> <span class="id">H6</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H6</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H7</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="MemLemmas.html#genv_defs_fun_find_fun_eq">genv_defs_fun_find_fun_eq</a></span> <span class="kwd">in</span> <span class="id">Hfptr</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hfptr</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">fundef_init</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">wd_args</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="val_casted.html#val_has_type_list_func">val_has_type_list_func</a></span> <span class="id">args</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> &amp;&amp; <span class="id"><a href="val_casted.html#vals_defined">vals_defined</a></span> <span class="id">args</span> &amp;&amp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Coqlib.html#zlt">zlt</a></span> (4 * (2 * <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.Zcomplements.html#Zlength">Zlength</a></span> <span class="id">args</span>)) <span class="id"><a href="Integers.html#Int.max_unsigned">Int.max_unsigned</a></span>) <span class="id">eqn</span> : <span class="id">Hargs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">symmetry</span> <span class="kwd">in</span> <span class="id">Hargs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#andb_true_eq">andb_true_eq</a></span> <span class="kwd">in</span> <span class="id">Hargs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hargs</span> <span class="kwd">as</span> [<span class="id">Hargs1</span> <span class="id">Hargs2</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#andb_true_eq">andb_true_eq</a></span> <span class="kwd">in</span> <span class="id">Hargs1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hargs1</span> <span class="kwd">as</span> [<span class="id">Hargs</span> <span class="id">Hargs1</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">args</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hargs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PTree.gleaf">PTree.gleaf</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PTree.gleaf">PTree.gleaf</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H5</span> <span class="kwd">in</span> <span class="id">H7</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H7</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfind_symbol</span> <span class="kwd">in</span> <span class="id">H6</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H6</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="MemLemmas.html#genv_defs_fun_find_fun_eq">genv_defs_fun_find_fun_eq</a></span> <span class="kwd">in</span> <span class="id">Hfptr</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hfptr</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">fundef_init</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">wd_args</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="val_casted.html#val_has_type_list_func">val_has_type_list_func</a></span> <span class="id">args</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> &amp;&amp; <span class="id"><a href="val_casted.html#vals_defined">vals_defined</a></span> <span class="id">args</span> &amp;&amp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Coqlib.html#zlt">zlt</a></span> (4 * (2 * <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.Zcomplements.html#Zlength">Zlength</a></span> <span class="id">args</span>)) <span class="id"><a href="Integers.html#Int.max_unsigned">Int.max_unsigned</a></span>) <span class="id">eqn</span> : <span class="id">Hargs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">symmetry</span> <span class="kwd">in</span> <span class="id">Hargs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#andb_true_eq">andb_true_eq</a></span> <span class="kwd">in</span> <span class="id">Hargs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hargs</span> <span class="kwd">as</span> [<span class="id">Hargs1</span> <span class="id">Hargs2</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#andb_true_eq">andb_true_eq</a></span> <span class="kwd">in</span> <span class="id">Hargs1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hargs1</span> <span class="kwd">as</span> [<span class="id">Hargs</span> <span class="id">Hargs1</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">args</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hargs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H5</span> <span class="kwd">in</span> <span class="id">H7</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H7</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfind_symbol</span> <span class="kwd">in</span> <span class="id">H6</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H6</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Hfptr</span> <span class="id">H7</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_funct_ptr</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_def</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H7</span> <span class="kwd">in</span> <span class="id">Hfptr</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfind_symbol</span> <span class="kwd">in</span> <span class="id">H7</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">id_eq_lock_unit</span>' :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sge</span> <span class="id">id</span> <span class="id">sG</span> <span class="id">args</span> <span class="id">sc</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hinit_genv</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hinit_core</span> : <span class="id"><a href="InteractionSemantics.html#init_core">InteractionSemantics.init_core</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#id">id</a></span> <span class="id"><a href="ObjLemmas.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="ObjLemmas.html#sc">sc</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="ObjLemmas.html#id">id</a></span> = <span class="id"><a href="code.html#lock_acquire_ident">lock_acquire_ident</a></span> \/ <span class="id"><a href="ObjLemmas.html#id">id</a></span> = <span class="id"><a href="code.html#lock_release_ident">lock_release_ident</a></span>) /\ <span class="id"><a href="ObjLemmas.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9959')">Proof.</div>
+<div class="proofscript" id="proof9959">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">SpecLang.init_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">generic_init_core</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">sge</span> = <span class="id">sG</span>). <br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hinit_genv</span>; <span class="tactic">subst</span>; <span class="tactic">eauto</span>. <span class="tactic">subst</span> <span class="id">sG</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Globalenvs.html#Genv.find_symbol">Genv.find_symbol</a></span> <span class="id">sge</span> <span class="id">id</span>) <span class="id">eqn</span>:<span class="id">Hfind_symbol</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id">sge</span> <span class="id">b</span>) <span class="id">eqn</span>:<span class="id">Hfptr</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">f</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hinit_genv</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>. <br/>
+&nbsp;&nbsp;<span class="id">revert</span> <span class="id">H3</span> <span class="id">H4</span> <span class="id">H5</span> <span class="id">H6</span> <span class="id">H7</span> <span class="id">Hfind_symbol</span> <span class="id">Hfptr</span> <span class="id">Hinit_core</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H4</span> <span class="id">id</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H4</span>; <span class="tactic">subst</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Globalenvs.html#Genv.find_symbol">Genv.find_symbol</a></span> <span class="kwd">in</span> <span class="id">H</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Globalenvs.html#Genv.globalenv">Genv.globalenv</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">id</span>; <span class="tactic">try</span> <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <br/>
+&nbsp;&nbsp;<span class="tactic">try</span> <span class="tactic">destruct</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#id">id</a></span>; <span class="tactic">try</span> <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">id</span>; <span class="tactic">try</span> <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">id</span>; <span class="tactic">try</span> <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H7</span> <span class="kwd">in</span> <span class="id">H8</span>.  <br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfind_symbol</span> <span class="kwd">in</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H8</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">SpecLang.F</span>, <span class="id">SpecLang.V</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfind_symbol</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_funct_ptr</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_def</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H8</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">args</span>; <span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">id</span>; <span class="id">simpls</span>; <span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">id</span>; <span class="id">simpls</span>; <span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">SpecLang.F</span>, <span class="id">SpecLang.V</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H1</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_funct_ptr</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_def</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H7</span> <span class="kwd">in</span> <span class="id">H8</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H8</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">args</span>; <span class="id">tryfalse</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">SpecLang.F</span>, <span class="id">SpecLang.V</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H1</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_funct_ptr</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H7</span> <span class="kwd">in</span> <span class="id">H8</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">Genv.find_def</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H8</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>; <span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfind_symbol</span> <span class="kwd">in</span> <span class="id">H8</span>.<br/>
+&nbsp;&nbsp;<span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">SpecLang.F</span>, <span class="id">SpecLang.V</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfind_symbol</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfptr</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;<span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">SpecLang.F</span>, <span class="id">SpecLang.V</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfind_symbol</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfptr</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">SpecLang.F</span>, <span class="id">SpecLang.V</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Hfind_symbol</span> <span class="kwd">in</span> <span class="id">Hinit_core</span>.<br/>
+&nbsp;&nbsp;<span class="id">tryfalse</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="ObjInit_core_match">ObjInit_core_match</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sge</span> <span class="id">tge</span> <span class="id">sG</span> <span class="id">id</span> <span class="id">args</span> <span class="id">tc</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">HSpecLang_init_genv</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Htso_init_genv</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Htso_init_core</span> : <span class="id"><a href="AsmTSO.html#init_core">init_core</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#id">id</a></span> <span class="id"><a href="ObjLemmas.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="ObjLemmas.html#tc">tc</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">sc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_core">InteractionSemantics.init_core</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#id">id</a></span> <span class="id"><a href="ObjLemmas.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">sc</span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> (<span class="id">t0</span> : <span class="id"><a href="GlobDefs.html#tid">tid</a></span>) (<span class="id">sm</span> : <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) (<span class="id">tm</span> : <span class="id"><a href="TSOMem.html#tsomem">tsomem</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InvRG.html#obj_inv">obj_inv</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> -&gt; <span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t0">t0</a></span> (<span class="id">sc</span>, <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>) (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9960')">Proof.</div>
+<div class="proofscript" id="proof9960">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">Hfid</span> : (<span class="id">id</span> = <span class="id"><a href="code.html#lock_acquire_ident">lock_acquire_ident</a></span> \/ <span class="id">id</span> = <span class="id"><a href="code.html#lock_release_ident">lock_release_ident</a></span>) /\ <span class="id">args</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>).<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="ObjLemmas.html#id_eq_lock_unit">id_eq_lock_unit</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hfid</span> <span class="kwd">as</span> [<span class="id">Hfid</span> <span class="id">Hargs</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">args</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hfid</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;{<br/>
+<div class="doc">init_lock_acquire </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">HSpecLang_init_core</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">sc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_core">InteractionSemantics.init_core</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sG</span> <span class="id"><a href="code.html#lock_acquire_ident">lock_acquire_ident</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">sc</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockAcqProof.html#lock_acquire_core_init_match">lock_acquire_core_init_match</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">HSpecLang_init_core</span> <span class="kwd">as</span> [<span class="id">sc</span> <span class="id">HSpecLang_init_core</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eexists</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">introv</span> <span class="id">Hobj_inv</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InvRG.html#lock_init_match">lock_init_match</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">HSpecLang_init_genv</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">subst</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+<div class="doc">init_lock_release </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">HSpecLang_init_core</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">sc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_core">InteractionSemantics.init_core</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sG</span> <span class="id"><a href="code.html#lock_release_ident">lock_release_ident</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">sc</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockRelProof.html#lock_release_core_init_match">lock_release_core_init_match</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">HSpecLang_init_core</span> <span class="kwd">as</span> [<span class="id">sc</span> <span class="id">HSpecLang_init_core</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eexists</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">introv</span> <span class="id">Hobj_inv</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InvRG.html#obj_unlock_match">obj_unlock_match</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InvRG.html#unlock_init_match">unlock_init_match</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">HSpecLang_init_genv</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">subst</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">ObjInit_core_match</span>' :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sge</span> <span class="id">tge</span> <span class="id">sG</span> <span class="id">id</span> <span class="id">args</span> <span class="id">sc</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">HSpecLang_init_genv</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Htso_init_genv</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hspec_init_core</span> : <span class="id"><a href="InteractionSemantics.html#init_core">InteractionSemantics.init_core</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#id">id</a></span> <span class="id"><a href="ObjLemmas.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="ObjLemmas.html#sc">sc</a></span>),<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmTSO.html#init_core">init_core</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#id">id</a></span> <span class="id"><a href="ObjLemmas.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">tc</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9961')">Proof.</div>
+<div class="proofscript" id="proof9961">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">Hfid</span> : (<span class="id">id</span> = <span class="id"><a href="code.html#lock_acquire_ident">lock_acquire_ident</a></span> \/ <span class="id">id</span> = <span class="id"><a href="code.html#lock_release_ident">lock_release_ident</a></span>) /\ <span class="id">args</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>).<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">id_eq_lock_unit</span>'; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hfid</span> <span class="kwd">as</span> [<span class="id">Hfid</span> <span class="id">Hargs</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">args</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hfid</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">lock_acquire_core_init_match</span>'; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">lock_release_core_init_match</span>'; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="obj_tau_step_match">obj_tau_step_match</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t</span> <span class="id">sc</span> <span class="id">sm</span> <span class="id">tc</span> <span class="id">tm</span> <span class="id">b</span> <span class="id">gm</span> <span class="id">fl</span> <span class="id">fp</span> <span class="id">tc</span>' <span class="id">b</span>' <span class="id">gm</span>' <span class="id">tm</span>' <span class="id">sge</span> <span class="id">tge</span> <span class="id">sG</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hspec_init</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Himp_init</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hge_equiv</span> : <span class="id"><a href="TSOGlobSem.html#genv_match">genv_match</a></span> (<span class="id"><a href="InteractionSemantics.html#F">InteractionSemantics.F</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#V">InteractionSemantics.V</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>) <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)  <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hmatch</span> : <span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id"><a href="ObjLemmas.html#sc">sc</a></span>, <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>) (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hbuffer</span> : <span class="id"><a href="TSOMem.html#tso_buffers">tso_buffers</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> = <span class="id"><a href="ObjLemmas.html#b">b</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hmem</span> : <span class="id"><a href="TSOMem.html#memory">memory</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> = <span class="id"><a href="ObjLemmas.html#gm">gm</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hno_conflict</span> : <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t</span>' <span class="id">blk</span> <span class="id">n</span> <span class="id">lo</span> <span class="id">hi</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">t</span>' &lt;&gt; <span class="id"><a href="ObjLemmas.html#t">t</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id"><a href="TSOMem.html#BufferedAlloc">BufferedAlloc</a></span> <span class="id"><a href="ObjLemmas.html#blk">blk</a></span> <span class="id"><a href="ObjLemmas.html#lo">lo</a></span> <span class="id"><a href="ObjLemmas.html#hi">hi</a></span>) (<span class="id"><a href="TSOMem.html#tso_buffers">tso_buffers</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> <span class="id">t</span>') -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ObjLemmas.html#blk">blk</a></span> &lt;&gt; <span class="id"><a href="MemAux.html#get_block">get_block</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#n">n</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hrel_tm_gm_vb</span> : <span class="id"><a href="RGRels.html#rel_tm_gm_vb">rel_tm_gm_vb</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Htsostep</span> : <span class="id"><a href="AsmTSO.html#tsostep">tsostep</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#tc">tc</a></span> (<span class="id"><a href="ObjLemmas.html#b">b</a></span>, <span class="id"><a href="ObjLemmas.html#gm">gm</a></span>) <span class="id"><a href="ObjLemmas.html#fp">fp</a></span> <span class="id">tc</span>' (<span class="id">b</span>', <span class="id">gm</span>'))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Htm</span>' : <span class="id">tm</span>' = (<span class="id"><a href="TSOMem.html#mktsomem">mktsomem</a></span> (<span class="id"><a href="TSOMem.html#tupdate">tupdate</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> <span class="id">b</span>' (<span class="id"><a href="TSOMem.html#tso_buffers">tso_buffers</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>)) <span class="id">gm</span>')),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">exists</span> <span class="id">FP</span> <span class="id">sc</span>' <span class="id">sm</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#star">InteractionSemantics.star</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span>) <span class="id"><a href="ObjLemmas.html#sc">sc</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id">FP</span> <span class="id">sc</span>' <span class="id">sm</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InvRG.html#Gobj">Gobj</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> <span class="id">sm</span>' <span class="id">tm</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id">sc</span>', <span class="id">sm</span>') (<span class="id">tc</span>', <span class="id">tm</span>') /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RGRels.html#tm_alloc_not_fl">tm_alloc_not_fl</a></span> <span class="id">tm</span>' <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> /\ <span class="id"><a href="RGRels.html#rel_tm_gm_vb">rel_tm_gm_vb</a></span> <span class="id">sm</span>' <span class="id">tm</span>' <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RGRels.html#obj_fp">obj_fp</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id">sm</span>' <span class="id"><a href="ObjLemmas.html#fp">fp</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((<span class="kwd">forall</span> <span class="id">FP</span>' <span class="id">sc</span>'' <span class="id">sm</span>'', ~ <span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sc</span>' <span class="id">sm</span>' <span class="id">FP</span>' <span class="id">sc</span>'' <span class="id">sm</span>'')<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <span class="id"><a href="InteractionSemantics.html#at_external">InteractionSemantics.at_external</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id">sc</span>' = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ (<span class="kwd">forall</span> <span class="id">ores</span>, <span class="id"><a href="InteractionSemantics.html#after_external">InteractionSemantics.after_external</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id">sc</span>' <span class="id"><a href="ObjLemmas.html#ores">ores</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <span class="id"><a href="InteractionSemantics.html#halt">InteractionSemantics.halt</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id">sc</span>' = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;\/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">exists</span> <span class="id">FP1</span> <span class="id">sc_ent</span> <span class="id">sm1</span> <span class="id">sc_ent</span>' <span class="id">FP2</span> <span class="id">sc_ext</span> <span class="id">sm</span>' <span class="id">sc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#star">InteractionSemantics.star</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span>) <span class="id"><a href="ObjLemmas.html#sc">sc</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id">FP1</span> <span class="id">sc_ent</span> <span class="id">sm1</span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#at_external">InteractionSemantics.at_external</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id">sc_ent</span> =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="GAST.html#ent_atom">ent_atom</a></span>, <span class="id"><a href="GAST.html#ent_atom_sg">ent_atom_sg</a></span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#after_external">InteractionSemantics.after_external</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id">sc_ent</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">sc_ent</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#star">InteractionSemantics.star</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sc_ent</span>' <span class="id">sm1</span> <span class="id">FP2</span> <span class="id">sc_ext</span> <span class="id">sm</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#at_external">InteractionSemantics.at_external</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id">sc_ext</span> =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="GAST.html#ext_atom">ext_atom</a></span>, <span class="id"><a href="GAST.html#ext_atom_sg">ext_atom_sg</a></span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#after_external">InteractionSemantics.after_external</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id">sc_ext</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">sc</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InvRG.html#Gobj">Gobj</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> <span class="id">sm</span>' <span class="id">tm</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id">sc</span>', <span class="id">sm</span>') (<span class="id">tc</span>', <span class="id">tm</span>') /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RGRels.html#tm_alloc_not_fl">tm_alloc_not_fl</a></span> <span class="id">tm</span>' <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> /\ <span class="id"><a href="RGRels.html#rel_tm_gm_vb">rel_tm_gm_vb</a></span> <span class="id">sm</span>' <span class="id">tm</span>' <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RGRels.html#obj_fp">obj_fp</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id">sm</span>' <span class="id"><a href="ObjLemmas.html#fp">fp</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">FP</span>' <span class="id">sc</span>' <span class="id">sm</span>'',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id">sc_ext</span> <span class="id">sm</span>' <span class="id">FP</span>' <span class="id">sc</span>' <span class="id">sm</span>'')<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <span class="id"><a href="InteractionSemantics.html#at_external">InteractionSemantics.at_external</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id">sc_ext</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ (<span class="kwd">forall</span> <span class="id">ores</span>, <span class="id"><a href="InteractionSemantics.html#after_external">InteractionSemantics.after_external</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id">sc_ext</span> <span class="id"><a href="ObjLemmas.html#ores">ores</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <span class="id"><a href="InteractionSemantics.html#halt">InteractionSemantics.halt</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id">sc_ext</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9962')">Proof.</div>
+<div class="proofscript" id="proof9962">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hmatch</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;{ <br/>
+<div class="doc">lock step satisfies Guarantee </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Ht</span> : <span class="id"><a href="LockAcqProof.html#lock_step_satisfy_Gobj">lock_step_satisfy_Gobj</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+<div class="doc">unlock step satisfies Guarantee </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockRelProof.html#unlock_step_satisfy_Gobj">unlock_step_satisfy_Gobj</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="obj_no_external_call">obj_no_external_call</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t</span> <span class="id">sc</span> <span class="id">sm</span> <span class="id">tc</span> <span class="id">tm</span> <span class="id">sge</span> <span class="id">tge</span> <span class="id">sG</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hspec_init</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Himp_init</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hobj_match_state</span> : <span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id"><a href="ObjLemmas.html#sc">sc</a></span>, <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>) (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AsmTSO.html#at_external">at_external</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#tc">tc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9963')">Proof.</div>
+<div class="proofscript" id="proof9963">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hobj_match_state</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;lock&nbsp;acquire&nbsp;no&nbsp;external&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockAcqProof.html#lock_acquire_no_external">lock_acquire_no_external</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;lock&nbsp;release&nbsp;no&nbsp;external&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockRelProof.html#lock_release_no_external">lock_release_no_external</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="obj_return_value_match">obj_return_value_match</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t</span> <span class="id">sc</span> <span class="id">sm</span> <span class="id">tc</span> <span class="id">tm</span> <span class="id">rv</span> <span class="id">tge</span> <span class="id">sge</span> <span class="id">sG</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hspec_init</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Himp_init</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hobj_state_match</span>: <span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id"><a href="ObjLemmas.html#sc">sc</a></span>, <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>) (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Htc_halt</span> : <span class="id"><a href="AsmTSO.html#halt">halt</a></span> <span class="id"><a href="ObjLemmas.html#tc">tc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="ObjLemmas.html#rv">rv</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#halt">InteractionSemantics.halt</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sc">sc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="ObjLemmas.html#rv">rv</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9964')">Proof.</div>
+<div class="proofscript" id="proof9964">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hobj_state_match</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;lock&nbsp;acquire&nbsp;halt&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockAcqProof.html#lock_ret_val_eq">lock_ret_val_eq</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;lock&nbsp;release&nbsp;halt&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockRelProof.html#unlock_ret_val_eq">unlock_ret_val_eq</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="obj_rely_step_match">obj_rely_step_match</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t</span> <span class="id">sc</span> <span class="id">sm</span> <span class="id">tc</span> <span class="id">tm</span> <span class="id">sm</span>' <span class="id">tm</span>' <span class="id">tge</span> <span class="id">sge</span> <span class="id">sG</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hspec_init</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Himp_init</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hge_equiv</span> : <span class="id"><a href="TSOGlobSem.html#genv_match">genv_match</a></span> (<span class="id"><a href="InteractionSemantics.html#F">InteractionSemantics.F</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#V">InteractionSemantics.V</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>) <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hobj_match</span> : <span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id"><a href="ObjLemmas.html#sc">sc</a></span>, <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>) (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hrely_step</span> : <span class="id"><a href="InvRG.html#Robj">Robj</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> <span class="id">sm</span>' <span class="id">tm</span>'),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id"><a href="ObjLemmas.html#sc">sc</a></span>, <span class="id">sm</span>') (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id">tm</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9965')">Proof.</div>
+<div class="proofscript" id="proof9965">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hobj_match</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;lock&nbsp;acquire&nbsp;rely&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InvRG.html#obj_lock_match">obj_lock_match</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockAcqProof.html#lock_acquire_rely">lock_acquire_rely</a></span>; <span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;lock&nbsp;release&nbsp;rely&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InvRG.html#obj_unlock_match">obj_unlock_match</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockRelProof.html#lock_release_rely">lock_release_rely</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="obj_not_abort">obj_not_abort</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sge</span> <span class="id">sG</span> <span class="id">tge</span> <span class="id">t</span> <span class="id">sc</span> <span class="id">sm</span> <span class="id">tc</span> <span class="id">tm</span> <span class="id">fl</span> <span class="id">fm</span> <span class="id">gm</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hspec_init</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Himp_init</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hobj_match_state</span> : <span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id"><a href="ObjLemmas.html#sc">sc</a></span>, <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>) (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hbf_nil</span> : <span class="id"><a href="TSOMem.html#tso_buffers">tso_buffers</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hgm</span> : <span class="id"><a href="TSOMem.html#memory">memory</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> = <span class="id"><a href="ObjLemmas.html#gm">gm</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hstep</span> : <span class="kwd">forall</span> (<span class="id">fp</span> : <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>) (<span class="id">tc</span>' : <span class="id"><a href="AsmTSO.html#core">core</a></span>) (<span class="id">b</span>' : <span class="id"><a href="TSOMem.html#buffer">buffer</a></span>) (<span class="id">gm</span>' : <span class="id"><a href="GMemory.html#gmem">gmem</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <span class="id"><a href="AsmTSO.html#tsostep">tsostep</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#tc">tc</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>, <span class="id"><a href="ObjLemmas.html#gm">gm</a></span>) <span class="id"><a href="ObjLemmas.html#fp">fp</a></span> <span class="id">tc</span>' (<span class="id">b</span>', <span class="id">gm</span>'))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hnot_halt</span> : <span class="id"><a href="AsmTSO.html#halt">halt</a></span> <span class="id"><a href="ObjLemmas.html#tc">tc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hembed</span> : <span class="id"><a href="FMemory.html#embed">embed</a></span> <span class="id"><a href="ObjLemmas.html#gm">gm</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#fm">fm</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9966')">Proof.</div>
+<div class="proofscript" id="proof9966">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hobj_match_state</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;lock&nbsp;acquire&nbsp;not&nbsp;abort&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockAcqProof.html#lock_acq_not_abort">lock_acq_not_abort</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;lock&nbsp;release&nbsp;not&nbsp;abort&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockRelProof.html#lock_rel_not_abort">lock_rel_not_abort</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tso_init_fail_spec_init_fail">tso_init_fail_spec_init_fail</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">tge</span> <span class="id">sge</span> <span class="id">sG</span> <span class="id">id</span> <span class="id">args</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hspec_init</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Himp_init</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Himp_init_core_fail</span> : <span class="id"><a href="AsmTSO.html#init_core">init_core</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#id">id</a></span> <span class="id"><a href="ObjLemmas.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#init_core">InteractionSemantics.init_core</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#id">id</a></span> <span class="id"><a href="ObjLemmas.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9967')">Proof.</div>
+<div class="proofscript" id="proof9967">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#classic">Classical_Prop.classic</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#init_core">InteractionSemantics.init_core</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id">sG</span> <span class="id">id</span> <span class="id">args</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eqn</span> : <span class="id">Heqe</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id"><a href="InteractionSemantics.html#init_core">InteractionSemantics.init_core</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id">sG</span> <span class="id">id</span> <span class="id">args</span> &lt;&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="MemLemmas.html#spec_init_not_none">spec_init_not_none</a></span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">ObjInit_core_match</span>' <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Himp_init_core_fail</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">tryfalse</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="obj_tso_halt_spec_not_exec">obj_tso_halt_spec_not_exec</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sge</span> <span class="id">tge</span> <span class="id">t</span> <span class="id">sc</span> <span class="id">sm</span> <span class="id">tc</span> <span class="id">tm</span> <span class="id">rv</span> <span class="id">sG</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hspec_init</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Himp_init</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hge_equiv</span> : <span class="id"><a href="TSOGlobSem.html#genv_match">genv_match</a></span> (<span class="id"><a href="InteractionSemantics.html#F">InteractionSemantics.F</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#V">InteractionSemantics.V</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>) <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hobj_match</span> : <span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id"><a href="ObjLemmas.html#sc">sc</a></span>, <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>) (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hhalt</span> : <span class="id"><a href="AsmTSO.html#halt">halt</a></span> <span class="id"><a href="ObjLemmas.html#tc">tc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="ObjLemmas.html#rv">rv</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fl</span> <span class="id">fp</span> <span class="id">sc</span>' <span class="id">sm</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~ <span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#sc">sc</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id"><a href="ObjLemmas.html#fp">fp</a></span> <span class="id">sc</span>' <span class="id">sm</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;) /\ <span class="id"><a href="InteractionSemantics.html#at_external">InteractionSemantics.at_external</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span> <span class="id"><a href="ObjLemmas.html#sc">sc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9968')">Proof.</div>
+<div class="proofscript" id="proof9968">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Ltac</span> <span class="id">solve_not_halt_cases</span> <span class="id">Hhalt</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">_</span> <span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hhalt</span>; <span class="tactic">rewrite</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">Hhalt</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hhalt</span>; <span class="id">tryfalse</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hobj_match</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;{<br/>
+<div class="doc">lock acquire </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id"><a href="InvRG.html#lock_match_state">lock_match_state</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>; <span class="tactic">try</span> (<span class="id">solve_not_halt_cases</span> <span class="id">Hhalt</span>).<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Hspec_core</span> : <span class="id"><a href="LockAcqProof.html#spec_lock_acquire_init_state">spec_lock_acquire_init_state</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Htso_core</span> : <span class="id"><a href="LockAcqProof.html#tso_lock_acquire_init_state">tso_lock_acquire_init_state</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hspec_core</span> <span class="kwd">as</span> [<span class="id">fb1</span> [<span class="id">Hspec_findsymb</span> <span class="id">Hspec_core</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Htso_core</span> <span class="kwd">as</span> [<span class="id">fb2</span> [<span class="id">Htso_findsymb</span> <span class="id">Htso_core</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hspec_core</span>, <span class="id">Htso_core</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hspec_core</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">fundef_init</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Htso_core</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Hhalt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">tryfalse</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">introv</span> <span class="id">Hstep</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hstep</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">context</span> [<span class="id"><a href="SpecLang.html#fstep">SpecLang.fstep</a></span>] |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">context</span> [<span class="id"><a href="SpecLang.html#normalstep">SpecLang.normalstep</a></span>] |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+<div class="doc">lock release </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id"><a href="InvRG.html#unlock_match_state">unlock_match_state</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>; <span class="tactic">try</span> (<span class="id">solve_not_halt_cases</span> <span class="id">Hhalt</span>).<br/>
+&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Hspec_core</span> : <span class="id"><a href="LockRelProof.html#spec_lock_release_init_state">spec_lock_release_init_state</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Htso_core</span> : <span class="id"><a href="LockRelProof.html#tso_lock_release_init_state">tso_lock_release_init_state</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hspec_core</span> <span class="kwd">as</span> [<span class="id">fb1</span> [<span class="id">Hspec_findsymb</span> <span class="id">Hspec_core</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Htso_core</span> <span class="kwd">as</span> [<span class="id">fb2</span> [<span class="id">Htso_findsymb</span> <span class="id">Htso_core</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hspec_core</span>, <span class="id">Htso_core</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hspec_core</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">fundef_init</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Htso_core</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Hhalt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">tryfalse</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">introv</span> <span class="id">Hstep</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hstep</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">context</span> [<span class="id"><a href="SpecLang.html#fstep">SpecLang.fstep</a></span>] |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">context</span> [<span class="id"><a href="SpecLang.html#normalstep">SpecLang.normalstep</a></span>] |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="obj_tso_not_halt_spec_not_halt">obj_tso_not_halt_spec_not_halt</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sge</span> <span class="id">tge</span> <span class="id">t</span> <span class="id">sc</span> <span class="id">sm</span> <span class="id">tc</span> <span class="id">tm</span> <span class="id">sG</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hspec_init</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Himp_init</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hge_equiv</span> : <span class="id"><a href="TSOGlobSem.html#genv_match">genv_match</a></span> (<span class="id"><a href="InteractionSemantics.html#F">InteractionSemantics.F</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#V">InteractionSemantics.V</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>) <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hobj_match</span> : <span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id"><a href="ObjLemmas.html#sc">sc</a></span>, <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>) (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hhalt</span> : <span class="id"><a href="AsmTSO.html#halt">halt</a></span> <span class="id"><a href="ObjLemmas.html#tc">tc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#halt">InteractionSemantics.halt</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> <span class="id"><a href="ObjLemmas.html#sc">sc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9969')">Proof.</div>
+<div class="proofscript" id="proof9969">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hobj_match</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;{<br/>
+<div class="doc">lock acquire </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">context</span> [<span class="id"><a href="InvRG.html#lock_match_state">lock_match_state</a></span>] |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>; <span class="tactic">try</span> <span class="id">solve</span> [<span class="tactic">simpl</span>; <span class="tactic">eauto</span>].<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Hspec_core</span> : <span class="id"><a href="LockAcqProof.html#spec_lock_acquire_init_state">spec_lock_acquire_init_state</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Htso_core</span> : <span class="id"><a href="LockAcqProof.html#tso_lock_acquire_init_state">tso_lock_acquire_init_state</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hspec_core</span> <span class="kwd">as</span> [<span class="id">fb1</span> [<span class="id">Hspec_findsymb</span> <span class="id">Hspec_core</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Htso_core</span> <span class="kwd">as</span> [<span class="id">fb2</span> [<span class="id">Htso_findsymb</span> <span class="id">Htso_core</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hspec_core</span>, <span class="id">Htso_core</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hspec_core</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">fundef_init</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Htso_core</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Hhalt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hhalt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">rs</span> <span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="tactic">rewrite</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">Hhalt</span>; <span class="id">simpls</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">loc_result</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id"><a href="Archi.html#ptr64">Archi.ptr64</a></span> <span class="id">eqn</span>:?; <span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+<div class="doc">lock release </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">context</span> [<span class="id"><a href="InvRG.html#unlock_match_state">unlock_match_state</a></span>] |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>; <span class="tactic">try</span> <span class="id">solve</span> [<span class="tactic">simpl</span>; <span class="tactic">eauto</span>].<br/>
+&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Hspec_core</span> : <span class="id"><a href="LockRelProof.html#spec_lock_release_init_state">spec_lock_release_init_state</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lets</span> <span class="id">Htso_core</span> : <span class="id"><a href="LockRelProof.html#tso_lock_release_init_state">tso_lock_release_init_state</a></span> <span class="id">___</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hspec_core</span> <span class="kwd">as</span> [<span class="id">fb1</span> [<span class="id">Hspec_findsymb</span> <span class="id">Hspec_core</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Htso_core</span> <span class="kwd">as</span> [<span class="id">fb2</span> [<span class="id">Htso_findsymb</span> <span class="id">Htso_core</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hspec_core</span>, <span class="id">Htso_core</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hspec_core</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">fundef_init</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Htso_core</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> - <span class="id">Hhalt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hhalt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">rs</span> <span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="tactic">rewrite</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">Hhalt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Hhalt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">unfolds</span> <span class="id">loc_result</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id"><a href="Archi.html#ptr64">Archi.ptr64</a></span> <span class="id">eqn</span>:?; <span class="id">tryfalse</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="obj_unbuffer_safe">obj_unbuffer_safe</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sge</span> <span class="id">tge</span> <span class="id">t</span> <span class="id">sc</span> <span class="id">sm</span> <span class="id">tc</span> <span class="id">tm</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hobj_match</span> : <span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id"><a href="ObjLemmas.html#sc">sc</a></span>, <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>) (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOMem.html#unbuffer_safe">unbuffer_safe</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9970')">Proof.</div>
+<div class="proofscript" id="proof9970">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hobj_match</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="MemLemmas.html#obj_inv_impl_unbuffer_safe">obj_inv_impl_unbuffer_safe</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="MemLemmas.html#obj_inv_impl_unbuffer_safe">obj_inv_impl_unbuffer_safe</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="obj_footprint_case">obj_footprint_case</a></span> :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sge</span> <span class="id">sG</span> <span class="id">tge</span> <span class="id">sc</span> <span class="id">tm</span> <span class="id">gm</span> <span class="id">t</span> <span class="id">b</span> <span class="id">fp</span> <span class="id">tc</span> <span class="id">tc</span>' <span class="id">b</span>' <span class="id">gm</span>' <span class="id">sm</span> <span class="id">ofs</span> <span class="id">fl</span> <span class="id">b0</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hspec_init</span> : <span class="id"><a href="InteractionSemantics.html#init_genv">InteractionSemantics.init_genv</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#lock_comp_unit">lock_comp_unit</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#sG">sG</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Himp_init</span> : <span class="id"><a href="AsmTSO.html#init_genv">init_genv</a></span> <span class="id"><a href="code.html#lock_comp_tso_unit">lock_comp_tso_unit</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hge_equiv</span> : <span class="id"><a href="TSOGlobSem.html#genv_match">genv_match</a></span> (<span class="id"><a href="InteractionSemantics.html#F">InteractionSemantics.F</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="InteractionSemantics.html#V">InteractionSemantics.V</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hobj_match_state</span> : <span class="id"><a href="InvRG.html#obj_match_state">obj_match_state</a></span> <span class="id"><a href="ObjLemmas.html#sge">sge</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> (<span class="id"><a href="ObjLemmas.html#sc">sc</a></span>, <span class="id"><a href="ObjLemmas.html#sm">sm</a></span>) (<span class="id"><a href="ObjLemmas.html#tc">tc</a></span>, <span class="id"><a href="ObjLemmas.html#tm">tm</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hbf</span> : <span class="id"><a href="TSOMem.html#tso_buffers">tso_buffers</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> <span class="id"><a href="ObjLemmas.html#t">t</a></span> = <span class="id"><a href="ObjLemmas.html#b">b</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hmem</span> : <span class="id"><a href="TSOMem.html#memory">memory</a></span> <span class="id"><a href="ObjLemmas.html#tm">tm</a></span> = <span class="id"><a href="ObjLemmas.html#gm">gm</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hstep</span> : <span class="id"><a href="AsmTSO.html#tsostep">tsostep</a></span> <span class="id"><a href="ObjLemmas.html#tge">tge</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id"><a href="ObjLemmas.html#tc">tc</a></span> (<span class="id"><a href="ObjLemmas.html#b">b</a></span>, <span class="id"><a href="ObjLemmas.html#gm">gm</a></span>) <span class="id"><a href="ObjLemmas.html#fp">fp</a></span> <span class="id">tc</span>' (<span class="id">b</span>', <span class="id">gm</span>'))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Hlocs_belongsto</span> : <span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span> (<span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span> <span class="id"><a href="ObjLemmas.html#fp">fp</a></span>) <span class="id"><a href="ObjLemmas.html#b0">b0</a></span> <span class="id"><a href="ObjLemmas.html#ofs">ofs</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RGRels.html#obj_mem">obj_mem</a></span> <span class="id"><a href="ObjLemmas.html#sm">sm</a></span> <span class="id"><a href="ObjLemmas.html#b0">b0</a></span> <span class="id"><a href="ObjLemmas.html#ofs">ofs</a></span> \/ (<span class="id">exists</span> <span class="id">n</span>, <span class="id"><a href="MemAux.html#get_block">get_block</a></span> <span class="id"><a href="ObjLemmas.html#fl">fl</a></span> <span class="id">n</span> = <span class="id"><a href="ObjLemmas.html#b0">b0</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9971')">Proof.</div>
+<div class="proofscript" id="proof9971">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Hobj_match_state</span>; <span class="tactic">subst</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockAcqProof.html#lock_footprint_case">lock_footprint_case</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LockRelProof.html#unlock_footprint_case">unlock_footprint_case</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

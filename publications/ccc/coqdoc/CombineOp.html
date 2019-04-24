@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module CombineOp</title>
+<meta name="description" content="Documentation of Coq module CombineOp" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module CombineOp</h1>
+<div class="coq">
+<br/>
+<div class="doc">Recognition of combined operations, addressing modes and conditions
+  during the <span class="bracket"><span class="id">CSE</span></span> phase. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span> <span class="id">Integers</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Op</span> <span class="id">CSEdomain</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">valnum</span> := <span class="id">positive</span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id">COMBINE</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">get</span>: <span class="id">valnum</span> -&gt; <span class="id">option</span> <span class="id">rhs</span>.<br/>
+<br/>
+<span class="id">Function</span> <span class="id">combine_compimm_ne_0</span> (<span class="id">x</span>: <span class="id">valnum</span>) : <span class="id">option</span>(<span class="id">condition</span> * <span class="id">list</span> <span class="id">valnum</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Ocmp</span> <span class="id">c</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span> (<span class="id">c</span>, <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Oandimm</span> <span class="id">n</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span> (<span class="id">Cmasknotzero</span> <span class="id">n</span>, <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="id">Function</span> <span class="id">combine_compimm_eq_0</span> (<span class="id">x</span>: <span class="id">valnum</span>) : <span class="id">option</span>(<span class="id">condition</span> * <span class="id">list</span> <span class="id">valnum</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Ocmp</span> <span class="id">c</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span> (<span class="id">negate_condition</span> <span class="id">c</span>, <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Oandimm</span> <span class="id">n</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span> (<span class="id">Cmaskzero</span> <span class="id">n</span>, <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="id">Function</span> <span class="id">combine_compimm_eq_1</span> (<span class="id">x</span>: <span class="id">valnum</span>) : <span class="id">option</span>(<span class="id">condition</span> * <span class="id">list</span> <span class="id">valnum</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Ocmp</span> <span class="id">c</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span> (<span class="id">c</span>, <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="id">Function</span> <span class="id">combine_compimm_ne_1</span> (<span class="id">x</span>: <span class="id">valnum</span>) : <span class="id">option</span>(<span class="id">condition</span> * <span class="id">list</span> <span class="id">valnum</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Ocmp</span> <span class="id">c</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span> (<span class="id">negate_condition</span> <span class="id">c</span>, <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="id">Function</span> <span class="id">combine_cond</span> (<span class="id">cond</span>: <span class="id">condition</span>) (<span class="id">args</span>: <span class="id">list</span> <span class="id">valnum</span>) : <span class="id">option</span>(<span class="id">condition</span> * <span class="id">list</span> <span class="id">valnum</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">cond</span>, <span class="id">args</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Ccompimm</span> <span class="id">Cne</span> <span class="id">n</span>, <span class="id">x</span>::<span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.zero</span> <span class="kwd">then</span> <span class="id">combine_compimm_ne_0</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.one</span> <span class="kwd">then</span> <span class="id">combine_compimm_ne_1</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">None</span><br/>
+&nbsp;&nbsp;| <span class="id">Ccompimm</span> <span class="id">Ceq</span> <span class="id">n</span>, <span class="id">x</span>::<span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.zero</span> <span class="kwd">then</span> <span class="id">combine_compimm_eq_0</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.one</span> <span class="kwd">then</span> <span class="id">combine_compimm_eq_1</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">None</span><br/>
+&nbsp;&nbsp;| <span class="id">Ccompuimm</span> <span class="id">Cne</span> <span class="id">n</span>, <span class="id">x</span>::<span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.zero</span> <span class="kwd">then</span> <span class="id">combine_compimm_ne_0</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.one</span> <span class="kwd">then</span> <span class="id">combine_compimm_ne_1</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">None</span><br/>
+&nbsp;&nbsp;| <span class="id">Ccompuimm</span> <span class="id">Ceq</span> <span class="id">n</span>, <span class="id">x</span>::<span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.zero</span> <span class="kwd">then</span> <span class="id">combine_compimm_eq_0</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.one</span> <span class="kwd">then</span> <span class="id">combine_compimm_eq_1</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">None</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="id">Function</span> <span class="id">combine_addr_32</span> (<span class="id">addr</span>: <span class="id">addressing</span>) (<span class="id">args</span>: <span class="id">list</span> <span class="id">valnum</span>) : <span class="id">option</span>(<span class="id">addressing</span> * <span class="id">list</span> <span class="id">valnum</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">addr</span>, <span class="id">args</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Aindexed</span> <span class="id">n</span>, <span class="id">x</span>::<span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Olea</span> <span class="id">a</span>) <span class="id">ys</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">offset_addressing</span> <span class="id">a</span> <span class="id">n</span> <span class="kwd">with</span> <span class="id">Some</span> <span class="id">a</span>' =&gt; <span class="id">Some</span> (<span class="id">a</span>', <span class="id">ys</span>) | <span class="id">None</span> =&gt; <span class="id">None</span> <span class="kwd">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="id">Function</span> <span class="id">combine_addr_64</span> (<span class="id">addr</span>: <span class="id">addressing</span>) (<span class="id">args</span>: <span class="id">list</span> <span class="id">valnum</span>) : <span class="id">option</span>(<span class="id">addressing</span> * <span class="id">list</span> <span class="id">valnum</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">addr</span>, <span class="id">args</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Aindexed</span> <span class="id">n</span>, <span class="id">x</span>::<span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Oleal</span> <span class="id">a</span>) <span class="id">ys</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">offset_addressing</span> <span class="id">a</span> <span class="id">n</span> <span class="kwd">with</span> <span class="id">Some</span> <span class="id">a</span>' =&gt; <span class="id">Some</span> (<span class="id">a</span>', <span class="id">ys</span>) | <span class="id">None</span> =&gt; <span class="id">None</span> <span class="kwd">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">combine_addr</span> (<span class="id">addr</span>: <span class="id">addressing</span>) (<span class="id">args</span>: <span class="id">list</span> <span class="id">valnum</span>) : <span class="id">option</span>(<span class="id">addressing</span> * <span class="id">list</span> <span class="id">valnum</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Archi.ptr64</span> <span class="kwd">then</span> <span class="id">combine_addr_64</span> <span class="id">addr</span> <span class="id">args</span> <span class="kwd">else</span> <span class="id">combine_addr_32</span> <span class="id">addr</span> <span class="id">args</span>.<br/>
+<br/>
+<span class="id">Function</span> <span class="id">combine_op</span> (<span class="id">op</span>: <span class="id">operation</span>) (<span class="id">args</span>: <span class="id">list</span> <span class="id">valnum</span>) : <span class="id">option</span>(<span class="id">operation</span> * <span class="id">list</span> <span class="id">valnum</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">op</span>, <span class="id">args</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Olea</span> <span class="id">addr</span>, <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">combine_addr_32</span> <span class="id">addr</span> <span class="id">args</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">addr</span>', <span class="id">args</span>') =&gt; <span class="id">Some</span>(<span class="id">Olea</span> <span class="id">addr</span>', <span class="id">args</span>')<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Oleal</span> <span class="id">addr</span>, <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">combine_addr_64</span> <span class="id">addr</span> <span class="id">args</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">addr</span>', <span class="id">args</span>') =&gt; <span class="id">Some</span>(<span class="id">Oleal</span> <span class="id">addr</span>', <span class="id">args</span>')<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Oandimm</span> <span class="id">n</span>, <span class="id">x</span> :: <span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Oandimm</span> <span class="id">m</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span>(<span class="id">Oandimm</span> (<span class="id">Int.and</span> <span class="id">m</span> <span class="id">n</span>), <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Oorimm</span> <span class="id">n</span>, <span class="id">x</span> :: <span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Oorimm</span> <span class="id">m</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span>(<span class="id">Oorimm</span> (<span class="id">Int.or</span> <span class="id">m</span> <span class="id">n</span>), <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Oxorimm</span> <span class="id">n</span>, <span class="id">x</span> :: <span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Oxorimm</span> <span class="id">m</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span>(<span class="id">Oxorimm</span> (<span class="id">Int.xor</span> <span class="id">m</span> <span class="id">n</span>), <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Oandlimm</span> <span class="id">n</span>, <span class="id">x</span> :: <span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Oandlimm</span> <span class="id">m</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span>(<span class="id">Oandlimm</span> (<span class="id">Int64.and</span> <span class="id">m</span> <span class="id">n</span>), <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Oorlimm</span> <span class="id">n</span>, <span class="id">x</span> :: <span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Oorlimm</span> <span class="id">m</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span>(<span class="id">Oorlimm</span> (<span class="id">Int64.or</span> <span class="id">m</span> <span class="id">n</span>), <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Oxorlimm</span> <span class="id">n</span>, <span class="id">x</span> :: <span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">get</span> <span class="id">x</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">Op</span> (<span class="id">Oxorlimm</span> <span class="id">m</span>) <span class="id">ys</span>) =&gt; <span class="id">Some</span>(<span class="id">Oxorlimm</span> (<span class="id">Int64.xor</span> <span class="id">m</span> <span class="id">n</span>), <span class="id">ys</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocmp</span> <span class="id">cond</span>, <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">combine_cond</span> <span class="id">cond</span> <span class="id">args</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">cond</span>', <span class="id">args</span>') =&gt; <span class="id">Some</span>(<span class="id">Ocmp</span> <span class="id">cond</span>', <span class="id">args</span>')<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">End</span> <span class="id">COMBINE</span>.<br/>
+<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

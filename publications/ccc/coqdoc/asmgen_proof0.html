@@ -1,0 +1,649 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module asmgen_proof0</title>
+<meta name="description" content="Documentation of Coq module asmgen_proof0" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module asmgen_proof0</h1>
+<div class="coq">
+<br/>
+<br/>
+<div class="doc">Correctness proof for Asm generation: machine-independent framework </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span>.<br/>
+<span class="kwd">Require</span> <span class="id"><a href="Intv.html">Intv</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AST.html">AST</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Errors.html">Errors</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Integers.html">Integers</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Floats.html">Floats</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Values.html">Values</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Memory.html">Memory</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Events.html">Events</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Smallstep.html">Smallstep</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Locations.html">Locations</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Mach.html">Mach</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Asm.html">Asm</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Asmgen</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Conventions.html">Conventions</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Mach_local.html">Mach_local</a></span> <span class="id"><a href="ASM_local.html">ASM_local</a></span> <span class="id"><a href="MemOpFP.html">MemOpFP</a></span> <span class="id"><a href="asmgen.html">asmgen</a></span> <span class="id"><a href="Asmgenproof0.html">Asmgenproof0</a></span>.<br/>
+<br/>
+<h1> Processor registers and register states </h1>
+<br/>
+<span class="kwd">Hint</span> <span class="kwd">Extern</span> 2 (<span class="id">_</span> &lt;&gt; <span class="id">_</span>) =&gt; <span class="tactic">congruence</span>: <span class="id">asmgen</span>.<br/>
+<br/>
+<span class="kwd">Hint</span> <span class="kwd">Resolve</span> <span class="id">preg_of_not_SP</span> <span class="id">preg_of_not_PC</span>: <span class="id">asmgen</span>.<br/>
+<br/>
+<h1> Agreement between Mach registers and processor registers </h1>
+<br/>
+<div class="doc">Preservation of register agreement under various assignments. </div>
+<br/>
+<div class="doc">Connection between Mach and Asm calling conventions for external
+    functions.  </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="extcall_arg_fp_match">extcall_arg_fp_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ms</span> <span class="id">sp</span> <span class="id">rs</span> <span class="id">l</span> <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="Asmgenproof0.html#agree">agree</a></span> <span class="id"><a href="asmgen_proof0.html#ms">ms</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="Mach_local.html#extcall_arg_fp">Mach_local.extcall_arg_fp</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#l">l</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#extcall_arg_fp">ASM_local.extcall_arg_fp</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> <span class="id"><a href="asmgen_proof0.html#l">l</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7741')">Proof.</div>
+<div class="proofscript" id="proof7741">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="extcall_arg_pair_fp_match">extcall_arg_pair_fp_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ms</span> <span class="id">sp</span> <span class="id">rs</span> <span class="id">p</span> <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="Asmgenproof0.html#agree">agree</a></span> <span class="id"><a href="asmgen_proof0.html#ms">ms</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="Mach_local.html#extcall_arg_pair_fp">Mach_local.extcall_arg_pair_fp</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#p">p</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#extcall_arg_pair_fp">ASM_local.extcall_arg_pair_fp</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> <span class="id"><a href="asmgen_proof0.html#p">p</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7742')">Proof.</div>
+<div class="proofscript" id="proof7742">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">eapply</span> <span class="id"><a href="asmgen_proof0.html#extcall_arg_fp_match">extcall_arg_fp_match</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>; <span class="tactic">eapply</span> <span class="id"><a href="asmgen_proof0.html#extcall_arg_fp_match">extcall_arg_fp_match</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="extcall_args_fp_match">extcall_args_fp_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ms</span> <span class="id">sp</span> <span class="id">rs</span>, <span class="id"><a href="Asmgenproof0.html#agree">agree</a></span> <span class="id"><a href="asmgen_proof0.html#ms">ms</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> -&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ll</span> <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Mach_local.html#load_arguments_fp">Mach_local.load_arguments_fp</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#ll">ll</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#load_arguments_fp">load_arguments_fp</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> <span class="id"><a href="asmgen_proof0.html#ll">ll</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7743')">Proof.</div>
+<div class="proofscript" id="proof7743">
+&nbsp;&nbsp;<span class="tactic">induction</span> 2. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="asmgen_proof0.html#extcall_arg_pair_fp_match">extcall_arg_pair_fp_match</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="extcall_arguments_fp_match">extcall_arguments_fp_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ms</span> <span class="id">sp</span> <span class="id">rs</span> <span class="id">sg</span> <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="Asmgenproof0.html#agree">agree</a></span> <span class="id"><a href="asmgen_proof0.html#ms">ms</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> -&gt; <br/>
+&nbsp;&nbsp;<span class="id"><a href="Mach_local.html#extcall_arguments_fp">Mach_local.extcall_arguments_fp</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#sg">sg</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#extcall_arguments_fp">ASM_local.extcall_arguments_fp</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> <span class="id"><a href="asmgen_proof0.html#sg">sg</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7744')">Proof.</div>
+<div class="proofscript" id="proof7744">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Mach_local.html#extcall_arguments_fp">Mach_local.extcall_arguments_fp</a></span>, <span class="id"><a href="ASM_local.html#extcall_arguments_fp">ASM_local.extcall_arguments_fp</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="asmgen_proof0.html#extcall_args_fp_match">extcall_args_fp_match</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Translation of arguments and results to builtins. </div>
+<span class="kwd">Remark</span> <span class="id"><a name="builtin_arg_match_fp">builtin_arg_match_fp</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> (<span class="id">rs</span>: <span class="id"><a href="Asm.html#regset">regset</a></span>) <span class="id">sp</span> <span class="id">a</span> <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="MemOpFP.html#eval_builtin_arg_fp">eval_builtin_arg_fp</a></span> <span class="id"><a href="asmgen_proof0.html#ge">ge</a></span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> (<span class="id"><a href="Asm.html#preg_of">preg_of</a></span> <span class="id"><a href="asmgen_proof0.html#r">r</a></span>)) <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#a">a</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="MemOpFP.html#eval_builtin_arg_fp">eval_builtin_arg_fp</a></span> <span class="id"><a href="asmgen_proof0.html#ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> (<span class="id"><a href="AST.html#map_builtin_arg">map_builtin_arg</a></span> <span class="id"><a href="Asm.html#preg_of">preg_of</a></span> <span class="id"><a href="asmgen_proof0.html#a">a</a></span>) <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7745')">Proof.</div>
+<div class="proofscript" id="proof7745">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">simpl</span>; <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="builtin_args_match_fp">builtin_args_match_fp</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">ms</span> <span class="id">sp</span> <span class="id">rs</span>, <span class="id"><a href="Asmgenproof0.html#agree">agree</a></span> <span class="id"><a href="asmgen_proof0.html#ms">ms</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> -&gt; <br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">al</span> <span class="id">fp</span>, <span class="id"><a href="MemOpFP.html#eval_builtin_args_fp">eval_builtin_args_fp</a></span> <span class="id"><a href="asmgen_proof0.html#ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#ms">ms</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#al">al</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemOpFP.html#eval_builtin_args_fp">eval_builtin_args_fp</a></span> <span class="id"><a href="asmgen_proof0.html#ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#map">map</a></span> (<span class="id"><a href="AST.html#map_builtin_arg">map_builtin_arg</a></span> <span class="id"><a href="Asm.html#preg_of">preg_of</a></span>) <span class="id"><a href="asmgen_proof0.html#al">al</a></span>) <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7746')">Proof.</div>
+<div class="proofscript" id="proof7746">
+&nbsp;&nbsp;<span class="tactic">induction</span> 2; <span class="tactic">intros</span>; <span class="tactic">simpl</span>; <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#builtin_arg_match_fp">builtin_arg_match_fp</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="MemOpFP.html#eval_builtin_arg_fp_lessdef">eval_builtin_arg_fp_lessdef</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<h1> Correspondence between Mach code and Asm code </h1>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="find_instr_in">find_instr_in</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">pos</span> <span class="id">i</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#find_instr">find_instr</a></span> <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="asmgen_proof0.html#i">i</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id"><a href="asmgen_proof0.html#i">i</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7747')">Proof.</div>
+<div class="proofscript" id="proof7747">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>; <span class="tactic">simpl</span>. <span class="tactic">intros</span>; <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">i</span>. <span class="tactic">case</span> (<span class="id"><a href="Coqlib.html#zeq">zeq</a></span> <span class="id">pos</span> 0); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">left</span>; <span class="tactic">congruence</span>. <span class="id">right</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The ``code tail'' of an instruction list <span class="bracket"><span class="id">c</span></span> is the list of instructions
+  starting at PC <span class="bracket"><span class="id">pos</span></span>. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="code_tail">code_tail</a></span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> -&gt; <span class="id"><a href="ASM_local.html#code">code</a></span> -&gt; <span class="id"><a href="ASM_local.html#code">code</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="code_tail_0">code_tail_0</a></span>: <span class="kwd">forall</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> 0 <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="code_tail_S">code_tail_S</a></span>: <span class="kwd">forall</span> <span class="id">pos</span> <span class="id">i</span> <span class="id">c1</span> <span class="id">c2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> + 1) (<span class="id"><a href="asmgen_proof0.html#i">i</a></span> :: <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span>) <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="code_tail_pos">code_tail_pos</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">pos</span> <span class="id">c1</span> <span class="id">c2</span>, <span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> -&gt; <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> &gt;= 0.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7748')">Proof.</div>
+<div class="proofscript" id="proof7748">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1. <span class="tactic">omega</span>. <span class="tactic">omega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="find_instr_tail">find_instr_tail</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c1</span> <span class="id">i</span> <span class="id">c2</span> <span class="id">pos</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> (<span class="id"><a href="asmgen_proof0.html#i">i</a></span> :: <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#find_instr">find_instr</a></span> <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="asmgen_proof0.html#i">i</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7749')">Proof.</div>
+<div class="proofscript" id="proof7749">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c1</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#zeq">zeq</a></span> <span class="id">pos</span> 0). <span class="tactic">subst</span> <span class="id">pos</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>. <span class="tactic">auto</span>. <span class="tactic">generalize</span> (<span class="id"><a href="asmgen_proof0.html#code_tail_pos">code_tail_pos</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H4</span>). <span class="tactic">intro</span>. <span class="id">omegaContradiction</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>. <span class="tactic">congruence</span>. <span class="tactic">replace</span> (<span class="id">pos0</span> + 1 - 1) <span class="kwd">with</span> <span class="id">pos0</span> <span class="tactic">by</span> <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Remark</span> <span class="id"><a name="code_tail_bounds_1">code_tail_bounds_1</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fn</span> <span class="id">ofs</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> -&gt; 0 &lt;= <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> &lt;= <span class="id"><a href="Coqlib.html#list_length_z">list_length_z</a></span> <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7750')">Proof.</div>
+<div class="proofscript" id="proof7750">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id"><a href="Coqlib.html#list_length_z_pos">list_length_z_pos</a></span> <span class="id">c</span>). <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Coqlib.html#list_length_z_cons">list_length_z_cons</a></span>. <span class="tactic">omega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Remark</span> <span class="id"><a name="code_tail_bounds_2">code_tail_bounds_2</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fn</span> <span class="id">ofs</span> <span class="id">i</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> (<span class="id"><a href="asmgen_proof0.html#i">i</a></span> :: <span class="id"><a href="asmgen_proof0.html#c">c</a></span>) -&gt; 0 &lt;= <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> &lt; <span class="id"><a href="Coqlib.html#list_length_z">list_length_z</a></span> <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7751')">Proof.</div>
+<div class="proofscript" id="proof7751">
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="kwd">forall</span> <span class="id">ofs</span> <span class="id">fn</span> <span class="id">c</span>, <span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">c</span>', <span class="id"><a href="asmgen_proof0.html#c">c</a></span> = <span class="id"><a href="asmgen_proof0.html#i">i</a></span> :: <span class="id">c</span>' -&gt; 0 &lt;= <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> &lt; <span class="id"><a href="Coqlib.html#list_length_z">list_length_z</a></span> <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span>).<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Coqlib.html#list_length_z_cons">list_length_z_cons</a></span>. <span class="tactic">generalize</span> (<span class="id"><a href="Coqlib.html#list_length_z_pos">list_length_z_pos</a></span> <span class="id">c</span>'). <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Coqlib.html#list_length_z_cons">list_length_z_cons</a></span>. <span class="tactic">generalize</span> (<span class="id">IHcode_tail</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H0</span>). <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="code_tail_next">code_tail_next</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fn</span> <span class="id">ofs</span> <span class="id">i</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> (<span class="id"><a href="asmgen_proof0.html#i">i</a></span> :: <span class="id"><a href="asmgen_proof0.html#c">c</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> + 1) <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7752')">Proof.</div>
+<div class="proofscript" id="proof7752">
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="kwd">forall</span> <span class="id">ofs</span> <span class="id">fn</span> <span class="id">c</span>, <span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">c</span>', <span class="id"><a href="asmgen_proof0.html#c">c</a></span> = <span class="id"><a href="asmgen_proof0.html#i">i</a></span> :: <span class="id">c</span>' -&gt; <span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> + 1) <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> <span class="id">c</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">c</span>. <span class="id">constructor</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="code_tail_next_int">code_tail_next_int</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fn</span> <span class="id">ofs</span> <span class="id">i</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="Coqlib.html#list_length_z">list_length_z</a></span> <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> &lt;= <span class="id"><a href="Integers.html#Ptrofs.max_unsigned">Ptrofs.max_unsigned</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id"><a href="Integers.html#Ptrofs.unsigned">Ptrofs.unsigned</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span>) <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> (<span class="id"><a href="asmgen_proof0.html#i">i</a></span> :: <span class="id"><a href="asmgen_proof0.html#c">c</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id"><a href="Integers.html#Ptrofs.unsigned">Ptrofs.unsigned</a></span> (<span class="id"><a href="Integers.html#Ptrofs.add">Ptrofs.add</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span>)) <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7753')">Proof.</div>
+<div class="proofscript" id="proof7753">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Integers.html#Ptrofs.add_unsigned">Ptrofs.add_unsigned</a></span>, <span class="id"><a href="Integers.html#Ptrofs.unsigned_one">Ptrofs.unsigned_one</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Integers.html#Ptrofs.unsigned_repr">Ptrofs.unsigned_repr</a></span>. <span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#code_tail_next">code_tail_next</a></span> <span class="kwd">with</span> <span class="id">i</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id"><a href="asmgen_proof0.html#code_tail_bounds_2">code_tail_bounds_2</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H0</span>). <span class="tactic">omega</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">transl_code_at_pc</span> <span class="id">pc</span> <span class="id">fb</span> <span class="id">f</span> <span class="id">c</span> <span class="id">ep</span> <span class="id">tf</span> <span class="id">tc</span></span> holds if the code pointer <span class="bracket"><span class="id">pc</span></span> points
+  within the Asm code generated by translating Mach function <span class="bracket"><span class="id">f</span></span>,
+  and <span class="bracket"><span class="id">tc</span></span> is the tail of the generated code at the position corresponding
+  to the code pointer <span class="bracket"><span class="id">pc</span></span>. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="transl_code_at_pc">transl_code_at_pc</a></span> (<span class="id">ge</span>: <span class="id"><a href="Mach.html#genv">Mach.genv</a></span>):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="id"><a href="Mach.html#function">Mach.function</a></span> -&gt; <span class="id"><a href="Mach.html#code">Mach.code</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#bool">bool</a></span> -&gt; <span class="id"><a href="ASM_local.html#function">ASM_local.function</a></span> -&gt; <span class="id"><a href="ASM_local.html#code">ASM_local.code</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="transl_code_at_pc_intro">transl_code_at_pc_intro</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">f</span> <span class="id">c</span> <span class="id">ep</span> <span class="id">tf</span> <span class="id">tc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id">ge</span> <span class="id"><a href="asmgen_proof0.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span>(<span class="id"><a href="AST.html#Internal">Internal</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen.html#transf_function">transf_function</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> = <span class="id"><a href="Errors.html#OK">Errors.OK</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen.html#transl_code">transl_code</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#ep">ep</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="asmgen_proof0.html#tc">tc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id"><a href="Integers.html#Ptrofs.unsigned">Ptrofs.unsigned</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span>) (<span class="id"><a href="ASM_local.html#fn_code">fn_code</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span>) <span class="id"><a href="asmgen_proof0.html#tc">tc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#transl_code_at_pc">transl_code_at_pc</a></span> <span class="id">ge</span> (<span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id"><a href="asmgen_proof0.html#b">b</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span>) <span class="id"><a href="asmgen_proof0.html#b">b</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#ep">ep</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span> <span class="id"><a href="asmgen_proof0.html#tc">tc</a></span>.<br/>
+<br/>
+<div class="doc">Equivalence between <span class="bracket"><span class="id">transl_code</span></span> and <span class="bracket"><span class="id">transl_code</span>'</span>. </div>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">error_monad_scope</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="transl_code_rec_transl_code">transl_code_rec_transl_code</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">il</span> <span class="id">ep</span> <span class="id">k</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen.html#transl_code_rec">transl_code_rec</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#il">il</a></span> <span class="id"><a href="asmgen_proof0.html#ep">ep</a></span> <span class="id"><a href="asmgen_proof0.html#k">k</a></span> = (<span class="tactic">do</span> <span class="id">c</span> &lt;- <span class="id"><a href="asmgen.html#transl_code">transl_code</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#il">il</a></span> <span class="id"><a href="asmgen_proof0.html#ep">ep</a></span>; <span class="id"><a href="asmgen_proof0.html#k">k</a></span> <span class="id">c</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7754')">Proof.</div>
+<div class="proofscript" id="proof7754">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">il</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">IHil</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="asmgen.html#transl_code">transl_code</a></span> <span class="id">f</span> <span class="id">il</span> (<span class="id">it1_is_parent</span> <span class="id">ep</span> <span class="id">a</span>)); <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">transl_code</span>'<span class="id">_transl_code</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">il</span> <span class="id">ep</span>,<br/>
+&nbsp;&nbsp;<span class="id">transl_code</span>' <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#il">il</a></span> <span class="id"><a href="asmgen_proof0.html#ep">ep</a></span> = <span class="id"><a href="asmgen.html#transl_code">transl_code</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#il">il</a></span> <span class="id"><a href="asmgen_proof0.html#ep">ep</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7755')">Proof.</div>
+<div class="proofscript" id="proof7755">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id">transl_code</span>'. <span class="tactic">rewrite</span> <span class="id"><a href="asmgen_proof0.html#transl_code_rec_transl_code">transl_code_rec_transl_code</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="asmgen.html#transl_code">transl_code</a></span> <span class="id">f</span> <span class="id">il</span> <span class="id">ep</span>); <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Predictor for return addresses in generated Asm code.
+  The <span class="bracket"><span class="id">return_address_offset</span></span> predicate defined here is used in the
+  semantics for Mach to determine the return addresses that are
+  stored in activation records. </div>
+<br/>
+<div class="doc">Consider a Mach function <span class="bracket"><span class="id">f</span></span> and a sequence <span class="bracket"><span class="id">c</span></span> of Mach instructions
+  representing the Mach code that remains to be executed after a
+  function call returns.  The predicate <span class="bracket"><span class="id">return_address_offset</span> <span class="id">f</span> <span class="id">c</span> <span class="id">ofs</span></span>
+  holds if <span class="bracket"><span class="id">ofs</span></span> is the integer offset of the PPC instruction
+  following the call in the Asm code obtained by translating the
+  code of <span class="bracket"><span class="id">f</span></span>. Graphically:
+<pre>
+     Mach function f    |--------- Mcall ---------|
+         Mach code c    |                |--------|
+                        |                 \        \
+                        |                  \        \
+                        |                   \        \
+     Asm code           |                    |--------|
+     Asm function       |------------- Pcall ---------|
+
+                        &lt;-------- ofs -------&gt;</pre>
+</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="return_address_offset">return_address_offset</a></span> (<span class="id">f</span>: <span class="id"><a href="Mach.html#function">Mach.function</a></span>) (<span class="id">c</span>: <span class="id"><a href="Mach.html#code">Mach.code</a></span>) (<span class="id">ofs</span>: <span class="id"><a href="Integers.html#ptrofs">ptrofs</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">tf</span> <span class="id">tc</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen.html#transf_function">transf_function</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen.html#transl_code">transl_code</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="asmgen_proof0.html#tc">tc</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id"><a href="Integers.html#Ptrofs.unsigned">Ptrofs.unsigned</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span>) (<span class="id"><a href="ASM_local.html#fn_code">fn_code</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span>) <span class="id"><a href="asmgen_proof0.html#tc">tc</a></span>.<br/>
+<br/>
+<div class="doc">We now show that such an offset always exists if the Mach code <span class="bracket"><span class="id">c</span></span>
+  is a suffix of <span class="bracket"><span class="id">f</span>.(<span class="id">fn_code</span>)</span>.  This holds because the translation
+  from Mach to PPC is compositional: each Mach instruction becomes
+  zero, one or several PPC instructions, but the order of instructions
+  is preserved. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="is_tail_code_tail">is_tail_code_tail</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c1</span> <span class="id">c2</span>, <span class="id"><a href="Coqlib.html#is_tail">is_tail</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> -&gt; <span class="id">exists</span> <span class="id">ofs</span>, <span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7756')">Proof.</div>
+<div class="proofscript" id="proof7756">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1. <span class="id">exists</span> 0; <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">IHis_tail</span> <span class="kwd">as</span> [<span class="id">ofs</span> <span class="id">CT</span>]. <span class="id">exists</span> (<span class="id">ofs</span> + 1); <span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="RETADDR_EXISTS">RETADDR_EXISTS</a></span>.<br/>
+<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="RETADDR_EXISTS.transl_instr_tail">transl_instr_tail</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">i</span> <span class="id">ep</span> <span class="id">k</span> <span class="id">c</span>, <span class="id"><a href="asmgen.html#transl_instr">transl_instr</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#i">i</a></span> <span class="id"><a href="asmgen_proof0.html#ep">ep</a></span> <span class="id"><a href="asmgen_proof0.html#k">k</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> -&gt; <span class="id"><a href="Coqlib.html#is_tail">is_tail</a></span> <span class="id"><a href="asmgen_proof0.html#k">k</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="RETADDR_EXISTS.transf_function_inv">transf_function_inv</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">tf</span>, <span class="id"><a href="asmgen.html#transf_function">transf_function</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tc</span>, <span class="id">exists</span> <span class="id">ep</span>, <span class="id"><a href="asmgen.html#transl_code">transl_code</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> (<span class="id"><a href="Mach.html#fn_code">Mach.fn_code</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span>) <span class="id"><a href="asmgen_proof0.html#ep">ep</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="asmgen_proof0.html#tc">tc</a></span> /\ <span class="id"><a href="Coqlib.html#is_tail">is_tail</a></span> <span class="id"><a href="asmgen_proof0.html#tc">tc</a></span> (<span class="id"><a href="ASM_local.html#fn_code">fn_code</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span>).<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="RETADDR_EXISTS.transf_function_len">transf_function_len</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">tf</span>, <span class="id"><a href="asmgen.html#transf_function">transf_function</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span> -&gt; <span class="id"><a href="Coqlib.html#list_length_z">list_length_z</a></span> (<span class="id"><a href="ASM_local.html#fn_code">fn_code</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span>) &lt;= <span class="id"><a href="Integers.html#Ptrofs.max_unsigned">Ptrofs.max_unsigned</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="transl_code_tail">transl_code_tail</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">c1</span> <span class="id">c2</span>, <span class="id"><a href="Coqlib.html#is_tail">is_tail</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">tc2</span> <span class="id">ep2</span>, <span class="id"><a href="asmgen.html#transl_code">transl_code</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> <span class="id"><a href="asmgen_proof0.html#ep2">ep2</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="asmgen_proof0.html#tc2">tc2</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tc1</span>, <span class="id">exists</span> <span class="id">ep1</span>, <span class="id"><a href="asmgen.html#transl_code">transl_code</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> <span class="id"><a href="asmgen_proof0.html#ep1">ep1</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="asmgen_proof0.html#tc1">tc1</a></span> /\ <span class="id"><a href="Coqlib.html#is_tail">is_tail</a></span> <span class="id"><a href="asmgen_proof0.html#tc1">tc1</a></span> <span class="id"><a href="asmgen_proof0.html#tc2">tc2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7757')">Proof.</div>
+<div class="proofscript" id="proof7757">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tc2</span>; <span class="id">exists</span> <span class="id">ep2</span>; <span class="tactic">split</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;&nbsp;<span class="id">monadInv</span> <span class="id">H0</span>. <span class="id">exploit</span> <span class="id">IHis_tail</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">tc1</span> [<span class="id">ep1</span> [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tc1</span>; <span class="id">exists</span> <span class="id">ep1</span>; <span class="tactic">split</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Coqlib.html#is_tail_trans">is_tail_trans</a></span> <span class="kwd">with</span> <span class="id">x</span>. <span class="tactic">auto</span>. <span class="tactic">eapply</span> <span class="id"><a href="asmgen_proof0.html#RETADDR_EXISTS.transl_instr_tail">transl_instr_tail</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="return_address_exists">return_address_exists</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">sg</span> <span class="id">ros</span> <span class="id">c</span>, <span class="id"><a href="Coqlib.html#is_tail">is_tail</a></span> (<span class="id"><a href="Mach.html#Mcall">Mcall</a></span> <span class="id"><a href="asmgen_proof0.html#sg">sg</a></span> <span class="id"><a href="asmgen_proof0.html#ros">ros</a></span> :: <span class="id"><a href="asmgen_proof0.html#c">c</a></span>) <span class="id"><a href="asmgen_proof0.html#f">f</a></span>.(<span class="id"><a href="Mach.html#fn_code">Mach.fn_code</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">ra</span>, <span class="id"><a href="asmgen_proof0.html#return_address_offset">return_address_offset</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#ra">ra</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7758')">Proof.</div>
+<div class="proofscript" id="proof7758">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id"><a href="asmgen.html#transf_function">transf_function</a></span> <span class="id">f</span>) <span class="kwd">as</span> [<span class="id">tf</span>|] <span class="id">eqn</span>:<span class="id">TF</span>.<br/>
++ <span class="id">exploit</span> <span class="id"><a href="asmgen_proof0.html#RETADDR_EXISTS.transf_function_inv">transf_function_inv</a></span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> (<span class="id">tc1</span> &amp; <span class="id">ep1</span> &amp; <span class="id">TR1</span> &amp; <span class="id">TL1</span>).<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="asmgen_proof0.html#transl_code_tail">transl_code_tail</a></span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> (<span class="id">tc2</span> &amp; <span class="id">ep2</span> &amp; <span class="id">TR2</span> &amp; <span class="id">TL2</span>).<br/>
+<span class="id">Opaque</span> <span class="id"><a href="asmgen.html#transl_instr">transl_instr</a></span>.<br/>
+&nbsp;&nbsp;<span class="id">monadInv</span> <span class="id">TR2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">TL3</span>: <span class="id"><a href="Coqlib.html#is_tail">is_tail</a></span> <span class="id">x</span> (<span class="id"><a href="ASM_local.html#fn_code">fn_code</a></span> <span class="id">tf</span>)).<br/>
+&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id"><a href="Coqlib.html#is_tail_trans">is_tail_trans</a></span> <span class="kwd">with</span> <span class="id">tc1</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Coqlib.html#is_tail_trans">is_tail_trans</a></span> <span class="kwd">with</span> <span class="id">tc2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="asmgen_proof0.html#RETADDR_EXISTS.transl_instr_tail">transl_instr_tail</a></span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="asmgen_proof0.html#is_tail_code_tail">is_tail_code_tail</a></span>. <span class="id">eexact</span> <span class="id">TL3</span>. <span class="tactic">intros</span> [<span class="id">ofs</span> <span class="id">CT</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Integers.html#Ptrofs.repr">Ptrofs.repr</a></span> <span class="id">ofs</span>). <span class="tactic">red</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Integers.html#Ptrofs.unsigned_repr">Ptrofs.unsigned_repr</a></span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="asmgen_proof0.html#code_tail_bounds_1">code_tail_bounds_1</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#RETADDR_EXISTS.transf_function_len">transf_function_len</a></span> <span class="kwd">in</span> <span class="id">TF</span>. <span class="tactic">omega</span>.<br/>
++ <span class="id">exists</span> <span class="id"><a href="Integers.html#Ptrofs.zero">Ptrofs.zero</a></span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="asmgen_proof0.html#RETADDR_EXISTS">RETADDR_EXISTS</a></span>.<br/>
+<br/>
+<span class="kwd">Remark</span> <span class="id"><a name="code_tail_no_bigger">code_tail_no_bigger</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">pos</span> <span class="id">c1</span> <span class="id">c2</span>, <span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> -&gt; (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#length">length</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> &lt;= <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#length">length</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span>)%<span class="id">nat</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7759')">Proof.</div>
+<div class="proofscript" id="proof7759">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">simpl</span>; <span class="tactic">omega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Remark</span> <span class="id"><a name="code_tail_unique">code_tail_unique</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fn</span> <span class="id">c</span> <span class="id">pos</span> <span class="id">pos</span>',<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> -&gt; <span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> <span class="id">pos</span>' <span class="id"><a href="asmgen_proof0.html#fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> -&gt; <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> = <span class="id">pos</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7760')">Proof.</div>
+<div class="proofscript" id="proof7760">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">fn</span>; <span class="tactic">intros</span> <span class="id">until</span> <span class="id">pos</span>'; <span class="tactic">intros</span> <span class="id">ITA</span> <span class="id">CT</span>; <span class="id">inv</span> <span class="id">ITA</span>; <span class="id">inv</span> <span class="id">CT</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id"><a href="asmgen_proof0.html#code_tail_no_bigger">code_tail_no_bigger</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H3</span>); <span class="tactic">simpl</span>; <span class="tactic">intro</span>; <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id"><a href="asmgen_proof0.html#code_tail_no_bigger">code_tail_no_bigger</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H3</span>); <span class="tactic">simpl</span>; <span class="tactic">intro</span>; <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">f_equal</span>. <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="return_address_offset_correct">return_address_offset_correct</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">fb</span> <span class="id">f</span> <span class="id">c</span> <span class="id">tf</span> <span class="id">tc</span> <span class="id">ofs</span>',<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#transl_code_at_pc">transl_code_at_pc</a></span> <span class="id"><a href="asmgen_proof0.html#ge">ge</a></span> (<span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id"><a href="asmgen_proof0.html#b">b</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span>) <span class="id"><a href="asmgen_proof0.html#fb">fb</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span> <span class="id"><a href="asmgen_proof0.html#tc">tc</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#return_address_offset">return_address_offset</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id">ofs</span>' -&gt;<br/>
+&nbsp;&nbsp;<span class="id">ofs</span>' = <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7761')">Proof.</div>
+<div class="proofscript" id="proof7761">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">red</span> <span class="kwd">in</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="asmgen_proof0.html#code_tail_unique">code_tail_unique</a></span>. <span class="id">eexact</span> <span class="id">H12</span>. <span class="tactic">eapply</span> <span class="id">H0</span>; <span class="tactic">eauto</span>. <span class="tactic">intro</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- (<span class="id"><a href="Integers.html#Ptrofs.repr_unsigned">Ptrofs.repr_unsigned</a></span> <span class="id">ofs</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- (<span class="id"><a href="Integers.html#Ptrofs.repr_unsigned">Ptrofs.repr_unsigned</a></span> <span class="id">ofs</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The <span class="bracket"><span class="id">find_label</span></span> function returns the code tail starting at the
+  given label.  A connection with <span class="bracket"><span class="id">code_tail</span></span> is then established. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="find_label">find_label</a></span> (<span class="id">lbl</span>: <span class="id"><a href="Asm.html#label">label</a></span>) (<span class="id">c</span>: <span class="id"><a href="ASM_local.html#code">code</a></span>) {<span class="kwd">struct</span> <span class="id">c</span>} : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="ASM_local.html#code">code</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span><br/>
+&nbsp;&nbsp;| <span class="id">instr</span> :: <span class="id">c</span>' =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="ASM_local.html#is_label">is_label</a></span> <span class="id"><a href="asmgen_proof0.html#lbl">lbl</a></span> <span class="id">instr</span> <span class="kwd">then</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">c</span>' <span class="kwd">else</span> <span class="id"><a href="asmgen_proof0.html#find_label">find_label</a></span> <span class="id"><a href="asmgen_proof0.html#lbl">lbl</a></span> <span class="id">c</span>'<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="label_pos_code_tail">label_pos_code_tail</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">lbl</span> <span class="id">c</span> <span class="id">pos</span> <span class="id">c</span>',<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#find_label">find_label</a></span> <span class="id"><a href="asmgen_proof0.html#lbl">lbl</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">c</span>' -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">pos</span>',<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#label_pos">label_pos</a></span> <span class="id"><a href="asmgen_proof0.html#lbl">lbl</a></span> <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">pos</span>'<br/>
+&nbsp;&nbsp;/\ <span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id">pos</span>' - <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span>) <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id">c</span>'<br/>
+&nbsp;&nbsp;/\ <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> &lt; <span class="id">pos</span>' &lt;= <span class="id"><a href="asmgen_proof0.html#pos">pos</a></span> + <span class="id"><a href="Coqlib.html#list_length_z">list_length_z</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7762')">Proof.</div>
+<div class="proofscript" id="proof7762">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">intros</span>. <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">intros</span> <span class="id">until</span> <span class="id">c</span>'.<br/>
+&nbsp;&nbsp;<span class="tactic">case</span> (<span class="id"><a href="ASM_local.html#is_label">is_label</a></span> <span class="id">lbl</span> <span class="id">a</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span> <span class="id">EQ</span>; <span class="tactic">injection</span> <span class="id">EQ</span>; <span class="tactic">intro</span>; <span class="tactic">subst</span> <span class="id">c</span>'.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">pos</span> + 1). <span class="tactic">split</span>. <span class="tactic">auto</span>. <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">replace</span> (<span class="id">pos</span> + 1 - <span class="id">pos</span>) <span class="kwd">with</span> (0 + 1) <span class="tactic">by</span> <span class="tactic">omega</span>. <span class="id">constructor</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Coqlib.html#list_length_z_cons">list_length_z_cons</a></span>. <span class="tactic">generalize</span> (<span class="id"><a href="Coqlib.html#list_length_z_pos">list_length_z_pos</a></span> <span class="id">c</span>). <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">generalize</span> (<span class="id">IHc</span> (<span class="id">pos</span> + 1) <span class="id">c</span>' <span class="id">H</span>). <span class="tactic">intros</span> [<span class="id">pos</span>' [<span class="id">A</span> [<span class="id">B</span> <span class="id">C</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">pos</span>'. <span class="tactic">split</span>. <span class="tactic">auto</span>. <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">replace</span> (<span class="id">pos</span>' - <span class="id">pos</span>) <span class="kwd">with</span> ((<span class="id">pos</span>' - (<span class="id">pos</span> + 1)) + 1) <span class="tactic">by</span> <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Coqlib.html#list_length_z_cons">list_length_z_cons</a></span>. <span class="tactic">omega</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Helper lemmas to reason about
+<ul>
+<li>
+ the "code is tail of" property
+</li>
+<li>
+ correct translation of labels. </li>
+</ul>
+</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="tail_nolabel">tail_nolabel</a></span> (<span class="id">k</span> <span class="id">c</span>: <span class="id"><a href="ASM_local.html#code">code</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="Coqlib.html#is_tail">is_tail</a></span> <span class="id"><a href="asmgen_proof0.html#k">k</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> /\ <span class="kwd">forall</span> <span class="id">lbl</span>, <span class="id"><a href="asmgen_proof0.html#find_label">find_label</a></span> <span class="id"><a href="asmgen_proof0.html#lbl">lbl</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> = <span class="id"><a href="asmgen_proof0.html#find_label">find_label</a></span> <span class="id"><a href="asmgen_proof0.html#lbl">lbl</a></span> <span class="id"><a href="asmgen_proof0.html#k">k</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tail_nolabel_refl">tail_nolabel_refl</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span>, <span class="id"><a href="asmgen_proof0.html#tail_nolabel">tail_nolabel</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7763')">Proof.</div>
+<div class="proofscript" id="proof7763">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id"><a href="Coqlib.html#is_tail_refl">is_tail_refl</a></span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tail_nolabel_trans">tail_nolabel_trans</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c1</span> <span class="id">c2</span> <span class="id">c3</span>, <span class="id"><a href="asmgen_proof0.html#tail_nolabel">tail_nolabel</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> <span class="id"><a href="asmgen_proof0.html#c3">c3</a></span> -&gt; <span class="id"><a href="asmgen_proof0.html#tail_nolabel">tail_nolabel</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> -&gt; <span class="id"><a href="asmgen_proof0.html#tail_nolabel">tail_nolabel</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> <span class="id"><a href="asmgen_proof0.html#c3">c3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7764')">Proof.</div>
+<div class="proofscript" id="proof7764">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>; <span class="tactic">destruct</span> <span class="id">H0</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Coqlib.html#is_tail_trans">is_tail_trans</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id">H1</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="nolabel">nolabel</a></span> (<span class="id">i</span>: <span class="id"><a href="ASM_local.html#instruction">instruction</a></span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="asmgen_proof0.html#i">i</a></span> <span class="kwd">with</span> <span class="id"><a href="ASM_local.html#Plabel">Plabel</a></span> <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span> | <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span> <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Hint</span> <span class="kwd">Extern</span> 1 (<span class="id"><a href="asmgen_proof0.html#nolabel">nolabel</a></span> <span class="id">_</span>) =&gt; <span class="tactic">exact</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#I">I</a></span> : <span class="id">labels</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tail_nolabel_cons">tail_nolabel_cons</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">c</span> <span class="id">k</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#nolabel">nolabel</a></span> <span class="id"><a href="asmgen_proof0.html#i">i</a></span> -&gt; <span class="id"><a href="asmgen_proof0.html#tail_nolabel">tail_nolabel</a></span> <span class="id"><a href="asmgen_proof0.html#k">k</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> -&gt; <span class="id"><a href="asmgen_proof0.html#tail_nolabel">tail_nolabel</a></span> <span class="id"><a href="asmgen_proof0.html#k">k</a></span> (<span class="id"><a href="asmgen_proof0.html#i">i</a></span> :: <span class="id"><a href="asmgen_proof0.html#c">c</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7765')">Proof.</div>
+<div class="proofscript" id="proof7765">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H0</span>. <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H1</span>. <span class="tactic">destruct</span> <span class="id">i</span>; <span class="tactic">reflexivity</span> || <span class="id">contradiction</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Hint</span> <span class="kwd">Resolve</span> <span class="id">tail_nolabel_refl</span>: <span class="id">labels</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">TailNoLabel</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">labels</span>;<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| [ |- <span class="id"><a href="asmgen_proof0.html#tail_nolabel">tail_nolabel</a></span> <span class="id">_</span> (<span class="id">_</span> :: <span class="id">_</span>) ] =&gt; <span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#tail_nolabel_cons">tail_nolabel_cons</a></span>; [<span class="tactic">auto</span>; <span class="tactic">exact</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#I">I</a></span> | <span class="id">TailNoLabel</span>]<br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id"><a href="Errors.html#Error">Error</a></span> <span class="id">_</span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <span class="tactic">discriminate</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id"><a href="Errors.html#assertion_failed">assertion_failed</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <span class="tactic">discriminate</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id">_</span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <span class="id">inv</span> <span class="id">H</span>; <span class="id">TailNoLabel</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id"><a href="Errors.html#bind">bind</a></span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <span class="id">monadInv</span> <span class="id">H</span>;  <span class="id">TailNoLabel</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: (<span class="kwd">if</span> ?<span class="id">x</span> <span class="kwd">then</span> <span class="id">_</span> <span class="kwd">else</span> <span class="id">_</span>) = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <span class="tactic">destruct</span> <span class="id">x</span>; <span class="id">TailNoLabel</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="kwd">match</span> ?<span class="id">x</span> <span class="kwd">with</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> =&gt; <span class="id">_</span> | <span class="id">_</span> :: <span class="id">_</span> =&gt; <span class="id">_</span> <span class="kwd">end</span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <span class="tactic">destruct</span> <span class="id">x</span>; <span class="id">TailNoLabel</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<h1> Execution of straight-line code </h1>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="STRAIGHTLINE">STRAIGHTLINE</a></span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="STRAIGHTLINE.ge">ge</a></span>: <span class="id"><a href="ASM_local.html#genv">genv</a></span>.<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="STRAIGHTLINE.fn">fn</a></span>: <span class="id"><a href="ASM_local.html#function">function</a></span>.<br/>
+<br/>
+<div class="doc">Straight-line code is composed of processor instructions that execute
+  in sequence (no branches, no function calls and returns).
+  The following inductive predicate relates the machine states
+  before and after executing a straight-line sequence of instructions.
+  Instructions are taken from the first list instead of being fetched
+  from memory. </div>
+<br/>
+<div class="doc">TODO: instrument exec_straight with footprint </div>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="exec_straight">exec_straight</a></span>: <span class="id"><a href="ASM_local.html#code">code</a></span> -&gt; <span class="id"><a href="Asm.html#regset">regset</a></span> -&gt; <span class="id"><a href="Memory.html#mem">mem</a></span> -&gt; <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#code">code</a></span> -&gt; <span class="id"><a href="Asm.html#regset">regset</a></span> -&gt; <span class="id"><a href="Memory.html#mem">mem</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="exec_straight_one">exec_straight_one</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i1</span> <span class="id">c</span> <span class="id">rs1</span> <span class="id">m1</span> <span class="id">fp</span> <span class="id">rs2</span> <span class="id">m2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr">exec_instr</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i1">i1</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> = <span class="kwd">Next</span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr_fp">exec_instr_fp</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i1">i1</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> = <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Val.offset_ptr">Val.offset_ptr</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#exec_straight">exec_straight</a></span> (<span class="id"><a href="asmgen_proof0.html#i1">i1</a></span> :: <span class="id"><a href="asmgen_proof0.html#c">c</a></span>) <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span><br/>
+| <span class="id"><a name="exec_straight_step">exec_straight_step</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">c</span> <span class="id">rs1</span> <span class="id">m1</span> <span class="id">fp1</span> <span class="id">rs2</span> <span class="id">m2</span> <span class="id">fp2</span> <span class="id">c</span>' <span class="id">rs3</span> <span class="id">m3</span> <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr">exec_instr</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i">i</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> = <span class="kwd">Next</span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr_fp">exec_instr_fp</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i">i</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> = <span class="id"><a href="asmgen_proof0.html#fp1">fp1</a></span> -&gt;      <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Val.offset_ptr">Val.offset_ptr</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#exec_straight">exec_straight</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> <span class="id"><a href="asmgen_proof0.html#fp2">fp2</a></span> <span class="id">c</span>' <span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span> <span class="id"><a href="asmgen_proof0.html#m3">m3</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="asmgen_proof0.html#fp1">fp1</a></span> <span class="id"><a href="asmgen_proof0.html#fp2">fp2</a></span> = <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#exec_straight">exec_straight</a></span> (<span class="id"><a href="asmgen_proof0.html#i">i</a></span> :: <span class="id"><a href="asmgen_proof0.html#c">c</a></span>) <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> <span class="id">c</span>' <span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span> <span class="id"><a href="asmgen_proof0.html#m3">m3</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="exec_straight_trans">exec_straight_trans</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c1</span> <span class="id">rs1</span> <span class="id">m1</span> <span class="id">fp1</span> <span class="id">c2</span> <span class="id">rs2</span> <span class="id">m2</span> <span class="id">fp2</span> <span class="id">c3</span> <span class="id">rs3</span> <span class="id">m3</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#exec_straight">exec_straight</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> <span class="id"><a href="asmgen_proof0.html#fp1">fp1</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#exec_straight">exec_straight</a></span> <span class="id"><a href="asmgen_proof0.html#c2">c2</a></span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> <span class="id"><a href="asmgen_proof0.html#fp2">fp2</a></span> <span class="id"><a href="asmgen_proof0.html#c3">c3</a></span> <span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span> <span class="id"><a href="asmgen_proof0.html#m3">m3</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#exec_straight">exec_straight</a></span> <span class="id"><a href="asmgen_proof0.html#c1">c1</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="asmgen_proof0.html#fp1">fp1</a></span> <span class="id"><a href="asmgen_proof0.html#fp2">fp2</a></span>) <span class="id"><a href="asmgen_proof0.html#c3">c3</a></span> <span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span> <span class="id"><a href="asmgen_proof0.html#m3">m3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7766')">Proof.</div>
+<div class="proofscript" id="proof7766">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> 1. <span class="id">revert</span> <span class="id">fp2</span> <span class="id">c3</span> <span class="id">rs3</span> <span class="id">m3</span>. <span class="tactic">induction</span> <span class="id">H</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#exec_straight_step">exec_straight_step</a></span> <span class="kwd">with</span> <span class="id">fp</span> <span class="id">rs2</span> <span class="id">m2</span> <span class="id">fp2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">fp</span>. <span class="tactic">rewrite</span> &lt;- <span class="id"><a href="Footprint.html#FP.fp_union_assoc">FP.fp_union_assoc</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#exec_straight_step">exec_straight_step</a></span> <span class="kwd">with</span> <span class="id">fp1</span> <span class="id">rs2</span> <span class="id">m2</span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id">fp2</span> <span class="id">fp0</span>) ; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="exec_straight_two">exec_straight_two</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i1</span> <span class="id">i2</span> <span class="id">c</span> <span class="id">rs1</span> <span class="id">m1</span> <span class="id">rs2</span> <span class="id">m2</span> <span class="id">fp1</span> <span class="id">rs3</span> <span class="id">m3</span> <span class="id">fp2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr">exec_instr</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i1">i1</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> = <span class="kwd">Next</span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr_fp">exec_instr_fp</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i1">i1</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> = <span class="id"><a href="asmgen_proof0.html#fp1">fp1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr">exec_instr</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i2">i2</a></span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> = <span class="kwd">Next</span> <span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span> <span class="id"><a href="asmgen_proof0.html#m3">m3</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr_fp">exec_instr_fp</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i2">i2</a></span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> = <span class="id"><a href="asmgen_proof0.html#fp2">fp2</a></span> -&gt;    <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Val.offset_ptr">Val.offset_ptr</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Val.offset_ptr">Val.offset_ptr</a></span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#exec_straight">exec_straight</a></span> (<span class="id"><a href="asmgen_proof0.html#i1">i1</a></span> :: <span class="id"><a href="asmgen_proof0.html#i2">i2</a></span> :: <span class="id"><a href="asmgen_proof0.html#c">c</a></span>) <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="asmgen_proof0.html#fp1">fp1</a></span> <span class="id"><a href="asmgen_proof0.html#fp2">fp2</a></span>) <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span> <span class="id"><a href="asmgen_proof0.html#m3">m3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7767')">Proof.</div>
+<div class="proofscript" id="proof7767">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#exec_straight_step">exec_straight_step</a></span> <span class="kwd">with</span> <span class="id">fp1</span> <span class="id">rs2</span> <span class="id">m2</span> <span class="id">fp2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#exec_straight_one">exec_straight_one</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="exec_straight_three">exec_straight_three</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i1</span> <span class="id">i2</span> <span class="id">i3</span> <span class="id">c</span> <span class="id">rs1</span> <span class="id">m1</span> <span class="id">rs2</span> <span class="id">m2</span> <span class="id">fp1</span> <span class="id">rs3</span> <span class="id">m3</span> <span class="id">fp2</span> <span class="id">rs4</span> <span class="id">m4</span> <span class="id">fp3</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr">exec_instr</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i1">i1</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> = <span class="kwd">Next</span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr_fp">exec_instr_fp</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i1">i1</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> = <span class="id"><a href="asmgen_proof0.html#fp1">fp1</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr">exec_instr</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i2">i2</a></span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> = <span class="kwd">Next</span> <span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span> <span class="id"><a href="asmgen_proof0.html#m3">m3</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr_fp">exec_instr_fp</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i2">i2</a></span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span> <span class="id"><a href="asmgen_proof0.html#m2">m2</a></span> = <span class="id"><a href="asmgen_proof0.html#fp2">fp2</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr">exec_instr</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i3">i3</a></span> <span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span> <span class="id"><a href="asmgen_proof0.html#m3">m3</a></span> = <span class="kwd">Next</span> <span class="id"><a href="asmgen_proof0.html#rs4">rs4</a></span> <span class="id"><a href="asmgen_proof0.html#m4">m4</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#exec_instr_fp">exec_instr_fp</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span> <span class="id"><a href="asmgen_proof0.html#i3">i3</a></span> <span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span> <span class="id"><a href="asmgen_proof0.html#m3">m3</a></span> = <span class="id"><a href="asmgen_proof0.html#fp3">fp3</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Val.offset_ptr">Val.offset_ptr</a></span> <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Val.offset_ptr">Val.offset_ptr</a></span> <span class="id"><a href="asmgen_proof0.html#rs2">rs2</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#rs4">rs4</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Val.offset_ptr">Val.offset_ptr</a></span> <span class="id"><a href="asmgen_proof0.html#rs3">rs3</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#exec_straight">exec_straight</a></span> (<span class="id"><a href="asmgen_proof0.html#i1">i1</a></span> :: <span class="id"><a href="asmgen_proof0.html#i2">i2</a></span> :: <span class="id"><a href="asmgen_proof0.html#i3">i3</a></span> :: <span class="id"><a href="asmgen_proof0.html#c">c</a></span>) <span class="id"><a href="asmgen_proof0.html#rs1">rs1</a></span> <span class="id"><a href="asmgen_proof0.html#m1">m1</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="asmgen_proof0.html#fp1">fp1</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="asmgen_proof0.html#fp2">fp2</a></span> <span class="id"><a href="asmgen_proof0.html#fp3">fp3</a></span>)) <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#rs4">rs4</a></span> <span class="id"><a href="asmgen_proof0.html#m4">m4</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7768')">Proof.</div>
+<div class="proofscript" id="proof7768">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#exec_straight_step">exec_straight_step</a></span> <span class="kwd">with</span> <span class="id">fp1</span> <span class="id">rs2</span> <span class="id">m2</span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id">fp2</span> <span class="id">fp3</span>); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="asmgen_proof0.html#exec_straight_two">exec_straight_two</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The following lemmas show that straight-line executions
+  (predicate <span class="bracket"><span class="id">exec_straight</span></span>) correspond to correct Asm executions. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="exec_straight_steps_1">exec_straight_steps_1</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">rs</span> <span class="id">m</span> <span class="id">fp</span> <span class="id">c</span>' <span class="id">rs</span>' <span class="id">m</span>' <span class="id">lf</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#exec_straight">exec_straight</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> <span class="id"><a href="asmgen_proof0.html#m">m</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> <span class="id">c</span>' <span class="id">rs</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Coqlib.html#list_length_z">list_length_z</a></span> (<span class="id"><a href="ASM_local.html#fn_code">fn_code</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span>) &lt;= <span class="id"><a href="Integers.html#Ptrofs.max_unsigned">Ptrofs.max_unsigned</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#rs">rs</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id"><a href="asmgen_proof0.html#b">b</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="AST.html#Internal">Internal</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id"><a href="Integers.html#Ptrofs.unsigned">Ptrofs.unsigned</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span>) (<span class="id"><a href="ASM_local.html#fn_code">fn_code</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span>) <span class="id"><a href="asmgen_proof0.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#plus">plus</a></span> (<span class="id"><a href="ASM_local.html#step">ASM_local.step</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span>) (<span class="id"><a href="ASM_local.html#Core_State">Core_State</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> <span class="id"><a href="asmgen_proof0.html#lf">lf</a></span>) <span class="id"><a href="asmgen_proof0.html#m">m</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> (<span class="id"><a href="ASM_local.html#Core_State">Core_State</a></span> <span class="id">rs</span>' <span class="id"><a href="asmgen_proof0.html#lf">lf</a></span>) <span class="id">m</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7769')">Proof.</div>
+<div class="proofscript" id="proof7769">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="InteractionSemantics.html#plus_one">plus_one</a></span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="asmgen_proof0.html#find_instr_tail">find_instr_tail</a></span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">plus_left</span>'.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="asmgen_proof0.html#find_instr_tail">find_instr_tail</a></span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHexec_straight</span> <span class="kwd">with</span> <span class="id">b</span> (<span class="id"><a href="Integers.html#Ptrofs.add">Ptrofs.add</a></span> <span class="id">ofs</span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span>).<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H1</span>. <span class="tactic">rewrite</span> <span class="id">H5</span>. <span class="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#code_tail_next_int">code_tail_next_int</a></span> <span class="kwd">with</span> <span class="id">i</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">traceEq</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="exec_straight_steps_2">exec_straight_steps_2</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">rs</span> <span class="id">m</span> <span class="id">fp</span> <span class="id">c</span>' <span class="id">rs</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#exec_straight">exec_straight</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="asmgen_proof0.html#rs">rs</a></span> <span class="id"><a href="asmgen_proof0.html#m">m</a></span> <span class="id"><a href="asmgen_proof0.html#fp">fp</a></span> <span class="id">c</span>' <span class="id">rs</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Coqlib.html#list_length_z">list_length_z</a></span> (<span class="id"><a href="ASM_local.html#fn_code">fn_code</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span>) &lt;= <span class="id"><a href="Integers.html#Ptrofs.max_unsigned">Ptrofs.max_unsigned</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#rs">rs</a></span>#<span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id"><a href="asmgen_proof0.html#b">b</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="AST.html#Internal">Internal</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id"><a href="Integers.html#Ptrofs.unsigned">Ptrofs.unsigned</a></span> <span class="id"><a href="asmgen_proof0.html#ofs">ofs</a></span>) (<span class="id"><a href="ASM_local.html#fn_code">fn_code</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span>) <span class="id"><a href="asmgen_proof0.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">ofs</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rs</span>'#<span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id"><a href="asmgen_proof0.html#b">b</a></span> <span class="id">ofs</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <span class="id"><a href="asmgen_proof0.html#code_tail">code_tail</a></span> (<span class="id"><a href="Integers.html#Ptrofs.unsigned">Ptrofs.unsigned</a></span> <span class="id">ofs</span>') (<span class="id"><a href="ASM_local.html#fn_code">fn_code</a></span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE.fn">fn</a></span>) <span class="id">c</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7770')">Proof.</div>
+<div class="proofscript" id="proof7770">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Integers.html#Ptrofs.add">Ptrofs.add</a></span> <span class="id">ofs</span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span>). <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span>. <span class="tactic">rewrite</span> <span class="id">H3</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#code_tail_next_int">code_tail_next_int</a></span> <span class="kwd">with</span> <span class="id">i1</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHexec_straight</span> <span class="kwd">with</span> (<span class="id"><a href="Integers.html#Ptrofs.add">Ptrofs.add</a></span> <span class="id">ofs</span> <span class="id"><a href="Integers.html#Ptrofs.one">Ptrofs.one</a></span>).<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H1</span>. <span class="tactic">rewrite</span> <span class="id">H5</span>. <span class="tactic">reflexivity</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="asmgen_proof0.html#code_tail_next_int">code_tail_next_int</a></span> <span class="kwd">with</span> <span class="id">i</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="asmgen_proof0.html#STRAIGHTLINE">STRAIGHTLINE</a></span>.<br/>
+<br/>
+<h1> Properties of the Mach call stack </h1>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="MATCH_STACK">MATCH_STACK</a></span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="MATCH_STACK.ge">ge</a></span>: <span class="id"><a href="Mach.html#genv">Mach.genv</a></span>.<br/>
+<br/>
+<div class="doc">TODO: This invariant might be too weak, since we have a loadframe </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="match_stack">match_stack</a></span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Mach.html#stackframe">Mach.stackframe</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="match_stack_nil">match_stack_nil</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#match_stack">match_stack</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="match_stack_cons">match_stack_cons</a></span>: <span class="kwd">forall</span> <span class="id">fb</span> <span class="id">sp</span> <span class="id">ra</span> <span class="id">c</span> <span class="id">s</span> <span class="id">f</span> <span class="id">tf</span> <span class="id">tc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id"><a href="asmgen_proof0.html#MATCH_STACK.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#fb">fb</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="AST.html#Internal">Internal</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#transl_code_at_pc">transl_code_at_pc</a></span> <span class="id"><a href="asmgen_proof0.html#MATCH_STACK.ge">ge</a></span> <span class="id"><a href="asmgen_proof0.html#ra">ra</a></span> <span class="id"><a href="asmgen_proof0.html#fb">fb</a></span> <span class="id"><a href="asmgen_proof0.html#f">f</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="asmgen_proof0.html#tf">tf</a></span> <span class="id"><a href="asmgen_proof0.html#tc">tc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> &lt;&gt; <span class="id"><a href="Values.html#Vundef">Vundef</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#match_stack">match_stack</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#match_stack">match_stack</a></span> (<span class="id"><a href="Mach.html#Stackframe">Stackframe</a></span> <span class="id"><a href="asmgen_proof0.html#fb">fb</a></span> <span class="id"><a href="asmgen_proof0.html#sp">sp</a></span> <span class="id"><a href="asmgen_proof0.html#ra">ra</a></span> <span class="id"><a href="asmgen_proof0.html#c">c</a></span> :: <span class="id"><a href="asmgen_proof0.html#s">s</a></span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="parent_sp_def">parent_sp_def</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">sp0</span>, <span class="id"><a href="asmgen_proof0.html#match_stack">match_stack</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span> -&gt; <span class="id"><a href="Mach_local.html#parent_sp0">parent_sp0</a></span> <span class="id"><a href="asmgen_proof0.html#sp0">sp0</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span> &lt;&gt; <span class="id"><a href="Values.html#Vundef">Vundef</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7771')">Proof.</div>
+<div class="proofscript" id="proof7771">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">simpl</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Values.html#Vnullptr">Vnullptr</a></span>; <span class="tactic">destruct</span> <span class="id"><a href="Archi.html#ptr64">Archi.ptr64</a></span>; <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="parent_ra_def">parent_ra_def</a></span>: <span class="kwd">forall</span> <span class="id">s</span>, <span class="id"><a href="asmgen_proof0.html#match_stack">match_stack</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span> -&gt; <span class="id"><a href="Mach.html#parent_ra">parent_ra</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span> &lt;&gt; <span class="id"><a href="Values.html#Vundef">Vundef</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7772')">Proof.</div>
+<div class="proofscript" id="proof7772">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Values.html#Vnullptr">Vnullptr</a></span>; <span class="tactic">destruct</span> <span class="id"><a href="Archi.html#ptr64">Archi.ptr64</a></span>; <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="lessdef_parent_sp">lessdef_parent_sp</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">sp0</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#match_stack">match_stack</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span> -&gt; <span class="id"><a href="Values.html#Val.lessdef">Val.lessdef</a></span> (<span class="id"><a href="Mach_local.html#parent_sp0">parent_sp0</a></span> <span class="id"><a href="asmgen_proof0.html#sp0">sp0</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span>) <span class="id"><a href="asmgen_proof0.html#v">v</a></span> -&gt; <span class="id"><a href="asmgen_proof0.html#v">v</a></span> = <span class="id"><a href="Mach_local.html#parent_sp0">parent_sp0</a></span> <span class="id"><a href="asmgen_proof0.html#sp0">sp0</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7773')">Proof.</div>
+<div class="proofscript" id="proof7773">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>. <span class="id">exploit</span> <span class="id"><a href="asmgen_proof0.html#parent_sp_def">parent_sp_def</a></span>; <span class="tactic">eauto</span>. <span class="tactic">tauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="lessdef_parent_ra">lessdef_parent_ra</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="asmgen_proof0.html#match_stack">match_stack</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span> -&gt; <span class="id"><a href="Values.html#Val.lessdef">Val.lessdef</a></span> (<span class="id"><a href="Mach.html#parent_ra">parent_ra</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span>) <span class="id"><a href="asmgen_proof0.html#v">v</a></span> -&gt; <span class="id"><a href="asmgen_proof0.html#v">v</a></span> = <span class="id"><a href="Mach.html#parent_ra">parent_ra</a></span> <span class="id"><a href="asmgen_proof0.html#s">s</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7774')">Proof.</div>
+<div class="proofscript" id="proof7774">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>. <span class="id">exploit</span> <span class="id"><a href="asmgen_proof0.html#parent_ra_def">parent_ra_def</a></span>; <span class="tactic">eauto</span>. <span class="tactic">tauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="asmgen_proof0.html#MATCH_STACK">MATCH_STACK</a></span>.<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

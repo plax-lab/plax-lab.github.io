@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module SimDRF</title>
+<meta name="description" content="Documentation of Coq module SimDRF" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module SimDRF</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span> <span class="id"><a href="GAST.html">GAST</a></span> <span class="id"><a href="GlobUSim.html">GlobUSim</a></span> <span class="id"><a href="NPSemantics.html">NPSemantics</a></span> <span class="id"><a href="NPDRF.html">NPDRF</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="ETrace.html">ETrace</a></span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="Injections.html">Injections</a></span> <span class="id"><a href="GSimDefs.html">GSimDefs</a></span> <span class="id"><a href="GlobSim.html">GlobSim</a></span> <span class="id"><a href="USimDRF.html">USimDRF</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical.html">Classical</a></span> <span class="id"><a href="Init.html">Init</a></span>.<br/>
+<h1> Simulation implies Refinement </h1>
+<br/>
+<div class="doc">This file defines the lemma <span class="bracket"><span class="id">USim_NPDRF</span></span>, which says when 
+    source program simulates target program ( <span class="bracket"><span class="id">S</span> &gt; <span class="id">T</span></span> ), and
+    source program is data-race-free (<span class="bracket"><span class="id">NPDRF</span>(<span class="id">S</span>)</span>), then
+    target program is data-race-free (<span class="bracket"><span class="id">NPDRF</span>(<span class="id">T</span>)</span>). </div>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "'[[' <span class="id">thdp</span> ',' <span class="id">t</span> ',' <span class="id">m</span> ',' <span class="id">b</span> ']]'" :=<br/>
+&nbsp;&nbsp;({| <span class="id"><a href="GlobDefs.html#Build_ProgConfig">thread_pool</a></span>:= <span class="id">thdp</span>; <span class="id">cur_tid</span>:= <span class="id">t</span>; <span class="id">gm</span>:= <span class="id">m</span>; <span class="id">atom_bit</span>:= <span class="id">b</span> |})<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="tactic">at</span> <span class="id">level</span> 70, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "'[[' <span class="id">thdp</span> ',' <span class="id">t</span> ',' <span class="id">m</span> ',' <span class="id">b</span> ']]@' <span class="id">G</span> " :=<br/>
+&nbsp;&nbsp;(<span class="id"><a href="GlobDefs.html#Build_ProgConfig">Build_ProgConfig</a></span> <span class="id">G</span> <span class="id">thdp</span> <span class="id">t</span> <span class="id">m</span> <span class="id">b</span>) (<span class="tactic">at</span> <span class="id">level</span> 70, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="npdrfpc">npdrfpc</a></span> {<span class="id">ge</span>}(<span class="id">pc</span>:@<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="SimDRF.html#ge">ge</a></span>):<span class="kwd">Prop</span>:=<br/>
+&nbsp;&nbsp;~ <span class="id"><a href="NPDRF.html#np_race_config">np_race_config</a></span> <span class="id"><a href="SimDRF.html#pc">pc</a></span> /\ ~ <span class="id"><a href="NPDRF.html#np_star_race_config">np_star_race_config</a></span> <span class="id"><a href="SimDRF.html#pc">pc</a></span>.<br/>
+<br/>
+<h1> NPDRF Preservation(Lemma 6):
+In the rule of data race, we always load the program P and the state \sigma to the world W first. Here spc is the source world and tpc is the target world. For convenience we write the load step explicitly.
+ </h1>
+<span class="kwd">Lemma</span> <span class="id"><a name="USim_NPDRF_Config">USim_NPDRF_Config</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">sprog</span> <span class="id">tprog</span> <span class="id">mu</span> <span class="id">sgm</span> <span class="id">sge</span> <span class="id">spc</span> <span class="id">t</span> <span class="id">tgm</span> <span class="id">tge</span> <span class="id">tpc</span>,<br/>
+<div class="doc">Source program simulates and target program</div>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GlobUSim.html#GlobUSim">GlobUSim</a></span> <span class="id"><a href="SimDRF.html#NL">NL</a></span> <span class="id"><a href="SimDRF.html#L">L</a></span> <span class="id"><a href="SimDRF.html#sprog">sprog</a></span> <span class="id"><a href="SimDRF.html#tprog">tprog</a></span>-&gt;<br/>
+<div class="doc">initM(mu,GE,sgm,tgm) the relation of initial memory </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#InitRel">InitRel</a></span> <span class="id"><a href="SimDRF.html#mu">mu</a></span> <span class="id"><a href="SimDRF.html#sge">sge</a></span> <span class="id"><a href="SimDRF.html#tge">tge</a></span> <span class="id"><a href="SimDRF.html#sgm">sgm</a></span> <span class="id"><a href="SimDRF.html#tgm">tgm</a></span>-&gt;<br/>
+<div class="doc">load step: (sprog,sgm) ==load==&gt; spc </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="SimDRF.html#sprog">sprog</a></span> <span class="id"><a href="SimDRF.html#sgm">sgm</a></span> <span class="id"><a href="SimDRF.html#sge">sge</a></span> <span class="id"><a href="SimDRF.html#spc">spc</a></span> <span class="id"><a href="SimDRF.html#t">t</a></span>-&gt;<br/>
+<div class="doc">load step: (tprog,tgm) ==load==&gt; tpc </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="SimDRF.html#tprog">tprog</a></span> <span class="id"><a href="SimDRF.html#tgm">tgm</a></span> <span class="id"><a href="SimDRF.html#tge">tge</a></span> <span class="id"><a href="SimDRF.html#tpc">tpc</a></span> <span class="id"><a href="SimDRF.html#t">t</a></span>-&gt;<br/>
+<div class="doc">source program configuration is data-race-free</div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimDRF.html#npdrfpc">npdrfpc</a></span> <span class="id"><a href="SimDRF.html#spc">spc</a></span>-&gt;<br/>
+<div class="doc">Conclusion: target program configuration is data-race-free</div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="SimDRF.html#npdrfpc">npdrfpc</a></span> <span class="id"><a href="SimDRF.html#tpc">tpc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8255')">Proof.</div>
+<div class="proofscript" id="proof8255">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="SimDRF.html#npdrfpc">npdrfpc</a></span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#and_not_or">and_not_or</a></span> <span class="kwd">in</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#not_or_and">not_or_and</a></span>. <span class="tactic">intro</span>. <span class="id">contradict</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> <span class="id">spc</span>.(<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span>)). <span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">subst</span>;<span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.init_inv">ThreadPool.init_inv</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> <span class="id">tpc</span>.(<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span>)). <span class="tactic">inversion</span> <span class="id">H2</span>;<span class="tactic">subst</span>;<span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.init_inv">ThreadPool.init_inv</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id">t</span>=<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">tpc</span>). <span class="tactic">inversion</span> <span class="id">H2</span>;<span class="tactic">auto</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H4</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">apply</span> <span class="id"><a href="USimDRF.html#np_race_config_np_race_config_base_equiv">np_race_config_np_race_config_base_equiv</a></span> <span class="kwd">in</span> <span class="id">H4</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span>(@<span class="id"><a href="USimDRF.html#np_race_config_0">np_race_config_0</a></span> <span class="id">NL</span> <span class="id">L</span> <span class="id">tgm</span> <span class="id">tge</span> <span class="id">tprog</span> <span class="id">tpc</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">GUSim_nprace_preservation_2</span>' <span class="kwd">in</span> <span class="id">H6</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H6</span> <span class="kwd">as</span> (<span class="id">_</span>&amp;?). <span class="tactic">eapply</span> <span class="id"><a href="USimDRF.html#np_race_config_np_race_config_base_equiv">np_race_config_np_race_config_base_equiv</a></span> <span class="kwd">in</span> <span class="id">H6</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">assert</span>(<span class="id">wdtge</span>:<span class="id"><a href="GlobDefs.html#GlobEnv.wd">GlobEnv.wd</a></span> <span class="id">tge</span>).  <span class="tactic">inversion</span> <span class="id">H2</span>;<span class="tactic">subst</span>. <span class="tactic">inversion</span> <span class="id">H6</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="USimDRF.html#np_star_race_config_np_race_config_1_equiv">np_star_race_config_np_race_config_1_equiv</a></span> <span class="kwd">in</span> <span class="id">H4</span> <span class="kwd">as</span> (<span class="id">l</span>&amp;<span class="id">fp</span>&amp;<span class="id">o</span>&amp;<span class="id">pc1</span>&amp;<span class="id">pc2</span>&amp;?&amp;?);<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">edestruct</span> <span class="id">H</span> <span class="kwd">as</span> (<span class="id">I</span>&amp;<span class="id">ord</span>&amp;<span class="id">match_state</span>&amp;<span class="id">i</span>&amp;<span class="id">Usim</span>&amp;<span class="id">matched</span>);<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="USimDRF.html#GUSim_star_progress">GUSim_star_progress</a></span> <span class="kwd">in</span> <span class="id">H4</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H7</span> <span class="kwd">as</span> (?&amp;?&amp;?&amp;?&amp;?&amp;?&amp;?&amp;?).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="USimDRF.html#GUSim_nprace_preservation_1">GUSim_nprace_preservation_1</a></span> <span class="kwd">in</span> <span class="id">H7</span> <span class="kwd">as</span> ?;<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H6</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H9</span> <span class="kwd">as</span> (?&amp;?&amp;?&amp;?&amp;?).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="USimDRF.html#np_star_race_config_np_race_config_1_equiv">np_star_race_config_np_race_config_1_equiv</a></span> ;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">subst</span>. <span class="tactic">inversion</span> <span class="id">H11</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="USimDRF.html#tau_star_to_star">tau_star_to_star</a></span> <span class="kwd">in</span> <span class="id">H9</span> <span class="kwd">as</span> [].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="USimDRF.html#cons_star_star">cons_star_star</a></span> <span class="kwd">in</span> <span class="id">H9</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> 6 <span class="id">eexists</span>;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+ </div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

@@ -1,0 +1,682 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module GDefLemmas</title>
+<meta name="description" content="Documentation of Coq module GDefLemmas" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module GDefLemmas</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.EqdepFacts.html">EqdepFacts</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Axioms.html">Axioms</a></span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Maps.html">Maps</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html">List</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="MemAux.html">MemAux</a></span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html">ETrace</a></span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="NPSemantics.html">NPSemantics</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html">Injections</a></span> <span class="id"><a href="LDSimDefs.html">LDSimDefs</a></span> <span class="id"><a href="LDSim.html">LDSim</a></span> <span class="id"><a href="GSimDefs.html">GSimDefs</a></span>.<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "'&lt;&lt;' <span class="id">i</span> ',' <span class="id">c</span> ',' <span class="id">sg</span> ',' <span class="id">F</span> '&gt;&gt;'" :=<br/>
+&nbsp;&nbsp;{|<span class="id"><a href="GlobDefs.html#Core.Build_t">Core.i</a></span> := <span class="id">i</span>; <span class="id">Core.c</span> := <span class="id">c</span>; <span class="id">Core.sg</span> := <span class="id">sg</span>; <span class="id">Core.F</span> := <span class="id">F</span>|}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="tactic">at</span> <span class="id">level</span> 60, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "'[[' <span class="id">thdp</span> ',' <span class="id">t</span> ',' <span class="id">m</span> ',' <span class="id">b</span> ']]@' <span class="id">G</span> " :=<br/>
+&nbsp;&nbsp;(<span class="id"><a href="GlobDefs.html#Build_ProgConfig">Build_ProgConfig</a></span> <span class="id">G</span> <span class="id">thdp</span> <span class="id">t</span> <span class="id">m</span> <span class="id">b</span>) (<span class="tactic">at</span> <span class="id">level</span> 70, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "'[[' <span class="id">thdp</span> ',' <span class="id">t</span> ',' <span class="id">m</span> ',' <span class="id">b</span> ']]'" :=<br/>
+&nbsp;&nbsp;({| <span class="id"><a href="GlobDefs.html#Build_ProgConfig">thread_pool</a></span>:= <span class="id">thdp</span>; <span class="id">cur_tid</span>:= <span class="id">t</span>; <span class="id">gm</span>:= <span class="id">m</span>; <span class="id">atom_bit</span>:= <span class="id">b</span> |})<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="tactic">at</span> <span class="id">level</span> 70, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> " <span class="id">GE</span> '||-' <span class="id">pc1</span> '=&lt;' <span class="id">l</span> '|' <span class="id">fp</span> '&gt;=&gt;&gt;' <span class="id">pc2</span> " :=<br/>
+&nbsp;&nbsp;(@<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id">GE</span> <span class="id">pc1</span> <span class="id">l</span> <span class="id">fp</span> <span class="id">pc2</span>) (<span class="tactic">at</span> <span class="id">level</span> 80, <span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="ocs_match_top_exists">ocs_match_top_exists</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> (<span class="id">stp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) <span class="id">scs</span> <span class="id">c</span> <span class="id">i</span> <span class="id">TGE</span> (<span class="id">ttp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">i</span>', <span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#stp">stp</a></span> <span class="id">i</span>') (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#ttp">ttp</a></span> <span class="id">i</span>')) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#stp">stp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GDefLemmas.html#scs">scs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.top">CallStack.top</a></span> <span class="id"><a href="GDefLemmas.html#scs">scs</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GDefLemmas.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tc</span>, <span class="id"><a href="GlobDefs.html#ThreadPool.get_top">ThreadPool.get_top</a></span> <span class="id"><a href="GDefLemmas.html#ttp">ttp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GDefLemmas.html#tc">tc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8296')">Proof.</div>
+<div class="proofscript" id="proof8296">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">specialize</span> (<span class="id">H</span> <span class="id">i</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">try</span> <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H4</span>. <span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#CallStack.is_emp">CallStack.is_emp</a></span> <span class="kwd">in</span> *. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H2</span>. <span class="tactic">inversion</span> <span class="id">H2</span>. <span class="tactic">subst</span>.  <span class="tactic">inversion</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="id">exists</span> <span class="id">c2</span>. <span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_top">ThreadPool.get_top</a></span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H3</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_union_emp_l">fp_union_emp_l</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fp</span>, <span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> = <span class="id"><a href="GDefLemmas.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8297')">Proof.</div>
+<div class="proofscript" id="proof8297">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#FP.union">FP.union</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">fp</span>; <span class="tactic">f_equal</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_union_comm">fp_union_comm</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fp1</span> <span class="id">fp2</span> <span class="id">fp3</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GDefLemmas.html#fp1">fp1</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GDefLemmas.html#fp2">fp2</a></span> <span class="id"><a href="GDefLemmas.html#fp3">fp3</a></span>) =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GDefLemmas.html#fp1">fp1</a></span> <span class="id"><a href="GDefLemmas.html#fp2">fp2</a></span>) <span class="id"><a href="GDefLemmas.html#fp3">fp3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8298')">Proof.</div>
+<div class="proofscript" id="proof8298">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#FP.union">FP.union</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">f_equal</span>;            <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> 2 (<span class="tactic">apply</span> <span class="id"><a href="Axioms.html#functional_extensionality">functional_extensionality</a></span>; <span class="tactic">intro</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_assoc">orb_assoc</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="star_step_plus">star_step_plus</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> (<span class="id">pc</span>: @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id">fp</span> <span class="id">pc</span>' <span class="id">fp</span>' <span class="id">pc</span>'',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GDefLemmas.html#pc">pc</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id">pc</span>' <span class="id"><a href="ETrace.html#tau">tau</a></span> <span class="id">fp</span>' <span class="id">pc</span>'' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_plus">tau_plus</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GDefLemmas.html#pc">pc</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">fp</span>') <span class="id">pc</span>''.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8299')">Proof.</div>
+<div class="proofscript" id="proof8299">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">induction</span> 1.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="GDefLemmas.html#fp_union_emp_l">fp_union_emp_l</a></span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span>. <span class="tactic">rewrite</span> &lt;- <span class="id"><a href="GDefLemmas.html#fp_union_comm">fp_union_comm</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHtau_star</span> <span class="kwd">in</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="ETrace.html#tau_plus_cons">tau_plus_cons</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_union_emp_r">fp_union_emp_r</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fp</span>, <span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span> = <span class="id"><a href="GDefLemmas.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8300')">Proof.</div>
+<div class="proofscript" id="proof8300">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#FP.union">FP.union</a></span>; <span class="tactic">destruct</span> <span class="id">fp</span>; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span>. <span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#Locs.emp">Locs.emp</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">f_equal</span>; <span class="tactic">do</span> 2 (<span class="tactic">apply</span> <span class="id"><a href="Axioms.html#functional_extensionality">functional_extensionality</a></span>; <span class="tactic">intro</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_false_r">orb_false_r</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="core_step_np_step">core_step_np_step</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> <span class="id">i_x</span> <span class="id">F</span> <span class="id">c</span> <span class="id">m</span> <span class="id">fp</span> <span class="id">c</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">Mod</span> := <span class="id"><a href="GlobDefs.html#GlobEnv.modules">GlobEnv.modules</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span> <span class="id"><a href="GDefLemmas.html#i_x">i_x</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">lang</span> := <span class="id"><a href="InteractionSemantics.html#ModSem.lang">ModSem.lang</a></span> <span class="id">Mod</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">Ge</span> := <span class="id"><a href="InteractionSemantics.html#ModSem.Ge">ModSem.Ge</a></span> <span class="id">Mod</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">fl</span> := <span class="id"><a href="GlobDefs.html#FLists.get_fl">FLists.get_fl</a></span> (<span class="id"><a href="GlobDefs.html#GlobEnv.freelists">GlobEnv.freelists</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id"><a href="GDefLemmas.html#F">F</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#step">step</a></span> <span class="id">lang</span> <span class="id">Ge</span> <span class="id">fl</span> <span class="id"><a href="GDefLemmas.html#c">c</a></span> <span class="id"><a href="GDefLemmas.html#m">m</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">c</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">tp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id">i</span> <span class="id">sg</span> <span class="id">b</span> <span class="id">cs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> ((<span class="id"><a href="GlobDefs.html#Core.Build_t">Core.Build_t</a></span> <span class="id"><a href="GDefLemmas.html#i_x">i_x</a></span> <span class="id"><a href="GDefLemmas.html#c">c</a></span> <span class="id"><a href="GDefLemmas.html#sg">sg</a></span> <span class="id"><a href="GDefLemmas.html#F">F</a></span>)::<span class="id"><a href="GDefLemmas.html#cs">cs</a></span>)  -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> (<span class="id"><a href="GlobDefs.html#Build_ProgConfig">Build_ProgConfig</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> <span class="id"><a href="GDefLemmas.html#m">m</a></span> <span class="id"><a href="GDefLemmas.html#b">b</a></span>) <span class="id"><a href="ETrace.html#tau">tau</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="GlobDefs.html#Build_ProgConfig">Build_ProgConfig</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span> <span class="id">tp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span> <span class="id">m</span>' <span class="id"><a href="GDefLemmas.html#b">b</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> (<span class="id"><a href="GlobDefs.html#Core.Build_t">Core.Build_t</a></span> <span class="id"><a href="GDefLemmas.html#i_x">i_x</a></span> <span class="id">c</span>' <span class="id"><a href="GDefLemmas.html#sg">sg</a></span> <span class="id"><a href="GDefLemmas.html#F">F</a></span>) <span class="id">tp</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8301')">Proof.</div>
+<div class="proofscript" id="proof8301">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">exists</span> <span class="id">tp</span>', <span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">tp</span> <span class="id">i</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{| <span class="id"><a href="GlobDefs.html#Core.Build_t">Core.i</a></span> := <span class="id">i_x</span>; <span class="id">Core.c</span> := <span class="id">c</span>'; <span class="id">Core.sg</span>:= <span class="id">sg</span>; <span class="id">Core.F</span> := <span class="id">F</span> |} <span class="id">tp</span>').<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">exists</span> <span class="id">cs</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.update">CallStack.update</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;({| <span class="id"><a href="GlobDefs.html#Core.Build_t">Core.c</a></span> := <span class="id">c</span>; <span class="id">Core.sg</span>:= <span class="id">sg</span>; <span class="id">Core.F</span> := <span class="id">F</span> |}::<span class="id">cs</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{| <span class="id"><a href="GlobDefs.html#Core.Build_t">Core.c</a></span> := <span class="id">c</span>'; <span class="id">Core.sg</span>:= <span class="id">sg</span>; <span class="id">Core.F</span> := <span class="id">F</span> |} <span class="id">cs</span>').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id">eexists</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H1</span> <span class="kwd">as</span> (<span class="id">cs</span>' &amp; <span class="id">H_cs_upd</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eexists</span>; <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H1</span> <span class="kwd">as</span> (<span class="id">tp</span>' &amp; <span class="id">H_tp_upd</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tp</span>'. <span class="tactic">split</span>. <span class="tactic">eapply</span> <span class="id"><a href="NPSemantics.html#Corestep">Corestep</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_top">ThreadPool.get_top</a></span>. <span class="tactic">rewrite</span> <span class="id">H0</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>. <span class="id">constructor</span>; <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="core_plus_np_plus">core_plus_np_plus</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> <span class="id">i_x</span> <span class="id">F</span> <span class="id">c</span> <span class="id">m</span> <span class="id">fp</span> <span class="id">c</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">Mod</span> := <span class="id"><a href="GlobDefs.html#GlobEnv.modules">GlobEnv.modules</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span> <span class="id"><a href="GDefLemmas.html#i_x">i_x</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">lang</span> := <span class="id"><a href="InteractionSemantics.html#ModSem.lang">ModSem.lang</a></span> <span class="id">Mod</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">Ge</span> := <span class="id"><a href="InteractionSemantics.html#ModSem.Ge">ModSem.Ge</a></span> <span class="id">Mod</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">fl</span> := <span class="id"><a href="GlobDefs.html#FLists.get_fl">FLists.get_fl</a></span> (<span class="id"><a href="GlobDefs.html#GlobEnv.freelists">GlobEnv.freelists</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id"><a href="GDefLemmas.html#F">F</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#plus">plus</a></span> (<span class="id"><a href="InteractionSemantics.html#step">step</a></span> <span class="id">lang</span> <span class="id">Ge</span> <span class="id">fl</span>) <span class="id"><a href="GDefLemmas.html#c">c</a></span> <span class="id"><a href="GDefLemmas.html#m">m</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">c</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">tp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id">i</span> <span class="id">sg</span> <span class="id">b</span> <span class="id">cs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="GlobDefs.html#Core.Build_t">Core.Build_t</a></span> <span class="id"><a href="GDefLemmas.html#i_x">i_x</a></span> <span class="id"><a href="GDefLemmas.html#c">c</a></span> <span class="id"><a href="GDefLemmas.html#sg">sg</a></span> <span class="id"><a href="GDefLemmas.html#F">F</a></span> :: <span class="id"><a href="GDefLemmas.html#cs">cs</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_plus">tau_plus</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> (<span class="id"><a href="GlobDefs.html#Build_ProgConfig">Build_ProgConfig</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> <span class="id"><a href="GDefLemmas.html#m">m</a></span> <span class="id"><a href="GDefLemmas.html#b">b</a></span>) <span class="id"><a href="GDefLemmas.html#fp">fp</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="GlobDefs.html#Build_ProgConfig">Build_ProgConfig</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span> <span class="id">tp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span> <span class="id">m</span>' <span class="id"><a href="GDefLemmas.html#b">b</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> {| <span class="id"><a href="GlobDefs.html#Core.Build_t">Core.c</a></span>:=<span class="id">c</span>'; <span class="id">Core.sg</span>:=<span class="id"><a href="GDefLemmas.html#sg">sg</a></span>; <span class="id">Core.F</span>:=<span class="id"><a href="GDefLemmas.html#F">F</a></span> |} <span class="id">tp</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8302')">Proof.</div>
+<div class="proofscript" id="proof8302">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">intros</span> <span class="id">GE</span> <span class="id">i_x</span> <span class="id">F</span> <span class="id">c</span> <span class="id">m</span> <span class="id">fp</span> <span class="id">c</span>' <span class="id">m</span>' <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GDefLemmas.html#core_step_np_step">core_step_np_step</a></span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> (<span class="id">tp</span>'&amp; <span class="id">Hstep</span> &amp; <span class="id">Htp</span>'). <span class="id">eexists</span>; <span class="tactic">split</span>; [<span class="id">econstructor</span>|]; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GDefLemmas.html#core_step_np_step">core_step_np_step</a></span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> (<span class="id">tp</span>' &amp; <span class="id">Hstep</span> &amp; <span class="id">Htp</span>'). <span class="id">instantiate</span> (1:=<span class="id">b</span>) <span class="kwd">in</span> <span class="id">Hstep</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Htp</span>'.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">inversion</span> <span class="id">H</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">edestruct</span> (<span class="id">IHplus</span> <span class="id">tp</span>' <span class="id">i</span> <span class="id">sg</span> <span class="id">b</span> <span class="id">cs</span>) <span class="kwd">as</span> [<span class="id">tp</span>'' [<span class="id">Hplus</span>' <span class="id">Htp</span>''] ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span>; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>. <span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; [|<span class="tactic">congruence</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H2</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tp</span>''. <span class="tactic">split</span>. <span class="tactic">eapply</span> <span class="id"><a href="ETrace.html#tau_plus_cons">tau_plus_cons</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">Htp</span>''. <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">Hplus</span>' <span class="id">IHplus</span> <span class="id">H0</span> <span class="id">Hstep</span> <span class="id">Htp</span>''.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="kwd">in</span> <span class="id">H5</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H5</span>; <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; [|<span class="tactic">congruence</span>]. <span class="tactic">inversion</span> <span class="id">H5</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">repeat</span> (<span class="id">econstructor</span>; <span class="tactic">eauto</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">f_equal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H7</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.set2">PMap.set2</a></span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="step_star_plus">step_star_plus</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">lang</span> <span class="id">Ge</span> <span class="id">fl</span> <span class="id">c</span>' <span class="id">m</span>' <span class="id">fp</span>' <span class="id">c</span>'' <span class="id">m</span>'',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#star">InteractionSemantics.star</a></span> (<span class="id"><a href="InteractionSemantics.html#step">step</a></span> <span class="id"><a href="GDefLemmas.html#lang">lang</a></span> <span class="id"><a href="GDefLemmas.html#Ge">Ge</a></span> <span class="id"><a href="GDefLemmas.html#fl">fl</a></span>) <span class="id">c</span>' <span class="id">m</span>' <span class="id">fp</span>' <span class="id">c</span>'' <span class="id">m</span>'' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">m</span> <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#step">step</a></span> <span class="id"><a href="GDefLemmas.html#lang">lang</a></span> <span class="id"><a href="GDefLemmas.html#Ge">Ge</a></span> <span class="id"><a href="GDefLemmas.html#fl">fl</a></span> <span class="id"><a href="GDefLemmas.html#c">c</a></span> <span class="id"><a href="GDefLemmas.html#m">m</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">c</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#plus">plus</a></span> (<span class="id"><a href="InteractionSemantics.html#step">step</a></span> <span class="id"><a href="GDefLemmas.html#lang">lang</a></span> <span class="id"><a href="GDefLemmas.html#Ge">Ge</a></span> <span class="id"><a href="GDefLemmas.html#fl">fl</a></span>) <span class="id"><a href="GDefLemmas.html#c">c</a></span> <span class="id"><a href="GDefLemmas.html#m">m</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">fp</span>') <span class="id">c</span>'' <span class="id">m</span>''.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8303')">Proof.</div>
+<div class="proofscript" id="proof8303">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">induction</span> 1; <span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="GDefLemmas.html#fp_union_emp_r">fp_union_emp_r</a></span>. <span class="id">constructor</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InteractionSemantics.html#plus_cons">plus_cons</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tau_plus_tau_star">tau_plus_tau_star</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> (<span class="id">pc</span>: @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_plus">tau_plus</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GDefLemmas.html#pc">pc</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> <span class="id"><a href="GDefLemmas.html#pc">pc</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">pc</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8304')">Proof.</div>
+<div class="proofscript" id="proof8304">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">induction</span> 1. <br/>
+&nbsp;&nbsp;<span class="tactic">replace</span> <span class="id">fp</span> <span class="kwd">with</span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id">fp</span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>) <span class="tactic">by</span> <span class="tactic">apply</span> <span class="id"><a href="GDefLemmas.html#fp_union_emp_r">fp_union_emp_r</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="ETrace.html#tau_star_cons">tau_star_cons</a></span>; <span class="tactic">eauto</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="ETrace.html#tau_star_cons">tau_star_cons</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="core_star_np_star">core_star_np_star</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> <span class="id">i_x</span> <span class="id">F</span> <span class="id">c</span> <span class="id">m</span> <span class="id">fp</span> <span class="id">c</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">Mod</span> := <span class="id"><a href="GlobDefs.html#GlobEnv.modules">GlobEnv.modules</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span> <span class="id"><a href="GDefLemmas.html#i_x">i_x</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">lang</span> := <span class="id"><a href="InteractionSemantics.html#ModSem.lang">ModSem.lang</a></span> <span class="id">Mod</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">Ge</span> := <span class="id"><a href="InteractionSemantics.html#ModSem.Ge">ModSem.Ge</a></span> <span class="id">Mod</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">fl</span> := <span class="id"><a href="GlobDefs.html#FLists.get_fl">FLists.get_fl</a></span> (<span class="id"><a href="GlobDefs.html#GlobEnv.freelists">GlobEnv.freelists</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id"><a href="GDefLemmas.html#F">F</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#star">InteractionSemantics.star</a></span> (<span class="id"><a href="InteractionSemantics.html#step">step</a></span> <span class="id">lang</span> <span class="id">Ge</span> <span class="id">fl</span>) <span class="id"><a href="GDefLemmas.html#c">c</a></span> <span class="id"><a href="GDefLemmas.html#m">m</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">c</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">tp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id">i</span> <span class="id">sg</span> <span class="id">b</span> <span class="id">cs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> ((<span class="id"><a href="GlobDefs.html#Core.Build_t">Core.Build_t</a></span> <span class="id"><a href="GDefLemmas.html#i_x">i_x</a></span> <span class="id"><a href="GDefLemmas.html#c">c</a></span> <span class="id"><a href="GDefLemmas.html#sg">sg</a></span> <span class="id"><a href="GDefLemmas.html#F">F</a></span>)::<span class="id"><a href="GDefLemmas.html#cs">cs</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="NPSemantics.html#np_step">np_step</a></span> (<span class="id"><a href="GlobDefs.html#Build_ProgConfig">Build_ProgConfig</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> <span class="id"><a href="GDefLemmas.html#m">m</a></span> <span class="id"><a href="GDefLemmas.html#b">b</a></span>) <span class="id"><a href="GDefLemmas.html#fp">fp</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="GlobDefs.html#Build_ProgConfig">Build_ProgConfig</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span> <span class="id">tp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span> <span class="id">m</span>' <span class="id"><a href="GDefLemmas.html#b">b</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> (&lt;&lt; <span class="id"><a href="GDefLemmas.html#i_x">i_x</a></span>, <span class="id">c</span>', <span class="id"><a href="GDefLemmas.html#sg">sg</a></span>, <span class="id"><a href="GDefLemmas.html#F">F</a></span>&gt;&gt;) <span class="id">tp</span>' \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GDefLemmas.html#m">m</a></span> = <span class="id">m</span>' /\ <span class="id"><a href="GDefLemmas.html#c">c</a></span> = <span class="id">c</span>' /\ <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> = <span class="id">tp</span>' /\ <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> = <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8305')">Proof.</div>
+<div class="proofscript" id="proof8305">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">intros</span> <span class="id">GE</span> <span class="id">i_x</span> <span class="id">F</span> <span class="id">c</span> <span class="id">m</span> <span class="id">fp</span> <span class="id">c</span>' <span class="id">m</span>' <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eexists</span>; <span class="tactic">split</span>; [<span class="id">econstructor</span>|]; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GDefLemmas.html#step_star_plus">step_star_plus</a></span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GDefLemmas.html#core_plus_np_plus">core_plus_np_plus</a></span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H0</span> <span class="kwd">as</span> [<span class="id">tp</span>' [<span class="id">Hplus</span> <span class="id">Htp</span>'] ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tp</span>'. <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GDefLemmas.html#tau_plus_tau_star">tau_plus_tau_star</a></span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="loc_belong_bset_belong">loc_belong_bset_belong</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fp</span> <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span> (<span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span>) <span class="id"><a href="GDefLemmas.html#b">b</a></span> <span class="id"><a href="GDefLemmas.html#ofs">ofs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> (<span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span>) <span class="id"><a href="GDefLemmas.html#b">b</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8306')">Proof.</div>
+<div class="proofscript" id="proof8306">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>. <span class="id">exists</span> <span class="id">ofs</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="bset_belong_union">bset_belong_union</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fp</span> <span class="id">fp</span>' <span class="id">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> (<span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span> <span class="id">fp</span>') <span class="id"><a href="GDefLemmas.html#b">b</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> (<span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">fp</span>')) <span class="id"><a href="GDefLemmas.html#b">b</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8307')">Proof.</div>
+<div class="proofscript" id="proof8307">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span>, <span class="id"><a href="Footprint.html#FP.union">FP.union</a></span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span>, <span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span>, <span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span>, <span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span> <span class="kwd">in</span> *; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">exists</span> <span class="id">x</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ <span class="id">H</span>: ?<span class="id">x</span>||<span class="id">_</span>=<span class="id">_</span> |- <span class="id">_</span> ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">x</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_true_r">orb_true_r</a></span>; <span class="tactic">auto</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span class="id">H</span>: ?<span class="id">x</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> |- <span class="id">_</span>] =&gt; <span class="tactic">destruct</span> <span class="id">x</span>; <span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_true_r">orb_true_r</a></span>; <span class="tactic">auto</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="loc_belong_union_block_belong">loc_belong_union_block_belong</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fp</span> <span class="id">fp</span>' <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span> (<span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span> <span class="id">fp</span>') <span class="id"><a href="GDefLemmas.html#b">b</a></span> <span class="id"><a href="GDefLemmas.html#ofs">ofs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> (<span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="GDefLemmas.html#fp">fp</a></span> <span class="id">fp</span>')) <span class="id"><a href="GDefLemmas.html#b">b</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8308')">Proof.</div>
+<div class="proofscript" id="proof8308">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GDefLemmas.html#bset_belong_union">bset_belong_union</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GDefLemmas.html#loc_belong_bset_belong">loc_belong_bset_belong</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="scs_upd_cs_match">scs_upd_cs_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">scs</span>: @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) (<span class="id">tcs</span>: @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> <span class="id"><a href="GDefLemmas.html#scs">scs</a></span> <span class="id"><a href="GDefLemmas.html#tcs">tcs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span>' <span class="id">scs</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.update">CallStack.update</a></span> <span class="id"><a href="GDefLemmas.html#scs">scs</a></span> <span class="id">c</span>' <span class="id">scs</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> <span class="id">scs</span>' <span class="id"><a href="GDefLemmas.html#tcs">tcs</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8309')">Proof.</div>
+<div class="proofscript" id="proof8309">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">induction</span> 1; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;{ <span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>. }<br/>
+&nbsp;&nbsp;{ <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GSimDefs.html#match_cs_cons">match_cs_cons</a></span>; <span class="tactic">auto</span>. }<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="stp_upd_ocs_match">stp_upd_ocs_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">sthdp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) (<span class="id">tthdp</span>:@<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>) <span class="id">i</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">i</span>' <span class="id">c</span>' <span class="id">sthdp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id">i</span>' <span class="id">c</span>' <span class="id">sthdp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">sthdp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8310')">Proof.</div>
+<div class="proofscript" id="proof8310">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span> <span class="id">SGE0</span> <span class="id">TGE0</span> <span class="id">sthdp</span> <span class="id">tthdp</span> <span class="id">i</span> <span class="id">H</span> <span class="id">i</span>' <span class="id">c</span>' <span class="id">sthdp</span>' <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="kwd">in</span> *; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; [<span class="tactic">subst</span>|<span class="tactic">auto</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">clear</span> <span class="id">H0</span> <span class="id">H3</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">eapply</span> <span class="id"><a href="GDefLemmas.html#scs_upd_cs_match">scs_upd_cs_match</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tcs_upd_cs_match">tcs_upd_cs_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">scs</span>: @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) (<span class="id">tcs</span>: @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> <span class="id"><a href="GDefLemmas.html#scs">scs</a></span> <span class="id"><a href="GDefLemmas.html#tcs">tcs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span>' <span class="id">tcs</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.update">CallStack.update</a></span> <span class="id"><a href="GDefLemmas.html#tcs">tcs</a></span> <span class="id">c</span>' <span class="id">tcs</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> <span class="id"><a href="GDefLemmas.html#scs">scs</a></span> <span class="id">tcs</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8311')">Proof.</div>
+<div class="proofscript" id="proof8311">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">induction</span> 1; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;{ <span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>. }<br/>
+&nbsp;&nbsp;{ <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GSimDefs.html#match_cs_cons">match_cs_cons</a></span>; <span class="tactic">auto</span>. }<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="ttp_upd_ocs_match">ttp_upd_ocs_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">sthdp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) (<span class="id">tthdp</span>:@<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>) <span class="id">i</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">i</span>' <span class="id">c</span>' <span class="id">tthdp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id">i</span>' <span class="id">c</span>' <span class="id">tthdp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">tthdp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8312')">Proof.</div>
+<div class="proofscript" id="proof8312">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span> <span class="id">SGE0</span> <span class="id">TGE0</span> <span class="id">sthdp</span> <span class="id">tthdp</span> <span class="id">i</span> <span class="id">H</span> <span class="id">i</span>' <span class="id">c</span>' <span class="id">tthdp</span>' <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="kwd">in</span> *; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; [<span class="tactic">subst</span>|<span class="tactic">auto</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H3</span>; <span class="tactic">inversion</span> <span class="id">H3</span>; <span class="tactic">clear</span> <span class="id">H0</span> <span class="id">H3</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">eapply</span> <span class="id"><a href="GDefLemmas.html#tcs_upd_cs_match">tcs_upd_cs_match</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tp_push_ocs_match">tp_push_ocs_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">sthdp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) (<span class="id">tthdp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>) <span class="id">i</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">i</span>' <span class="id">six</span> <span class="id">sc</span>' <span class="id">ssg</span> <span class="id">sthdp</span>' <span class="id">tix</span> <span class="id">tc</span>' <span class="id">tsg</span> <span class="id">tthdp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.push">ThreadPool.push</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id">i</span>' <span class="id"><a href="GDefLemmas.html#six">six</a></span> <span class="id">sc</span>' <span class="id"><a href="GDefLemmas.html#ssg">ssg</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">sthdp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.push">ThreadPool.push</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id">i</span>' <span class="id"><a href="GDefLemmas.html#tix">tix</a></span> <span class="id">tc</span>' <span class="id"><a href="GDefLemmas.html#tsg">tsg</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">tthdp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">sthdp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">tthdp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8313')">Proof.</div>
+<div class="proofscript" id="proof8313">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span>, <span class="id"><a href="GlobDefs.html#ThreadPool.push">ThreadPool.push</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="kwd">match</span> ?<span class="id">p</span> <span class="kwd">with</span> <span class="id">_</span> =&gt; <span class="id">_</span> <span class="kwd">end</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">p</span> <span class="id">eqn</span>:?; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>; <span class="tactic">simpl</span>. <span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; [|<span class="tactic">congruence</span>].<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#CallStack.push">CallStack.push</a></span>. <span class="tactic">apply</span> <span class="id"><a href="GSimDefs.html#match_cs_cons">match_cs_cons</a></span>; <span class="tactic">auto</span>. <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tp_pop_ocs_match">tp_pop_ocs_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">sthdp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) (<span class="id">tthdp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>) <span class="id">i</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">i</span>' <span class="id">sthdp</span>' <span class="id">tthdp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.pop">ThreadPool.pop</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id">i</span>' = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">sthdp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.pop">ThreadPool.pop</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id">i</span>' = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">tthdp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">sthdp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">tthdp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8314')">Proof.</div>
+<div class="proofscript" id="proof8314">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span>, <span class="id"><a href="GlobDefs.html#ThreadPool.pop">ThreadPool.pop</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="kwd">match</span> ?<span class="id">p</span> <span class="kwd">with</span> <span class="id">_</span> =&gt; <span class="id">_</span> <span class="kwd">end</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">p</span> <span class="id">eqn</span>:?; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>; <span class="tactic">simpl</span>. <span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; [|<span class="tactic">congruence</span>].<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#CallStack.pop">CallStack.pop</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">t</span>, <span class="id">t1</span>; <span class="tactic">try</span> <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Heqo1</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">inversion</span> <span class="id">H0</span>. <span class="tactic">inversion</span> <span class="id">H3</span>. <span class="tactic">subst</span>. <span class="tactic">inversion</span> <span class="id">Heqo2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="tactic">rewrite</span> <span class="id">Heqo1</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">rewrite</span> <span class="id">Heqo</span> <span class="kwd">in</span> <span class="id">H1</span>. <span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="tactic">inversion</span> <span class="id">Heqo0</span>; <span class="tactic">inversion</span> <span class="id">Heqo2</span>. <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="stcs_upd_cs_match">stcs_upd_cs_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">scs</span>: @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) (<span class="id">tcs</span>: @<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> <span class="id"><a href="GDefLemmas.html#scs">scs</a></span> <span class="id"><a href="GDefLemmas.html#tcs">tcs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sc</span>' <span class="id">scs</span>' <span class="id">tc</span>' <span class="id">tcs</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.update">CallStack.update</a></span> <span class="id"><a href="GDefLemmas.html#scs">scs</a></span> <span class="id">sc</span>' <span class="id">scs</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.update">CallStack.update</a></span> <span class="id"><a href="GDefLemmas.html#tcs">tcs</a></span> <span class="id">tc</span>' <span class="id">tcs</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#cs_match">cs_match</a></span> <span class="id">scs</span>' <span class="id">tcs</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8315')">Proof.</div>
+<div class="proofscript" id="proof8315">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">induction</span> 1; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;{ <span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>. }<br/>
+&nbsp;&nbsp;{ <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GSimDefs.html#match_cs_cons">match_cs_cons</a></span>; <span class="tactic">auto</span>. }<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="sttp_upd_ocs_match">sttp_upd_ocs_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">sthdp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) (<span class="id">tthdp</span>:@<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>) <span class="id">i</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">si</span>' <span class="id">sc</span>' <span class="id">sthdp</span>' <span class="id">ti</span>' <span class="id">tc</span>' <span class="id">tthdp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id">si</span>' <span class="id">sc</span>' <span class="id">sthdp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id">ti</span>' <span class="id">tc</span>' <span class="id">tthdp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">sthdp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">tthdp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8316')">Proof.</div>
+<div class="proofscript" id="proof8316">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H0</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="kwd">in</span> *; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;{ <span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id">constructor</span>. <span class="tactic">eapply</span> <span class="id"><a href="GDefLemmas.html#stcs_upd_cs_match">stcs_upd_cs_match</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">congruence</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">inversion</span> <span class="id">H</span>. <span class="tactic">congruence</span>. <span class="tactic">clear</span> <span class="id">H6</span> <span class="id">H7</span>. <span class="tactic">rewrite</span> <span class="id">H2</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">inversion</span> <span class="id">H0</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">eapply</span> <span class="id"><a href="GDefLemmas.html#scs_upd_cs_match">scs_upd_cs_match</a></span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{ <span class="tactic">clear</span> <span class="id">H2</span> <span class="id">n</span>. <span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">inversion</span> <span class="id">H</span>. <span class="tactic">congruence</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H6</span> <span class="kwd">in</span> <span class="id">H1</span>; <span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">clear</span> <span class="id">H0</span> <span class="id">H1</span> <span class="id">H3</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GDefLemmas.html#tcs_upd_cs_match">tcs_upd_cs_match</a></span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="thdp_upd_get_nil_false">thdp_upd_get_nil_false</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> (<span class="id">thdp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id">i</span> <span class="id">c</span>' <span class="id">thdp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id"><a href="GDefLemmas.html#thdp">thdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> <span class="id">c</span>' <span class="id">thdp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">thdp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8317')">Proof.</div>
+<div class="proofscript" id="proof8317">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">inversion</span> 1; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>. <span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; [|<span class="tactic">congruence</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span> <span class="id">C</span>; <span class="tactic">inversion</span> <span class="id">C</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="thdp_upd_get">thdp_upd_get</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> (<span class="id">thdp</span> <span class="id">thdp</span>': @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id">i</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id"><a href="GDefLemmas.html#thdp">thdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> <span class="id"><a href="GDefLemmas.html#c">c</a></span> <span class="id">thdp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">c0</span> <span class="id">cs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#thdp">thdp</a></span> <span class="id"><a href="GDefLemmas.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="GDefLemmas.html#c0">c0</a></span> :: <span class="id"><a href="GDefLemmas.html#cs">cs</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">thdp</span>' <span class="id"><a href="GDefLemmas.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="GDefLemmas.html#c">c</a></span> :: <span class="id"><a href="GDefLemmas.html#cs">cs</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8318')">Proof.</div>
+<div class="proofscript" id="proof8318">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span> <span class="id">GE</span> <span class="id">thdp</span> <span class="id">thdp</span>' <span class="id">i</span> <span class="id">c</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="kwd">in</span> *; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>. <span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; [|<span class="tactic">congruence</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">c0</span>, <span class="id">cs0</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">inv_upd</span>:=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id"><a href="GlobDefs.html#CallStack.update">CallStack.update</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span> : <span class="id"><a href="GlobDefs.html#Core.update">Core.update</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">solv_eq</span>:=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;( <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H1</span>: ?<span class="id">P</span> = <span class="id">_</span>, <span class="id">H2</span>: ?<span class="id">P</span> = <span class="id">_</span> |- <span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="tactic">inversion</span> <span class="id">H2</span>; <span class="tactic">clear</span> <span class="id">H1</span> <span class="id">H2</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H1</span>: ?<span class="id">P</span> = <span class="id">_</span> , <span class="id">H2</span>: <span class="id">_</span> = ?<span class="id">P</span> |- <span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="tactic">inversion</span> <span class="id">H2</span>; <span class="tactic">clear</span> <span class="id">H1</span> <span class="id">H2</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H1</span>: <span class="id">_</span> = ?<span class="id">P</span>, <span class="id">H2</span>: <span class="id">_</span> = ?<span class="id">P</span> |- <span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="tactic">inversion</span> <span class="id">H2</span>; <span class="tactic">clear</span> <span class="id">H1</span> <span class="id">H2</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;); <br/>
+&nbsp;&nbsp;<span class="tactic">try</span> (<span class="tactic">trivial</span>; <span class="tactic">fail</span>)<br/>
+.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">norm_orb</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id">context</span>[(?<span class="id">x</span> || ?<span class="id">y</span>) || ?<span class="id">z</span>] |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_assoc">orb_assoc</a></span> <span class="kwd">in</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id">context</span>[(?<span class="id">x</span> || ?<span class="id">y</span>) || ?<span class="id">z</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_assoc">orb_assoc</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<span class="kwd">Ltac</span> <span class="id">infer_orb</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#orb">orb</a></span> ?<span class="id">x</span> ?<span class="id">y</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_true_elim">orb_true_elim</a></span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">H</span>|<span class="id">H</span>];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="tactic">rewrite</span> <span class="id">H</span> <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">H</span> |]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#orb">orb</a></span> ?<span class="id">x</span> ?<span class="id">y</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_false_elim">orb_false_elim</a></span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">H</span>' <span class="id">H</span>''];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H</span>', <span class="id">H</span>'' <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">H</span>' <span class="id">H</span>''<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<span class="kwd">Ltac</span> <span class="id">elim_bool</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span>: ?<span class="id">x</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> |- <span class="id">context</span>[?<span class="id">x</span>] =&gt; <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span>: ?<span class="id">x</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> |- <span class="id">context</span>[?<span class="id">x</span>] =&gt; <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<span class="kwd">Ltac</span> <span class="id">solv_orb_true</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_true_l">orb_true_l</a></span>;<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_true_r">orb_true_r</a></span>;<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_true_l">orb_true_l</a></span>;<br/>
+&nbsp;&nbsp;<span class="tactic">try</span> <span class="tactic">trivial</span>.<br/>
+<span class="kwd">Ltac</span> <span class="id">solv_true_fp</span> :=<br/>
+&nbsp;&nbsp;<span class="id">norm_orb</span>; <span class="id">infer_orb</span>; (<span class="tactic">try</span> <span class="id">elim_bool</span>); <span class="tactic">try</span> (<span class="id">solv_orb_true</span>).<br/>
+<span class="kwd">Ltac</span> <span class="id">solv_belongsto</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span>, <span class="id"><a href="Footprint.html#FP.union">FP.union</a></span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span>, <span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span>, <span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span>, <span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span> <span class="kwd">in</span> *; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">solv_true_fp</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">find_relatives</span> <span class="id">x</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">try</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">x</span> <span class="id">_</span> = <span class="id">_</span> |- <span class="id">_</span>=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_relatives</span> <span class="id">x</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="GlobDefs.html#ThreadPool.get_top">ThreadPool.get_top</a></span> <span class="id">x</span> <span class="id">_</span> = <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_relatives</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id">context</span>[<span class="id"><a href="GlobDefs.html#ThreadPool.halted">ThreadPool.halted</a></span> <span class="id">x</span> <span class="id">_</span>] |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_relatives</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id">context</span>[<span class="id"><a href="GlobDefs.html#ThreadPool.valid_tid">ThreadPool.valid_tid</a></span> <span class="id">x</span> <span class="id">_</span>] |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_relatives</span> <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> ?<span class="id">y</span> <span class="id">_</span> ?<span class="id">c</span> <span class="id">x</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="tactic">dependent</span> <span class="id">c</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">try</span> (<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_relatives</span> <span class="id">y</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="GlobDefs.html#ThreadPool.pop">ThreadPool.pop</a></span> ?<span class="id">y</span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">x</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_relatives</span> <span class="id">y</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="GlobDefs.html#ThreadPool.push">ThreadPool.push</a></span> ?<span class="id">y</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">x</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_relatives</span> <span class="id">y</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">solv_thread</span>' :=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:<span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:<span class="id"><a href="GlobDefs.html#CallStack.update">CallStack.update</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:<span class="id"><a href="GlobDefs.html#ThreadPool.halted">ThreadPool.halted</a></span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:<span class="id">context</span>[<span class="kwd">match</span> (<span class="id"><a href="GlobDefs.html#ThreadPool.content">ThreadPool.content</a></span> ?<span class="id">x</span>) !! ?<span class="id">y</span> <span class="kwd">with</span> <span class="id">_</span> =&gt; <span class="id">_</span> <span class="kwd">end</span>] |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> ((<span class="id"><a href="GlobDefs.html#ThreadPool.content">ThreadPool.content</a></span> <span class="id">x</span>) !! <span class="id">y</span>) <span class="id">eqn</span>:?<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_top">ThreadPool.get_top</a></span>, <span class="id"><a href="GlobDefs.html#ThreadPool.pop">ThreadPool.pop</a></span>, <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span>, <span class="id"><a href="GlobDefs.html#ThreadPool.push">ThreadPool.push</a></span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.pop">CallStack.pop</a></span>, <span class="id"><a href="GlobDefs.html#CallStack.top">CallStack.top</a></span>, <span class="id"><a href="GlobDefs.html#CallStack.is_emp">CallStack.is_emp</a></span>, <span class="id"><a href="GlobDefs.html#CallStack.emp_cs">CallStack.emp_cs</a></span> <span class="kwd">in</span> *; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">subst</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H</span>: <span class="id">context</span>[<span class="kwd">match</span> ?<span class="id">x</span> <span class="kwd">with</span> <span class="id">_</span> =&gt; <span class="id">_</span> <span class="kwd">end</span>] |- <span class="id">_</span> =&gt; <span class="tactic">destruct</span> <span class="id">x</span> <span class="id">eqn</span>:?; <span class="tactic">try</span> (<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">fail</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span>; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:?<span class="id">P</span> = ?<span class="id">Q</span>, <span class="id">H1</span>:<span class="id">context</span> [ ?<span class="id">P</span> ] |- <span class="id">_</span> =&gt; <span class="tactic">rewrite</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>:?<span class="id">P</span> = ?<span class="id">Q</span> |- <span class="id">context</span> [ ?<span class="id">P</span> ] =&gt; <span class="tactic">rewrite</span> <span class="id">H</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *;<br/>
+&nbsp;&nbsp;<span class="id">solv_eq</span>; <span class="tactic">eauto</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">solv_pmap</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span> <span class="kwd">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">peq</span>; <span class="tactic">try</span> <span class="id">contradiction</span>).<br/>
+<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">decompose_ex</span> <span class="id">H</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">type</span> <span class="id">of</span> <span class="id">H</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#ex">ex</a></span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">_</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">x</span> := <span class="tactic">fresh</span> <span class="id">x</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">x</span> <span class="id">H</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">norm_hypos</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span>: ?<span class="id">P</span> \/ ?<span class="id">Q</span> |- <span class="id">_</span> =&gt; <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">H</span>|<span class="id">H</span>]<br/>
+&nbsp;&nbsp;| <span class="id">H</span>: <span class="id">_</span> /\ <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [? ?]<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">solv_thread</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H</span>: <span class="id"><a href="GlobDefs.html#ThreadPool.update">ThreadPool.update</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span>] =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H</span>: <span class="id"><a href="GlobDefs.html#CallStack.update">CallStack.update</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span>] =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">subst</span>; <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_top">ThreadPool.get_top</a></span>, <span class="id"><a href="GlobDefs.html#ThreadPool.pop">ThreadPool.pop</a></span>, <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="kwd">in</span> *; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">subst</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span> <span class="kwd">in</span> *;<br/>
+&nbsp;&nbsp;<span class="tactic">try</span> (<span class="tactic">destruct</span> <span class="id">peq</span>; [|<span class="id">contradiction</span>]; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">subst</span>);<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">H</span>; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: ?<span class="id">P</span> = ?<span class="id">Q</span>, <span class="id">H1</span>: <span class="id">context</span>[?<span class="id">P</span>] |- <span class="id">_</span> =&gt; <span class="tactic">rewrite</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>;<br/>
+&nbsp;&nbsp;<span class="id">solv_eq</span><br/>
+.<br/>
+<br/>
+<div class="doc">should be put into ThreadPool </div>
+<span class="kwd">Lemma</span> <span class="id"><a name="valid_tid_get_cs">valid_tid_get_cs</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> (<span class="id">tp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#GE">GE</a></span>) <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.valid_tid">ThreadPool.valid_tid</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#t">t</a></span> &lt;-&gt; (<span class="id">exists</span> <span class="id">cs</span>, <span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tp">tp</a></span> <span class="id"><a href="GDefLemmas.html#t">t</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GDefLemmas.html#cs">cs</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8319')">Proof.</div>
+<div class="proofscript" id="proof8319">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>. <span class="tactic">clear</span> <span class="id">thdp_default</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.valid_tid">ThreadPool.valid_tid</a></span>. <span class="id">solv_thread</span>'.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">edestruct</span> <span class="id"><a href="Coqlib.html#plt">plt</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">tp_finite</span> <span class="kwd">in</span> <span class="id">n</span>. <span class="tactic">destruct</span> <span class="id">H0</span>. <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Lemmas, TODO: move to somewhere else </div>
+<span class="kwd">Lemma</span> <span class="id"><a name="thrddom_eq_valid_tid">thrddom_eq_valid_tid</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">sthdp</span>:@<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) (<span class="id">tthdp</span>:@<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">t</span>, <span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id"><a href="GDefLemmas.html#t">t</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id"><a href="GDefLemmas.html#t">t</a></span>)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">t</span>, <span class="id"><a href="GlobDefs.html#ThreadPool.valid_tid">ThreadPool.valid_tid</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id"><a href="GDefLemmas.html#t">t</a></span> &lt;-&gt; <span class="id"><a href="GlobDefs.html#ThreadPool.valid_tid">ThreadPool.valid_tid</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id"><a href="GDefLemmas.html#t">t</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8320')">Proof.</div>
+<div class="proofscript" id="proof8320">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>. <span class="id">specialize</span> (<span class="id">H1</span> <span class="id">t</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="GDefLemmas.html#valid_tid_get_cs">valid_tid_get_cs</a></span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id"><a href="GDefLemmas.html#valid_tid_get_cs">valid_tid_get_cs</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">clear</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;{ <span class="tactic">split</span>; <span class="tactic">intro</span> <span class="id">C</span>; <span class="tactic">destruct</span> <span class="id">C</span> <span class="kwd">as</span> [? <span class="id">C</span>]; <span class="tactic">inversion</span> <span class="id">C</span>. }<br/>
+&nbsp;&nbsp;{ <span class="tactic">split</span>; <span class="tactic">eauto</span>. }<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="thrddom_eq_halted">thrddom_eq_halted</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">sthdp</span>:@<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>) (<span class="id">tthdp</span>:@<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">t</span>, <span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id"><a href="GDefLemmas.html#t">t</a></span>) (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id"><a href="GDefLemmas.html#t">t</a></span>)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">t</span>, <span class="id"><a href="GlobDefs.html#ThreadPool.halted">ThreadPool.halted</a></span> <span class="id"><a href="GDefLemmas.html#sthdp">sthdp</a></span> <span class="id"><a href="GDefLemmas.html#t">t</a></span> &lt;-&gt; <span class="id"><a href="GlobDefs.html#ThreadPool.halted">ThreadPool.halted</a></span> <span class="id"><a href="GDefLemmas.html#tthdp">tthdp</a></span> <span class="id"><a href="GDefLemmas.html#t">t</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8321')">Proof.</div>
+<div class="proofscript" id="proof8321">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>. <span class="id">specialize</span> (<span class="id">H1</span> <span class="id">t</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">inversion</span> 1; <span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.Halted">ThreadPool.Halted</a></span>; <span class="id">solv_thread</span>'.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>. <span class="tactic">inversion</span> <span class="id">H5</span>. <span class="tactic">subst</span>. <span class="tactic">inversion</span> <span class="id">H6</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">subst</span>. <span class="tactic">inversion</span> <span class="id">H5</span>. <span class="tactic">subst</span>. <span class="tactic">inversion</span> <span class="id">H4</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="ocs_match_comm">ocs_match_comm</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">oscs</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> (@<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span>)) (<span class="id">otcs</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> (@<span class="id"><a href="GlobDefs.html#CallStack.t">CallStack.t</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span>)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> <span class="id"><a href="GDefLemmas.html#oscs">oscs</a></span> <span class="id"><a href="GDefLemmas.html#otcs">otcs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#ocs_match">ocs_match</a></span> <span class="id"><a href="GDefLemmas.html#otcs">otcs</a></span> <span class="id"><a href="GDefLemmas.html#oscs">oscs</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8322')">Proof.</div>
+<div class="proofscript" id="proof8322">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">inversion</span> 1. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">H1</span> <span class="id">H2</span> <span class="id">H</span> <span class="id">oscs</span> <span class="id">otcs</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">induction</span> <span class="id">H0</span>; <span class="id">solv_thread</span>'.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GSimDefs.html#match_cs_cons">match_cs_cons</a></span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">cs_match</span>'<span class="id">_comm</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> <span class="id">cs1</span> <span class="id">cs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id">cs_match</span>' <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span> <span class="id"><a href="GDefLemmas.html#cs1">cs1</a></span> <span class="id"><a href="GDefLemmas.html#cs2">cs2</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cs_match</span>' <span class="id"><a href="GDefLemmas.html#cs2">cs2</a></span> <span class="id"><a href="GDefLemmas.html#cs1">cs1</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8323')">Proof.</div>
+<div class="proofscript" id="proof8323">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H</span>;<span class="tactic">subst</span>;[<span class="id">econstructor</span>|<span class="id">econstructor</span> 2];<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">ocs_match</span>'<span class="id">_comm</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> <span class="id">ocs1</span> <span class="id">ocs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id">ocs_match</span>' <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span> <span class="id"><a href="GDefLemmas.html#ocs1">ocs1</a></span> <span class="id"><a href="GDefLemmas.html#ocs2">ocs2</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ocs_match</span>' <span class="id"><a href="GDefLemmas.html#ocs2">ocs2</a></span> <span class="id"><a href="GDefLemmas.html#ocs1">ocs1</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8324')">Proof.</div>
+<div class="proofscript" id="proof8324">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1;<span class="tactic">intros</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">cs_match</span>'<span class="id">_comm</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span> 2;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">thrddom_eq</span>'<span class="id">_comm</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> <span class="id">thdp</span> <span class="id">thdp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id">thrddom_eq</span>' <span class="id"><a href="GDefLemmas.html#SGE">SGE</a></span> <span class="id"><a href="GDefLemmas.html#TGE">TGE</a></span> <span class="id"><a href="GDefLemmas.html#thdp">thdp</a></span> <span class="id">thdp</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">thrddom_eq</span>' <span class="id">thdp</span>' <span class="id"><a href="GDefLemmas.html#thdp">thdp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8325')">Proof.</div>
+<div class="proofscript" id="proof8325">
+&nbsp;&nbsp;<span class="tactic">inversion</span> 1;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>;<span class="tactic">eapply</span> <span class="id">ocs_match</span>'<span class="id">_comm</span>;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

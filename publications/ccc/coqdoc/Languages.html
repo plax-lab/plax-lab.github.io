@@ -1,0 +1,56 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Languages</title>
+<meta name="description" content="Documentation of Coq module Languages" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Languages</h1>
+<div class="coq">
+<span class="id">From</span> <span class="id">mathcomp.ssreflect</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">fintype</span> <span class="id">ssrnat</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Maps.html">Maps</a></span> <span class="id"><a href="Axioms.html">Axioms</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="ClightLang.html">ClightLang</a></span> <span class="id"><a href="AsmLang.html">AsmLang</a></span> <span class="id"><a href="SpecLang.html">SpecLang</a></span>.<br/>
+<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="NL">NL</a></span> : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span> := 3.<br/>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id"><a name="id0">id0</a></span> : '<span class="id">I_NL</span> := @<span class="id">Ordinal</span> <span class="id"><a href="Languages.html#NL">NL</a></span> 0 <span class="id">_</span>.<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id"><a name="id1">id1</a></span> : '<span class="id">I_NL</span> := @<span class="id">Ordinal</span> <span class="id"><a href="Languages.html#NL">NL</a></span> 1 <span class="id">_</span>.<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id"><a name="id2">id2</a></span> : '<span class="id">I_NL</span> := @<span class="id">Ordinal</span> <span class="id"><a href="Languages.html#NL">NL</a></span> 2 <span class="id">_</span>.<br/>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id"><a name="L">L</a></span> (<span class="id">i</span>: '<span class="id">I_NL</span>): <span class="id"><a href="InteractionSemantics.html#Language">Language</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">eqn</span> <span class="id"><a href="Languages.html#i">i</a></span> 0 <span class="kwd">then</span> <span class="id"><a href="ClightLang.html#Clight_IS_2">Clight_IS_2</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">eqn</span> <span class="id"><a href="Languages.html#i">i</a></span> 1 <span class="kwd">then</span> <span class="id"><a href="AsmLang.html#AsmLang">AsmLang</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id"><a href="SpecLang.html#speclang">speclang</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="L_sound_1">L_sound_1</a></span>: <span class="id"><a href="Languages.html#L">L</a></span> <span class="id"><a href="Languages.html#id0">id0</a></span> = <span class="id"><a href="ClightLang.html#Clight_IS_2">Clight_IS_2</a></span>. <span class="kwd">Proof</span>. <span class="tactic">auto</span>. Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="L_sound_2">L_sound_2</a></span>: <span class="id"><a href="Languages.html#L">L</a></span> <span class="id"><a href="Languages.html#id1">id1</a></span> = <span class="id"><a href="AsmLang.html#AsmLang">AsmLang</a></span>. <span class="kwd">Proof</span>. <span class="tactic">auto</span>. Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="L_sound_3">L_sound_3</a></span>: <span class="id"><a href="Languages.html#L">L</a></span> <span class="id"><a href="Languages.html#id2">id2</a></span> = <span class="id"><a href="SpecLang.html#speclang">speclang</a></span>. <span class="kwd">Proof</span>. <span class="tactic">auto</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="eq_ord">eq_ord</a></span>: <span class="kwd">forall</span> <span class="id">i</span>:'<span class="id">I_NL</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Languages.html#i">i</a></span> = <span class="id"><a href="Languages.html#id0">id0</a></span> \/ <span class="id"><a href="Languages.html#i">i</a></span> = <span class="id"><a href="Languages.html#id1">id1</a></span> \/ <span class="id"><a href="Languages.html#i">i</a></span> = <span class="id"><a href="Languages.html#id2">id2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof10340')">Proof.</div>
+<div class="proofscript" id="proof10340">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Languages.html#id0">id0</a></span>, <span class="id"><a href="Languages.html#id1">id1</a></span>, <span class="id"><a href="Languages.html#id2">id2</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span>. <span class="tactic">destruct</span> <span class="id">i</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">m</span>.<br/>
+&nbsp;&nbsp;<span class="id">left</span>. <span class="tactic">cut</span> (<span class="id">i</span> = <span class="id"><a href="Languages.html#id0_obligation_1">id0_obligation_1</a></span>). <span class="tactic">intro</span>; <span class="tactic">subst</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Axioms.html#proof_irr">proof_irr</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">m</span>.<br/>
+&nbsp;&nbsp;<span class="id">right</span>. <span class="tactic">cut</span> (<span class="id">i</span> = <span class="id"><a href="Languages.html#id1_obligation_1">id1_obligation_1</a></span>). <span class="tactic">intro</span>; <span class="tactic">subst</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Axioms.html#proof_irr">proof_irr</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">m</span>.<br/>
+&nbsp;&nbsp;<span class="id">right</span>. <span class="tactic">cut</span> (<span class="id">i</span> = <span class="id"><a href="Languages.html#id2_obligation_1">id2_obligation_1</a></span>). <span class="tactic">intro</span>; <span class="tactic">subst</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Axioms.html#proof_irr">proof_irr</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">i</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

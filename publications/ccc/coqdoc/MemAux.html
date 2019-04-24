@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module MemAux</title>
+<meta name="description" content="Documentation of Coq module MemAux" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module MemAux</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html">Streams</a></span> <span class="id"><a href="Maps.html">Maps</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span>.<br/>
+<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="freelist">freelist</a></span> : <span class="kwd">Type</span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Stream">Stream</a></span> <span class="id"><a href="Values.html#block">block</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="in_fl">in_fl</a></span> (<span class="id">fl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">b</span>: <span class="id"><a href="Values.html#block">block</a></span>) := <span class="id">exists</span> <span class="id">n</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Str_nth">Str_nth</a></span> <span class="id"><a href="MemAux.html#n">n</a></span> <span class="id"><a href="MemAux.html#fl">fl</a></span> = <span class="id"><a href="MemAux.html#b">b</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="get_block">get_block</a></span> (<span class="id">fl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">n</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>) := <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Str_nth">Str_nth</a></span> <span class="id"><a href="MemAux.html#n">n</a></span> <span class="id"><a href="MemAux.html#fl">fl</a></span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="norep">norep</a></span> {<span class="id">A</span>: <span class="kwd">Type</span>} (<span class="id">x</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Stream">Stream</a></span> <span class="id"><a href="MemAux.html#A">A</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="Norep">Norep</a></span> : (<span class="kwd">forall</span> <span class="id">n1</span> <span class="id">n2</span>, <span class="id"><a href="MemAux.html#n1">n1</a></span> &lt;&gt; <span class="id"><a href="MemAux.html#n2">n2</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Str_nth">Str_nth</a></span> <span class="id"><a href="MemAux.html#n1">n1</a></span> <span class="id">x</span> &lt;&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Str_nth">Str_nth</a></span> <span class="id"><a href="MemAux.html#n2">n2</a></span> <span class="id">x</span>) -&gt; <span class="id"><a href="MemAux.html#norep">norep</a></span> <span class="id">x</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="disj">disj</a></span> {<span class="id">A</span>: <span class="kwd">Type</span>} (<span class="id">x1</span> <span class="id">x2</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Stream">Stream</a></span> <span class="id"><a href="MemAux.html#A">A</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="Disj">Disj</a></span> : (<span class="kwd">forall</span> <span class="id">n1</span> <span class="id">n2</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Str_nth">Str_nth</a></span> <span class="id"><a href="MemAux.html#n1">n1</a></span> <span class="id">x1</span> &lt;&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Str_nth">Str_nth</a></span> <span class="id"><a href="MemAux.html#n2">n2</a></span> <span class="id">x2</span> ) -&gt; <span class="id"><a href="MemAux.html#disj">disj</a></span> <span class="id">x1</span> <span class="id">x2</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">decomp_in_fl</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| [<span class="id">H</span>: <span class="id"><a href="MemAux.html#in_fl">in_fl</a></span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> ]=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">x</span> := <span class="tactic">fresh</span> "<span class="id">n</span>" <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">x</span> <span class="id">H</span>]<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">unfold_fl</span>:=<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="id">decomp_in_fl</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="MemAux.html#in_fl">in_fl</a></span>, <span class="id"><a href="MemAux.html#get_block">get_block</a></span> <span class="kwd">in</span> *.<br/>
+<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="no_overlap">no_overlap</a></span> (<span class="id">fl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">bs</span>:<span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">n</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Str_nth">Str_nth</a></span> <span class="id"><a href="MemAux.html#n">n</a></span> <span class="id"><a href="MemAux.html#fl">fl</a></span> = <span class="id"><a href="MemAux.html#b">b</a></span> -&gt; ~ <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="id"><a href="MemAux.html#bs">bs</a></span> <span class="id"><a href="MemAux.html#b">b</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="unchg_freelist">unchg_freelist</a></span> (<span class="id">fl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">gm</span> <span class="id">gm</span>': <span class="id"><a href="GMemory.html#gmem">gmem</a></span>): <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.unchanged_on">GMem.unchanged_on</a></span> (<span class="kwd">fun</span> <span class="id">b</span> <span class="id">ofs</span> =&gt; <span class="id"><a href="MemAux.html#in_fl">in_fl</a></span> <span class="id"><a href="MemAux.html#fl">fl</a></span> <span class="id"><a href="MemAux.html#b">b</a></span>) <span class="id"><a href="MemAux.html#gm">gm</a></span> <span class="id">gm</span>'.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="unchg_freelist_trans">unchg_freelist_trans</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fl</span> <span class="id">gm1</span> <span class="id">gm2</span> <span class="id">gm3</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#unchg_freelist">unchg_freelist</a></span> <span class="id"><a href="MemAux.html#fl">fl</a></span> <span class="id"><a href="MemAux.html#gm1">gm1</a></span> <span class="id"><a href="MemAux.html#gm2">gm2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#unchg_freelist">unchg_freelist</a></span> <span class="id"><a href="MemAux.html#fl">fl</a></span> <span class="id"><a href="MemAux.html#gm2">gm2</a></span> <span class="id"><a href="MemAux.html#gm3">gm3</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#unchg_freelist">unchg_freelist</a></span> <span class="id"><a href="MemAux.html#fl">fl</a></span> <span class="id"><a href="MemAux.html#gm1">gm1</a></span> <span class="id"><a href="MemAux.html#gm3">gm3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6346')">Proof.</div>
+<div class="proofscript" id="proof6346">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GMemory.html#GMem.unchanged_on_trans">GMem.unchanged_on_trans</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="valid_block_bset">valid_block_bset</a></span> (<span class="id">gm</span>: <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) : <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span> := <span class="id"><a href="GMemory.html#GMem.valid_block">GMem.valid_block</a></span> <span class="id"><a href="MemAux.html#gm">gm</a></span>.<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="valid_block_bset_eq">valid_block_bset_eq</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">gm</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="GMemory.html#GMem.valid_block">GMem.valid_block</a></span> <span class="id"><a href="MemAux.html#gm">gm</a></span> <span class="id"><a href="MemAux.html#b">b</a></span>) &lt;-&gt; (<span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> (<span class="id"><a href="MemAux.html#valid_block_bset">valid_block_bset</a></span> <span class="id"><a href="MemAux.html#gm">gm</a></span>) <span class="id"><a href="MemAux.html#b">b</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6347')">Proof.</div>
+<div class="proofscript" id="proof6347">
+ <span class="tactic">firstorder</span>. Qed.</div>
+<br/>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="bset_eq_no_overlap">bset_eq_no_overlap</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">bs1</span> <span class="id">bs2</span> <span class="id">fl</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="MemAux.html#bs1">bs1</a></span> <span class="id"><a href="MemAux.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="MemAux.html#bs2">bs2</a></span> <span class="id"><a href="MemAux.html#b">b</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="MemAux.html#fl">fl</a></span> <span class="id"><a href="MemAux.html#bs1">bs1</a></span> &lt;-&gt; <span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span> <span class="id"><a href="MemAux.html#fl">fl</a></span> <span class="id"><a href="MemAux.html#bs2">bs2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6348')">Proof.</div>
+<div class="proofscript" id="proof6348">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="MemAux.html#no_overlap">no_overlap</a></span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">intros</span>; [<span class="tactic">rewrite</span> &lt;-<span class="id">H</span> | <span class="tactic">rewrite</span> <span class="id">H</span>]; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

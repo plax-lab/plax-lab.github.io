@@ -1,0 +1,323 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Lineartyping_local</title>
+<meta name="description" content="Documentation of Coq module Lineartyping_local" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Lineartyping_local</h1>
+<div class="coq">
+<br/>
+<br/>
+<div class="doc">Type-checking Linear code. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AST.html">AST</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Integers.html">Integers</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Values.html">Values</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Memory.html">Memory</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Events.html">Events</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Op.html">Op</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Machregs.html">Machregs</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Locations.html">Locations</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Conventions.html">Conventions</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="LTL.html">LTL</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Linear.html">Linear</a></span> <span class="id"><a href="CUAST.html">CUAST</a></span> <span class="id"><a href="Linear_local.html">Linear_local</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Lineartyping.html">Lineartyping</a></span>.<br/>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_set_arguments">wt_set_arguments</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ls</span> <span class="id">rl</span> <span class="id">args</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">r</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id"><a href="Lineartyping_local.html#r">r</a></span> <span class="id"><a href="Lineartyping_local.html#rl">rl</a></span> -&gt; <span class="id"><a href="AST.html#forall_rpair">forall_rpair</a></span> (<span class="kwd">fun</span> <span class="id">l</span> =&gt; <span class="kwd">match</span> <span class="id"><a href="Lineartyping_local.html#l">l</a></span> <span class="kwd">with</span> <span class="id"><a href="Locations.html#S">S</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span> | <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span> <span class="kwd">end</span>) <span class="id"><a href="Lineartyping_local.html#r">r</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> <span class="id"><a href="Lineartyping_local.html#ls">ls</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> (<span class="id"><a href="val_casted.html#set_arguments">val_casted.set_arguments</a></span> <span class="id"><a href="Lineartyping_local.html#rl">rl</a></span> <span class="id"><a href="Lineartyping_local.html#args">args</a></span> <span class="id"><a href="Lineartyping_local.html#ls">ls</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7572')">Proof.</div>
+<div class="proofscript" id="proof7572">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">induction</span> <span class="id">rl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">args</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id">H</span> <span class="id">a</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">a</span>; <span class="tactic">simpl</span>; <span class="tactic">intro</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">r</span>; <span class="tactic">try</span> <span class="id">contradiction</span>. <span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_setstack">wt_setstack</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHrl</span>; <span class="tactic">auto</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">simpl</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">rhi</span>; <span class="tactic">try</span> <span class="tactic">tauto</span>; <span class="tactic">destruct</span> <span class="id">rlo</span>; <span class="tactic">try</span> <span class="tactic">tauto</span>. <span class="tactic">do</span> 2 <span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_setstack">wt_setstack</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHrl</span>; <span class="tactic">auto</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">simpl</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_parent_locset0">wt_parent_locset0</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">rs0</span> <span class="id">s</span>, <span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> <span class="id"><a href="Lineartyping_local.html#rs0">rs0</a></span> -&gt; <span class="id"><a href="Lineartyping.html#wt_callstack">wt_callstack</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span> -&gt; <span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> (<span class="id"><a href="Linear_local.html#parent_locset0">parent_locset0</a></span> <span class="id"><a href="Lineartyping_local.html#rs0">rs0</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7573')">Proof.</div>
+<div class="proofscript" id="proof7573">
+&nbsp;&nbsp;<span class="tactic">induction</span> 2; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="wt_core">wt_core</a></span>: <span class="id"><a href="Linear_local.html#core">core</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="wt_regular_core">wt_regular_core</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">c</span> <span class="id">rs</span> <span class="id">rs0</span> <span class="id">f0</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTSTK</span>: <span class="id"><a href="Lineartyping.html#wt_callstack">wt_callstack</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span> )<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTF</span>: <span class="id"><a href="Lineartyping.html#wt_function">wt_function</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTC</span>: <span class="id"><a href="Lineartyping.html#wt_code">wt_code</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> <span class="id"><a href="Lineartyping_local.html#c">c</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTRS</span>: <span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTRS0</span>: <span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> <span class="id"><a href="Lineartyping_local.html#rs0">rs0</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="Linear_local.html#Core_State">Core_State</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> <span class="id"><a href="Lineartyping_local.html#sp">sp</a></span> <span class="id"><a href="Lineartyping_local.html#c">c</a></span> <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> (<span class="id"><a href="Linear_local.html#mk_load_frame">mk_load_frame</a></span> <span class="id"><a href="Lineartyping_local.html#rs0">rs0</a></span> <span class="id"><a href="Lineartyping_local.html#f0">f0</a></span>))<br/>
+| <span class="id"><a name="wt_call_core">wt_call_core</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">fd</span> <span class="id">rs</span> <span class="id">rs0</span> <span class="id">f0</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTSTK</span>: <span class="id"><a href="Lineartyping.html#wt_callstack">wt_callstack</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTFD</span>: <span class="id"><a href="Lineartyping.html#wt_fundef">wt_fundef</a></span> <span class="id"><a href="Lineartyping_local.html#fd">fd</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTRS</span>: <span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTRS0</span>: <span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> <span class="id"><a href="Lineartyping_local.html#rs0">rs0</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="Linear_local.html#Core_Callstate">Core_Callstate</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span> <span class="id"><a href="Lineartyping_local.html#fd">fd</a></span> <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> (<span class="id"><a href="Linear_local.html#mk_load_frame">mk_load_frame</a></span> <span class="id"><a href="Lineartyping_local.html#rs0">rs0</a></span> <span class="id"><a href="Lineartyping_local.html#f0">f0</a></span>))<br/>
+| <span class="id"><a name="wt_call_coreIn">wt_call_coreIn</a></span>: <span class="kwd">forall</span> <span class="id">fd</span> <span class="id">rs</span> <span class="id">rs0</span> <span class="id">f0</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTFD</span>: <span class="id"><a href="Lineartyping.html#wt_fundef">wt_fundef</a></span> <span class="id"><a href="Lineartyping_local.html#fd">fd</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTRS</span>: <span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTRS0</span>: <span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> <span class="id"><a href="Lineartyping_local.html#rs0">rs0</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="Linear_local.html#Core_CallstateIn">Core_CallstateIn</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="Lineartyping_local.html#fd">fd</a></span> <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> (<span class="id"><a href="Linear_local.html#mk_load_frame">mk_load_frame</a></span> <span class="id"><a href="Lineartyping_local.html#rs0">rs0</a></span> <span class="id"><a href="Lineartyping_local.html#f0">f0</a></span>))<br/>
+| <span class="id"><a name="wt_return_core">wt_return_core</a></span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">rs</span> <span class="id">rs0</span> <span class="id">f0</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTSTK</span>: <span class="id"><a href="Lineartyping.html#wt_callstack">wt_callstack</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTRS</span>: <span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WTRS0</span>: <span class="id"><a href="Lineartyping.html#wt_locset">wt_locset</a></span> <span class="id"><a href="Lineartyping_local.html#rs0">rs0</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="Linear_local.html#Core_Returnstate">Core_Returnstate</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span> <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> (<span class="id"><a href="Linear_local.html#mk_load_frame">mk_load_frame</a></span> <span class="id"><a href="Lineartyping_local.html#rs0">rs0</a></span> <span class="id"><a href="Lineartyping_local.html#f0">f0</a></span>)).<br/>
+<br/>
+<div class="doc">Preservation of state typing by transitions </div>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="SOUNDNESS">SOUNDNESS</a></span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="SOUNDNESS.cu">cu</a></span>: <span class="id"><a href="Linear_local.html#Linear_comp_unit">Linear_comp_unit</a></span>.<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="SOUNDNESS.ge">ge</a></span>: <span class="id"><a href="Linear.html#genv">genv</a></span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="SOUNDNESS.GE_INIT">GE_INIT</a></span>: <span class="id"><a href="Linear_local.html#init_genv">init_genv</a></span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.cu">cu</a></span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.ge">ge</a></span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.ge">ge</a></span>.<br/>
+<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="SOUNDNESS.wt_prog">wt_prog</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">fd</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id"><a href="Lineartyping_local.html#i">i</a></span>, <span class="id"><a href="AST.html#Gfun">Gfun</a></span> <span class="id"><a href="Lineartyping_local.html#fd">fd</a></span>) <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.cu">cu</a></span>.(<span class="id"><a href="CUAST.html#cu_defs">cu_defs</a></span>) -&gt; <span class="id"><a href="Lineartyping.html#wt_fundef">wt_fundef</a></span> <span class="id"><a href="Lineartyping_local.html#fd">fd</a></span>.<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="cu_find_def_eq">cu_find_def_eq</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F</span> <span class="id">V</span> (<span class="id">cu</span>: <span class="id"><a href="CUAST.html#comp_unit_generic">comp_unit_generic</a></span> <span class="id"><a href="Lineartyping_local.html#F">F</a></span> <span class="id"><a href="Lineartyping_local.html#V">V</a></span>) <span class="id">ge</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CUAST.html#globalenv_generic">globalenv_generic</a></span> <span class="id"><a href="Lineartyping_local.html#cu">cu</a></span> <span class="id"><a href="Lineartyping_local.html#ge">ge</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Globalenvs.html#Genv.find_def">Genv.find_def</a></span> <span class="id"><a href="Lineartyping_local.html#ge">ge</a></span> <span class="id"><a href="Lineartyping_local.html#b">b</a></span> =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Globalenvs.html#Genv.find_def">Genv.find_def</a></span> (<span class="id"><a href="Globalenvs.html#Genv.globalenv">Genv.globalenv</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="AST.html#mkprogram">prog_defs</a></span> := <span class="id"><a href="CUAST.html#cu_defs">cu_defs</a></span> <span class="id"><a href="Lineartyping_local.html#cu">cu</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">prog_public</span> := <span class="id"><a href="CUAST.html#cu_public">cu_public</a></span> <span class="id"><a href="Lineartyping_local.html#cu">cu</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">prog_main</span> := 1%<span class="id">positive</span> |}) <span class="id"><a href="Lineartyping_local.html#b">b</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7574')">Proof.</div>
+<div class="proofscript" id="proof7574">
+ <span class="tactic">clear</span>; <span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">auto</span>. Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="cu_find_def_inversion">cu_find_def_inversion</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F</span> <span class="id">V</span> (<span class="id">cu</span>: <span class="id"><a href="CUAST.html#comp_unit_generic">comp_unit_generic</a></span> <span class="id"><a href="Lineartyping_local.html#F">F</a></span> <span class="id"><a href="Lineartyping_local.html#V">V</a></span>) <span class="id">ge</span> <span class="id">b</span> <span class="id">g</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CUAST.html#globalenv_generic">globalenv_generic</a></span> <span class="id"><a href="Lineartyping_local.html#cu">cu</a></span> <span class="id"><a href="Lineartyping_local.html#ge">ge</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Globalenvs.html#Genv.find_def">Genv.find_def</a></span> <span class="id"><a href="Lineartyping_local.html#ge">ge</a></span> <span class="id"><a href="Lineartyping_local.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="Lineartyping_local.html#g">g</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">id</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id"><a href="Lineartyping_local.html#id">id</a></span>, <span class="id"><a href="Lineartyping_local.html#g">g</a></span>) (<span class="id"><a href="CUAST.html#cu_defs">cu_defs</a></span> <span class="id"><a href="Lineartyping_local.html#cu">cu</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7575')">Proof.</div>
+<div class="proofscript" id="proof7575">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span> <span class="id">F</span> <span class="id">V</span> <span class="id">cu0</span> <span class="id">ge0</span> <span class="id">b</span> <span class="id">g</span> <span class="id">HGE</span> <span class="id">FIND</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id"><a href="Lineartyping_local.html#cu_find_def_eq">cu_find_def_eq</a></span> <span class="kwd">in</span> <span class="id">FIND</span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="Globalenvs.html#Genv.find_def_inversion">Genv.find_def_inversion</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="cu_find_funct_ptr_inversion">cu_find_funct_ptr_inversion</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F</span> <span class="id">V</span> (<span class="id">cu</span>: <span class="id"><a href="CUAST.html#comp_unit_generic">comp_unit_generic</a></span> <span class="id"><a href="Lineartyping_local.html#F">F</a></span> <span class="id"><a href="Lineartyping_local.html#V">V</a></span>) <span class="id">ge</span> <span class="id">b</span> <span class="id">f</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CUAST.html#globalenv_generic">globalenv_generic</a></span> <span class="id"><a href="Lineartyping_local.html#cu">cu</a></span> <span class="id"><a href="Lineartyping_local.html#ge">ge</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id"><a href="Lineartyping_local.html#ge">ge</a></span> <span class="id"><a href="Lineartyping_local.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">id</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id"><a href="Lineartyping_local.html#id">id</a></span>, <span class="id"><a href="AST.html#Gfun">Gfun</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span>) (<span class="id"><a href="CUAST.html#cu_defs">cu_defs</a></span> <span class="id"><a href="Lineartyping_local.html#cu">cu</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7576')">Proof.</div>
+<div class="proofscript" id="proof7576">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id"><a href="Lineartyping_local.html#cu_find_def_inversion">cu_find_def_inversion</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr_iff">Genv.find_funct_ptr_iff</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="cu_find_funct_inversion">cu_find_funct_inversion</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F</span> <span class="id">V</span> (<span class="id">cu</span>: <span class="id"><a href="CUAST.html#comp_unit_generic">comp_unit_generic</a></span> <span class="id"><a href="Lineartyping_local.html#F">F</a></span> <span class="id"><a href="Lineartyping_local.html#V">V</a></span>) <span class="id">ge</span> <span class="id">v</span> <span class="id">f</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="CUAST.html#globalenv_generic">globalenv_generic</a></span> <span class="id"><a href="Lineartyping_local.html#cu">cu</a></span> <span class="id"><a href="Lineartyping_local.html#ge">ge</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Globalenvs.html#Genv.find_funct">Genv.find_funct</a></span> <span class="id"><a href="Lineartyping_local.html#ge">ge</a></span> <span class="id"><a href="Lineartyping_local.html#v">v</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">id</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id"><a href="Lineartyping_local.html#id">id</a></span>, <span class="id"><a href="AST.html#Gfun">Gfun</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span>) (<span class="id"><a href="CUAST.html#cu_defs">cu_defs</a></span> <span class="id"><a href="Lineartyping_local.html#cu">cu</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7577')">Proof.</div>
+<div class="proofscript" id="proof7577">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>. <span class="id">exploit</span> <span class="id"><a href="Globalenvs.html#Genv.find_funct_inv">Genv.find_funct_inv</a></span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">b</span> <span class="id">EQ</span>]. <span class="tactic">subst</span> <span class="id">v</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Globalenvs.html#Genv.find_funct_find_funct_ptr">Genv.find_funct_find_funct_ptr</a></span> <span class="kwd">in</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Lineartyping_local.html#cu_find_funct_ptr_inversion">cu_find_funct_ptr_inversion</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_find_function">wt_find_function</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ros</span> <span class="id">rs</span> <span class="id">f</span>, <span class="id"><a href="Linear.html#find_function">find_function</a></span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.ge">ge</a></span> <span class="id"><a href="Lineartyping_local.html#ros">ros</a></span> <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> -&gt; <span class="id"><a href="Lineartyping.html#wt_fundef">wt_fundef</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7578')">Proof.</div>
+<div class="proofscript" id="proof7578">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">exists</span> <span class="id">i</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id"><a href="Lineartyping_local.html#i">i</a></span>, <span class="id"><a href="AST.html#Gfun">Gfun</a></span> <span class="id">f</span>) <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.cu">cu</a></span>.(<span class="id"><a href="CUAST.html#cu_defs">cu_defs</a></span>)) <span class="kwd">as</span> [<span class="id">i</span> <span class="id">IN</span>].<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">ros</span> <span class="kwd">as</span> [<span class="id">r</span> | <span class="id">s</span>]; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+<div class="doc">TODO: there should be a CUAST version of find_funct_inversion. </div>
+&nbsp;&nbsp;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Lineartyping_local.html#cu_find_funct_inversion">cu_find_funct_inversion</a></span>; <span class="tactic">eauto</span>. <span class="id">inv</span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.GE_INIT">GE_INIT</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Globalenvs.html#Genv.find_symbol">Genv.find_symbol</a></span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.ge">ge</a></span> <span class="id">s</span>) <span class="kwd">as</span> [<span class="id">b</span>|]; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Lineartyping_local.html#cu_find_funct_ptr_inversion">cu_find_funct_ptr_inversion</a></span>; <span class="tactic">eauto</span>. <span class="id">inv</span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.GE_INIT">GE_INIT</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.wt_prog">wt_prog</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="step_type_preservation">step_type_preservation</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c1</span> <span class="id">m1</span> <span class="id">fp</span> <span class="id">c2</span> <span class="id">m2</span>, <span class="id"><a href="Linear_local.html#step">step</a></span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.ge">ge</a></span> <span class="id"><a href="Lineartyping_local.html#c1">c1</a></span> <span class="id"><a href="Lineartyping_local.html#m1">m1</a></span> <span class="id"><a href="Lineartyping_local.html#fp">fp</a></span> <span class="id"><a href="Lineartyping_local.html#c2">c2</a></span> <span class="id"><a href="Lineartyping_local.html#m2">m2</a></span> -&gt; <span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> <span class="id"><a href="Lineartyping_local.html#c1">c1</a></span> -&gt; <span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> <span class="id"><a href="Lineartyping_local.html#c2">c2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7579')">Proof.</div>
+<div class="proofscript" id="proof7579">
+<span class="kwd">Local</span> <span class="id">Opaque</span> <span class="id"><a href="Machregs.html#mreg_type">mreg_type</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span> <span class="id">WTS</span>; <span class="id">inv</span> <span class="id">WTS</span>.<br/>
+- <span class="comment">(*&nbsp;getstack&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvBooleans</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Lineartyping.html#wt_setreg">wt_setreg</a></span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id"><a href="Values.html#Val.has_subtype">Val.has_subtype</a></span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">WTRS</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;setstack&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvBooleans</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_setstack">wt_setstack</a></span>. <span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;op&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="tactic">destruct</span> (<span class="id"><a href="Op.html#is_move_operation">is_move_operation</a></span> <span class="id">op</span> <span class="id">args</span>) <span class="kwd">as</span> [<span class="id">src</span> | ] <span class="id">eqn</span>:<span class="id">ISMOVE</span>.<br/>
+&nbsp;&nbsp;+ <span class="comment">(*&nbsp;move&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">InvBooleans</span>. <span class="id">exploit</span> <span class="id"><a href="Op.html#is_move_operation_correct">is_move_operation_correct</a></span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">EQ1</span> <span class="id">EQ2</span>]; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_setreg">wt_setreg</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="Values.html#Val.has_subtype">Val.has_subtype</a></span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">WTRS</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;+ <span class="comment">(*&nbsp;other&nbsp;ops&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Op.html#type_of_operation">type_of_operation</a></span> <span class="id">op</span>) <span class="kwd">as</span> [<span class="id">ty_args</span> <span class="id">ty_res</span>] <span class="id">eqn</span>:<span class="id">TYOP</span>. <span class="id">InvBooleans</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_setreg">wt_setreg</a></span>; <span class="tactic">auto</span>. <span class="tactic">eapply</span> <span class="id"><a href="Values.html#Val.has_subtype">Val.has_subtype</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">change</span> <span class="id">ty_res</span> <span class="kwd">with</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#snd">snd</a></span> (<span class="id">ty_args</span>, <span class="id">ty_res</span>)). <span class="tactic">rewrite</span> &lt;- <span class="id">TYOP</span>. <span class="tactic">eapply</span> <span class="id"><a href="Op.html#type_of_operation_sound">type_of_operation_sound</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>; <span class="tactic">subst</span> <span class="id">op</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">ISMOVE</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">args</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>. <span class="tactic">destruct</span> <span class="id">args</span>; <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;load&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvBooleans</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_setreg">wt_setreg</a></span>. <span class="tactic">eapply</span> <span class="id"><a href="Values.html#Val.has_subtype">Val.has_subtype</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">a</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>. <span class="tactic">eapply</span> <span class="id"><a href="Memory.html#Mem.load_type">Mem.load_type</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;store&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvBooleans</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>; <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;call&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvBooleans</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Lineartyping_local.html#wt_find_function">wt_find_function</a></span>; <span class="tactic">eauto</span>.<br/>
+- <span class="comment">(*&nbsp;tailcall&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvBooleans</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Lineartyping_local.html#wt_find_function">wt_find_function</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_return_regs">wt_return_regs</a></span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id"><a href="Lineartyping_local.html#wt_parent_locset0">wt_parent_locset0</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;builtin&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvBooleans</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Lineartyping.html#wt_setres">wt_setres</a></span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id"><a href="Events.html#external_call_well_typed">external_call_well_typed</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;label&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+- <span class="comment">(*&nbsp;goto&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id"><a href="Lineartyping.html#wt_find_label">wt_find_label</a></span>; <span class="tactic">eauto</span>.<br/>
+- <span class="comment">(*&nbsp;cond&nbsp;branch,&nbsp;taken&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="id">econstructor</span>. <span class="tactic">auto</span>. <span class="tactic">auto</span>. <span class="tactic">eapply</span> <span class="id"><a href="Lineartyping.html#wt_find_label">wt_find_label</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>; <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;cond&nbsp;branch,&nbsp;not&nbsp;taken&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="id">econstructor</span>. <span class="tactic">auto</span>. <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>; <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;jumptable&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="id">econstructor</span>. <span class="tactic">auto</span>. <span class="tactic">auto</span>. <span class="tactic">eapply</span> <span class="id"><a href="Lineartyping.html#wt_find_label">wt_find_label</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>; <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;return&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="id">InvBooleans</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_return_regs">wt_return_regs</a></span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id"><a href="Lineartyping_local.html#wt_parent_locset0">wt_parent_locset0</a></span>; <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;internal&nbsp;function&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">WTFD</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_undef_regs">wt_undef_regs</a></span>. <span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_call_regs">wt_call_regs</a></span>. <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;internal0&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="id">constructor</span>. <span class="tactic">auto</span>. <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;external&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_setpair">wt_setpair</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Events.html#external_call_well_typed">external_call_well_typed</a></span>; <span class="tactic">eauto</span>.<br/>
+- <span class="comment">(*&nbsp;return&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">WTSTK</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="wt_initial_state">wt_initial_state</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fid</span> <span class="id">args</span> <span class="id">c</span>, <span class="id"><a href="Linear_local.html#init_core">init_core</a></span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.ge">ge</a></span> <span class="id"><a href="Lineartyping_local.html#fid">fid</a></span> <span class="id"><a href="Lineartyping_local.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="Lineartyping_local.html#c">c</a></span> -&gt; <span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> <span class="id"><a href="Lineartyping_local.html#c">c</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7580')">Proof.</div>
+<div class="proofscript" id="proof7580">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Linear_local.html#init_core">init_core</a></span>, <span class="id"><a href="CUAST.html#generic_init_core">generic_init_core</a></span>, <span class="id"><a href="Linear_local.html#fundef_init">fundef_init</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="id">context</span>[<span class="kwd">match</span> ?<span class="id">x</span> <span class="kwd">with</span> <span class="id">_</span> =&gt; <span class="id">_</span> <span class="kwd">end</span>] |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">x</span> <span class="id">eqn</span>:?; <span class="tactic">try</span> <span class="tactic">discriminate</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="Lineartyping_local.html#cu_find_funct_ptr_inversion">cu_find_funct_ptr_inversion</a></span>; <span class="tactic">eauto</span>. <span class="id">inv</span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.GE_INIT">GE_INIT</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">id</span> <span class="id">IN</span>].  <span class="tactic">apply</span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS.wt_prog">wt_prog</a></span> <span class="kwd">with</span> <span class="id">id</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping_local.html#wt_set_arguments">wt_set_arguments</a></span>. <span class="tactic">clear</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Conventions1.html#loc_arguments">loc_arguments</a></span>. <span class="tactic">destruct</span> <span class="id"><a href="Archi.html#ptr64">Archi.ptr64</a></span> <span class="id">eqn</span>:<span class="id">C</span>. <span class="tactic">inversion</span> <span class="id">C</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">r</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id"><a href="Conventions1.html#loc_arguments_32_charact">loc_arguments_32_charact</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="AST.html#forall_rpair">forall_rpair</a></span>,<span class="id"><a href="Conventions1.html#loc_argument_32_charact">loc_argument_32_charact</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">r</span>. <span class="tactic">destruct</span> <span class="id">r</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> <span class="id">rhi</span>, <span class="id">rlo</span>; <span class="tactic">tauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_init">wt_init</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping_local.html#wt_set_arguments">wt_set_arguments</a></span>. <span class="tactic">clear</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Conventions1.html#loc_arguments">loc_arguments</a></span>. <span class="tactic">destruct</span> <span class="id"><a href="Archi.html#ptr64">Archi.ptr64</a></span> <span class="id">eqn</span>:<span class="id">C</span>. <span class="tactic">inversion</span> <span class="id">C</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">r</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id"><a href="Conventions1.html#loc_arguments_32_charact">loc_arguments_32_charact</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="AST.html#forall_rpair">forall_rpair</a></span>,<span class="id"><a href="Conventions1.html#loc_argument_32_charact">loc_argument_32_charact</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">r</span>. <span class="tactic">destruct</span> <span class="id">r</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> <span class="id">rhi</span>, <span class="id">rlo</span>; <span class="tactic">tauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Lineartyping.html#wt_init">wt_init</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="Lineartyping_local.html#SOUNDNESS">SOUNDNESS</a></span>.<br/>
+<br/>
+<div class="doc">Properties of well-typed states that are used in <span class="bracket"><span class="id">Stackingproof</span></span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_core_getstack">wt_core_getstack</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">sl</span> <span class="id">ofs</span> <span class="id">ty</span> <span class="id">rd</span> <span class="id">c</span> <span class="id">rs</span> <span class="id">lf</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="Linear_local.html#Core_State">Core_State</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> <span class="id"><a href="Lineartyping_local.html#sp">sp</a></span> (<span class="id"><a href="Linear.html#Lgetstack">Lgetstack</a></span> <span class="id"><a href="Lineartyping_local.html#sl">sl</a></span> <span class="id"><a href="Lineartyping_local.html#ofs">ofs</a></span> <span class="id"><a href="Lineartyping_local.html#ty">ty</a></span> <span class="id"><a href="Lineartyping_local.html#rd">rd</a></span> :: <span class="id"><a href="Lineartyping_local.html#c">c</a></span>) <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> <span class="id"><a href="Lineartyping_local.html#lf">lf</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="Lineartyping.html#slot_valid">slot_valid</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> <span class="id"><a href="Lineartyping_local.html#sl">sl</a></span> <span class="id"><a href="Lineartyping_local.html#ofs">ofs</a></span> <span class="id"><a href="Lineartyping_local.html#ty">ty</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7581')">Proof.</div>
+<div class="proofscript" id="proof7581">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">WTC</span>; <span class="id">InvBooleans</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_core_setstack">wt_core_setstack</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">sl</span> <span class="id">ofs</span> <span class="id">ty</span> <span class="id">r</span> <span class="id">c</span> <span class="id">rs</span> <span class="id">lf</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="Linear_local.html#Core_State">Core_State</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> <span class="id"><a href="Lineartyping_local.html#sp">sp</a></span> (<span class="id"><a href="Linear.html#Lsetstack">Lsetstack</a></span> <span class="id"><a href="Lineartyping_local.html#r">r</a></span> <span class="id"><a href="Lineartyping_local.html#sl">sl</a></span> <span class="id"><a href="Lineartyping_local.html#ofs">ofs</a></span> <span class="id"><a href="Lineartyping_local.html#ty">ty</a></span> :: <span class="id"><a href="Lineartyping_local.html#c">c</a></span>) <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> <span class="id"><a href="Lineartyping_local.html#lf">lf</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="Lineartyping.html#slot_valid">slot_valid</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> <span class="id"><a href="Lineartyping_local.html#sl">sl</a></span> <span class="id"><a href="Lineartyping_local.html#ofs">ofs</a></span> <span class="id"><a href="Lineartyping_local.html#ty">ty</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> /\ <span class="id"><a href="Lineartyping.html#slot_writable">slot_writable</a></span> <span class="id"><a href="Lineartyping_local.html#sl">sl</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7582')">Proof.</div>
+<div class="proofscript" id="proof7582">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">WTC</span>; <span class="id">InvBooleans</span>. <span class="tactic">intuition</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_core_tailcall">wt_core_tailcall</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">sg</span> <span class="id">ros</span> <span class="id">c</span> <span class="id">rs</span> <span class="id">lf</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="Linear_local.html#Core_State">Core_State</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> <span class="id"><a href="Lineartyping_local.html#sp">sp</a></span> (<span class="id"><a href="Linear.html#Ltailcall">Ltailcall</a></span> <span class="id"><a href="Lineartyping_local.html#sg">sg</a></span> <span class="id"><a href="Lineartyping_local.html#ros">ros</a></span> :: <span class="id"><a href="Lineartyping_local.html#c">c</a></span>) <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> <span class="id"><a href="Lineartyping_local.html#lf">lf</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="Conventions1.html#size_arguments">size_arguments</a></span> <span class="id"><a href="Lineartyping_local.html#sg">sg</a></span> = 0.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7583')">Proof.</div>
+<div class="proofscript" id="proof7583">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">WTC</span>; <span class="id">InvBooleans</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_core_builtin">wt_core_builtin</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">ef</span> <span class="id">args</span> <span class="id">res</span> <span class="id">c</span> <span class="id">rs</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="Linear_local.html#Core_State">Core_State</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> <span class="id"><a href="Lineartyping_local.html#sp">sp</a></span> (<span class="id"><a href="Linear.html#Lbuiltin">Lbuiltin</a></span> <span class="id"><a href="Lineartyping_local.html#ef">ef</a></span> <span class="id"><a href="Lineartyping_local.html#args">args</a></span> <span class="id"><a href="Lineartyping_local.html#res">res</a></span> :: <span class="id"><a href="Lineartyping_local.html#c">c</a></span>) <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> <span class="id"><a href="Lineartyping_local.html#m">m</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#forallb">forallb</a></span> (<span class="id"><a href="Lineartyping.html#loc_valid">loc_valid</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span>) (<span class="id"><a href="AST.html#params_of_builtin_args">params_of_builtin_args</a></span> <span class="id"><a href="Lineartyping_local.html#args">args</a></span>) = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7584')">Proof.</div>
+<div class="proofscript" id="proof7584">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">WTC</span>; <span class="id">InvBooleans</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_core_callstate_wt_regs">wt_core_callstate_wt_regs</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">rs</span> <span class="id">lf</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="Lineartyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="Linear_local.html#Core_Callstate">Core_Callstate</a></span> <span class="id"><a href="Lineartyping_local.html#s">s</a></span> <span class="id"><a href="Lineartyping_local.html#f">f</a></span> <span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> <span class="id"><a href="Lineartyping_local.html#lf">lf</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">r</span>, <span class="id"><a href="Values.html#Val.has_type">Val.has_type</a></span> (<span class="id"><a href="Lineartyping_local.html#rs">rs</a></span> (<span class="id"><a href="Locations.html#R">R</a></span> <span class="id"><a href="Lineartyping_local.html#r">r</a></span>)) (<span class="id"><a href="Machregs.html#mreg_type">mreg_type</a></span> <span class="id"><a href="Lineartyping_local.html#r">r</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7585')">Proof.</div>
+<div class="proofscript" id="proof7585">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id">WTRS</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

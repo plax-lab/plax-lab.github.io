@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module GAST</title>
+<meta name="description" content="Documentation of Coq module GAST" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module GAST</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">mathcomp.ssreflect.fintype</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html">List</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Errors.html">Errors</a></span> <span class="id"><a href="AST.html">AST</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span>.<br/>
+<br/>
+<br/>
+<h1> Definitions for global AST </h1>
+<br/>
+<div class="doc">There are special idents 
+    - <span class="bracket"><span class="id">print</span></span> : corresponds to event message 
+    - <span class="bracket"><span class="id">ent_atom</span></span> : corresponds to enter atomic block message
+    - <span class="bracket"><span class="id">exit_atom</span></span> : corresponds to exit atomic block message
+    These idents are hardwired in the global syntax and semantics,
+    and are not supposed to be bound to user defined global definitions in modules.
+ </div>
+<span class="kwd">Definition</span> <span class="id"><a name="print">print</a></span> : <span class="id"><a href="AST.html#ident">ident</a></span> := 1%<span class="id">positive</span>.<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="ent_atom">ent_atom</a></span> : <span class="id"><a href="AST.html#ident">ident</a></span> := 2%<span class="id">positive</span>.<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="ext_atom">ext_atom</a></span> : <span class="id"><a href="AST.html#ident">ident</a></span> := 3%<span class="id">positive</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="print_sg">print_sg</a></span>: <span class="id"><a href="AST.html#signature">signature</a></span> := <br/>
+&nbsp;&nbsp;{| <span class="id"><a href="AST.html#mksignature">sig_args</a></span> := <span class="id"><a href="AST.html#Tint">Tint</a></span> :: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>; <span class="id">sig_res</span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>; <span class="id">sig_cc</span> := <span class="id"><a href="AST.html#cc_default">cc_default</a></span> |}.<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="ent_atom_sg">ent_atom_sg</a></span>: <span class="id"><a href="AST.html#signature">signature</a></span> :=<br/>
+&nbsp;&nbsp;{| <span class="id"><a href="AST.html#mksignature">sig_args</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>; <span class="id">sig_res</span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>; <span class="id">sig_cc</span> := <span class="id"><a href="AST.html#cc_default">cc_default</a></span> |}.<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="ext_atom_sg">ext_atom_sg</a></span>: <span class="id"><a href="AST.html#signature">signature</a></span> :=<br/>
+&nbsp;&nbsp;{| <span class="id"><a href="AST.html#mksignature">sig_args</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>; <span class="id">sig_res</span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>; <span class="id">sig_cc</span> := <span class="id"><a href="AST.html#cc_default">cc_default</a></span> |}.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="not_primitive">not_primitive</a></span>: <span class="id"><a href="AST.html#ident">ident</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">id</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span> <span class="id"><a href="GAST.html#id">id</a></span> <span class="id"><a href="GAST.html#print">print</a></span> <span class="kwd">then</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span> <span class="id"><a href="GAST.html#id">id</a></span> <span class="id"><a href="GAST.html#ent_atom">ent_atom</a></span> <span class="kwd">then</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span> <span class="id"><a href="GAST.html#id">id</a></span> <span class="id"><a href="GAST.html#ext_atom">ext_atom</a></span> <span class="kwd">then</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="not_primitive_cases">not_primitive_cases</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">id</span>, <span class="id"><a href="GAST.html#not_primitive">not_primitive</a></span> <span class="id"><a href="GAST.html#id">id</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GAST.html#id">id</a></span> &lt;&gt; <span class="id"><a href="GAST.html#print">print</a></span> /\ <span class="id"><a href="GAST.html#id">id</a></span> &lt;&gt; <span class="id"><a href="GAST.html#ent_atom">ent_atom</a></span> /\ <span class="id"><a href="GAST.html#id">id</a></span> &lt;&gt; <span class="id"><a href="GAST.html#ext_atom">ext_atom</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5917')">Proof.</div>
+<div class="proofscript" id="proof5917">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GAST.html#not_primitive">not_primitive</a></span>; <span class="tactic">intros</span>; <span class="tactic">repeat</span> <span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; <span class="tactic">intuition</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">not_prim</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span>: <span class="id"><a href="GAST.html#not_primitive">not_primitive</a></span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GAST.html#not_primitive_cases">not_primitive_cases</a></span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> (?&amp;?&amp;?)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<br/>
+<div class="doc">There are NL languages at source/target level </div>
+<span class="kwd">Definition</span> <span class="id"><a name="langs">langs</a></span> {<span class="id">NL</span>:<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} := '<span class="id">I_NL</span> -&gt; <span class="id"><a href="InteractionSemantics.html#Language">Language</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="entry">entry</a></span> := <span class="id"><a href="AST.html#ident">ident</a></span>.<br/>
+<br/>
+<div class="doc">entries are modeled as list of <span class="bracket"><span class="id">entry</span></span> </div>
+<span class="kwd">Definition</span> <span class="id"><a name="entries">entries</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="GAST.html#entry">entry</a></span>. <br/>
+<br/>
+<div class="doc">A compilation unit (<span class="bracket"><span class="id">cunit</span></span>) consists of its corresponding language and a compilation unit </div>
+<span class="kwd">Record</span> <span class="id"><a name="cunit">cunit</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} (<span class="id">L</span>: <span class="id"><a href="GAST.html#langs">langs</a></span>): <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="lid">lid</a></span>: '<span class="id">I_NL</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="cu">cu</a></span>: <span class="id"><a href="InteractionSemantics.html#comp_unit">comp_unit</a></span> (<span class="id"><a href="GAST.html#L">L</a></span> <span class="id"><a href="GAST.html#lid">lid</a></span>);<br/>
+&nbsp;&nbsp;}.<br/>
+<div class="doc"><span class="bracket"><span class="id">cunits</span></span> is a mapping from module id to its <span class="bracket"><span class="id">cunit</span></span>, 
+    modeled as list instead of a finite map </div>
+<span class="kwd">Definition</span> <span class="id"><a name="cunits">cunits</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} (<span class="id">L</span>: <span class="id"><a href="GAST.html#langs">langs</a></span>) := <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> (@<span class="id"><a href="GAST.html#cunit">cunit</a></span> <span class="id"><a href="GAST.html#NL">NL</a></span> <span class="id"><a href="GAST.html#L">L</a></span>).<br/>
+<br/>
+<div class="doc">Program is a pair of compilation units and thread entries </div>
+<span class="kwd">Definition</span> <span class="id"><a name="prog">prog</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} (<span class="id">L</span>: @<span class="id"><a href="GAST.html#langs">langs</a></span> <span class="id"><a href="GAST.html#NL">NL</a></span>) : <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;@<span class="id"><a href="GAST.html#cunits">cunits</a></span> <span class="id"><a href="GAST.html#NL">NL</a></span> <span class="id"><a href="GAST.html#L">L</a></span> * <span class="id"><a href="GAST.html#entries">entries</a></span> .<br/>
+<br/>
+<br/>
+<div class="doc">languages of compilation units are well-defined </div>
+<span class="kwd">Definition</span> <span class="id"><a name="wd_langs">wd_langs</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} {<span class="id">L</span>: @<span class="id"><a href="GAST.html#langs">langs</a></span> <span class="id"><a href="GAST.html#NL">NL</a></span>}: @<span class="id"><a href="GAST.html#cunits">cunits</a></span> <span class="id"><a href="GAST.html#NL">NL</a></span> <span class="id"><a href="GAST.html#L">L</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">cus</span> =&gt; <span class="kwd">forall</span> <span class="id">cu</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id"><a href="GAST.html#cu">cu</a></span> <span class="id"><a href="GAST.html#cus">cus</a></span> -&gt; <span class="id"><a href="InteractionSemantics.html#wd">wd</a></span> (<span class="id"><a href="GAST.html#L">L</a></span> <span class="id"><a href="GAST.html#cu">cu</a></span>.(<span class="id"><a href="GAST.html#lid">lid</a></span> <span class="id"><a href="GAST.html#L">L</a></span>)).<br/>
+<div class="doc">languages of compilation units are deterministic </div>
+<span class="kwd">Definition</span> <span class="id"><a name="det_langs">det_langs</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} {<span class="id">L</span>: @<span class="id"><a href="GAST.html#langs">langs</a></span> <span class="id"><a href="GAST.html#NL">NL</a></span>}: @<span class="id"><a href="GAST.html#cunits">cunits</a></span> <span class="id"><a href="GAST.html#NL">NL</a></span> <span class="id"><a href="GAST.html#L">L</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">cus</span> =&gt; <span class="kwd">forall</span> <span class="id">cu</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id"><a href="GAST.html#cu">cu</a></span> <span class="id"><a href="GAST.html#cus">cus</a></span> -&gt; <span class="id"><a href="InteractionSemantics.html#lang_det">lang_det</a></span> (<span class="id"><a href="GAST.html#L">L</a></span> <span class="id"><a href="GAST.html#cu">cu</a></span>.(<span class="id"><a href="GAST.html#lid">lid</a></span> <span class="id"><a href="GAST.html#L">L</a></span>)).<br/>
+<br/>
+<br/>
+<br/>
+<h1> Definition of Compilation </h1>
+<br/>
+<div class="doc">There is a compiler for each compilation unit </div>
+<br/>
+<div class="doc">A single compiler is parameterized with the source and target languages </div>
+<br/>
+<span class="kwd">Record</span> <span class="id"><a name="seq_comp_i">seq_comp_i</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} {<span class="id">L</span>: <span class="id"><a href="GAST.html#langs">langs</a></span>} : <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="slid">slid</a></span>: '<span class="id">I_NL</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="tlid">tlid</a></span>: '<span class="id">I_NL</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="comp">comp</a></span>: @<span class="id"><a href="InteractionSemantics.html#seq_comp">seq_comp</a></span> (<span class="id"><a href="GAST.html#L">L</a></span> <span class="id"><a href="GAST.html#slid">slid</a></span>) (<span class="id"><a href="GAST.html#L">L</a></span> <span class="id"><a href="GAST.html#tlid">tlid</a></span>);<br/>
+&nbsp;&nbsp;}.<br/>
+<br/>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">gcomp</span></span> is a collection of compilers, modeled as a list </div>
+<span class="kwd">Definition</span> <span class="id"><a name="gcomp">gcomp</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} {<span class="id">L</span>: @<span class="id"><a href="GAST.html#langs">langs</a></span> <span class="id"><a href="GAST.html#NL">NL</a></span>} : <span class="kwd">Type</span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> (@<span class="id"><a href="GAST.html#seq_comp_i">seq_comp_i</a></span> <span class="id"><a href="GAST.html#NL">NL</a></span> <span class="id"><a href="GAST.html#L">L</a></span>).<br/>
+&nbsp;&nbsp;<br/>
+<br/>
+<div class="doc">Cunit transformation </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="cunit_transf">cunit_transf</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} {<span class="id">L</span>: <span class="id"><a href="GAST.html#langs">langs</a></span>} :<br/>
+&nbsp;&nbsp;<span class="id"><a href="GAST.html#seq_comp_i">seq_comp_i</a></span> -&gt; <span class="id"><a href="GAST.html#cunit">cunit</a></span> <span class="id">L</span> -&gt; <span class="id"><a href="GAST.html#cunit">cunit</a></span> <span class="id">L</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="Transf_cunit">Transf_cunit</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">scomp</span> <span class="id">scu</span> <span class="id">tcu</span> <span class="id">slid</span> <span class="id">scomp_unit</span> <span class="id">tlid</span> <span class="id">tcomp_unit</span> <span class="id">comp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GAST.html#scomp">scomp</a></span> = <span class="id"><a href="GAST.html#Build_seq_comp_i">Build_seq_comp_i</a></span> <span class="id">NL</span> <span class="id">L</span> <span class="id"><a href="GAST.html#slid">slid</a></span> <span class="id"><a href="GAST.html#tlid">tlid</a></span> <span class="id"><a href="GAST.html#comp">comp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GAST.html#scu">scu</a></span> = <span class="id"><a href="GAST.html#Build_cunit">Build_cunit</a></span> <span class="id">NL</span> <span class="id">L</span> <span class="id"><a href="GAST.html#slid">slid</a></span> <span class="id"><a href="GAST.html#scomp_unit">scomp_unit</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GAST.html#tcu">tcu</a></span> = <span class="id"><a href="GAST.html#Build_cunit">Build_cunit</a></span> <span class="id">NL</span> <span class="id">L</span> <span class="id"><a href="GAST.html#tlid">tlid</a></span> <span class="id"><a href="GAST.html#tcomp_unit">tcomp_unit</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GAST.html#comp">comp</a></span> <span class="id"><a href="GAST.html#scomp_unit">scomp_unit</a></span> = <span class="id"><a href="Errors.html#OK">OK</a></span> <span class="id"><a href="GAST.html#tcomp_unit">tcomp_unit</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GAST.html#cunit_transf">cunit_transf</a></span> <span class="id"><a href="GAST.html#scomp">scomp</a></span> <span class="id"><a href="GAST.html#scu">scu</a></span> <span class="id"><a href="GAST.html#tcu">tcu</a></span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="cunits_transf">cunits_transf</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} {<span class="id">L</span>: <span class="id"><a href="GAST.html#langs">langs</a></span>} :<br/>
+&nbsp;&nbsp;<span class="id"><a href="GAST.html#gcomp">gcomp</a></span> -&gt; <span class="id"><a href="GAST.html#cunits">cunits</a></span> <span class="id">L</span> -&gt; <span class="id"><a href="GAST.html#cunits">cunits</a></span> <span class="id">L</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="Trans_nil">Trans_nil</a></span>: <span class="id"><a href="GAST.html#cunits_transf">cunits_transf</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span><br/>
+| <span class="id"><a name="Trans_cons">Trans_cons</a></span>: <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">scomp</span> <span class="id">scu</span> <span class="id">tcu</span> <span class="id">comp</span> <span class="id">scus</span> <span class="id">tcus</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GAST.html#cunit_transf">cunit_transf</a></span> <span class="id">NL</span> <span class="id">L</span> <span class="id"><a href="GAST.html#scomp">scomp</a></span> <span class="id"><a href="GAST.html#scu">scu</a></span> <span class="id"><a href="GAST.html#tcu">tcu</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GAST.html#cunits_transf">cunits_transf</a></span> <span class="id"><a href="GAST.html#comp">comp</a></span> <span class="id"><a href="GAST.html#scus">scus</a></span> <span class="id"><a href="GAST.html#tcus">tcus</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GAST.html#cunits_transf">cunits_transf</a></span> (<span class="id"><a href="GAST.html#scomp">scomp</a></span>::<span class="id"><a href="GAST.html#comp">comp</a></span>) (<span class="id"><a href="GAST.html#scu">scu</a></span>::<span class="id"><a href="GAST.html#scus">scus</a></span>) (<span class="id"><a href="GAST.html#tcu">tcu</a></span>::<span class="id"><a href="GAST.html#tcus">tcus</a></span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="cunits_transf_wf">cunits_transf_wf</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">comp</span> <span class="id">scus</span> <span class="id">tcus</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GAST.html#cunits_transf">cunits_transf</a></span> <span class="id"><a href="GAST.html#NL">NL</a></span> <span class="id"><a href="GAST.html#L">L</a></span> <span class="id"><a href="GAST.html#comp">comp</a></span> <span class="id"><a href="GAST.html#scus">scus</a></span> <span class="id"><a href="GAST.html#tcus">tcus</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span>, <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">exists</span> <span class="id">scu</span> <span class="id">tcu</span> <span class="id">scomp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#nth_error">nth_error</a></span> <span class="id"><a href="GAST.html#scus">scus</a></span> <span class="id"><a href="GAST.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GAST.html#scu">scu</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#nth_error">nth_error</a></span> <span class="id"><a href="GAST.html#tcus">tcus</a></span> <span class="id"><a href="GAST.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GAST.html#tcu">tcu</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#nth_error">nth_error</a></span> <span class="id"><a href="GAST.html#comp">comp</a></span> <span class="id"><a href="GAST.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GAST.html#scomp">scomp</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GAST.html#cunit_transf">cunit_transf</a></span> <span class="id"><a href="GAST.html#scomp">scomp</a></span> <span class="id"><a href="GAST.html#scu">scu</a></span> <span class="id"><a href="GAST.html#tcu">tcu</a></span>) \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#nth_error">nth_error</a></span> <span class="id"><a href="GAST.html#scus">scus</a></span> <span class="id"><a href="GAST.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#nth_error">nth_error</a></span> <span class="id"><a href="GAST.html#tcus">tcus</a></span> <span class="id"><a href="GAST.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#nth_error">nth_error</a></span> <span class="id"><a href="GAST.html#comp">comp</a></span> <span class="id"><a href="GAST.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5918')">Proof.</div>
+<div class="proofscript" id="proof5918">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">comp0</span> <span class="id">scus</span> <span class="id">tcus</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H</span>; <span class="tactic">intro</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="Coqlib.html#nth_error_nil">nth_error_nil</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">destruct</span> <span class="id">i</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">left</span>. <span class="id">exists</span> <span class="id">scu</span>, <span class="id">tcu</span>, <span class="id">scomp</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">apply</span> <span class="id">IHcunits_transf</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

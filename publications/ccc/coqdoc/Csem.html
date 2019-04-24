@@ -1,0 +1,813 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Csem</title>
+<meta name="description" content="Documentation of Coq module Csem" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Csem</h1>
+<div class="coq">
+<br/>
+<div class="doc">Dynamic semantics for the Compcert C language </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Errors</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Maps</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Integers</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Floats</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Values</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Memory</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Events</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Globalenvs</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Ctypes</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Cop</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Csyntax</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Smallstep</span>.<br/>
+<br/>
+<h1> Operational semantics </h1>
+<br/>
+<div class="doc">The semantics uses two environments.  The global environment
+  maps names of functions and global variables to memory block references,
+  and function pointers to their definitions.  (See module <span class="bracket"><span class="id">Globalenvs</span></span>.)
+  It also contains a composite environment, used by type-dependent operations. </div>
+<br/>
+<span class="kwd">Record</span> <span class="id">genv</span> := { <span class="id">genv_genv</span> :&gt; <span class="id">Genv.t</span> <span class="id">fundef</span> <span class="id">type</span>; <span class="id">genv_cenv</span> :&gt; <span class="id">composite_env</span> }.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">globalenv</span> (<span class="id">p</span>: <span class="id">program</span>) :=<br/>
+&nbsp;&nbsp;{| <span class="id">genv_genv</span> := <span class="id">Genv.globalenv</span> <span class="id">p</span>; <span class="id">genv_cenv</span> := <span class="id">p</span>.(<span class="id">prog_comp_env</span>) |}.<br/>
+<br/>
+<div class="doc">The local environment maps local variables to block references and types.
+  The current value of the variable is stored in the associated memory
+  block. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">env</span> := <span class="id">PTree.t</span> (<span class="id">block</span> * <span class="id">type</span>). <br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">empty_env</span>: <span class="id">env</span> := (<span class="id">PTree.empty</span> (<span class="id">block</span> * <span class="id">type</span>)).<br/>
+<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id">SEMANTICS</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">ge</span>: <span class="id">genv</span>.<br/>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">deref_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">t</span> <span class="id">v</span></span> computes the value of a datum
+  of type <span class="bracket"><span class="id">ty</span></span> residing in memory <span class="bracket"><span class="id">m</span></span> at block <span class="bracket"><span class="id">b</span></span>, offset <span class="bracket"><span class="id">ofs</span></span>.
+  If the type <span class="bracket"><span class="id">ty</span></span> indicates an access by value, the corresponding
+  memory load is performed.  If the type <span class="bracket"><span class="id">ty</span></span> indicates an access by
+  reference, the pointer <span class="bracket"><span class="id">Vptr</span> <span class="id">b</span> <span class="id">ofs</span></span> is returned.  <span class="bracket"><span class="id">v</span></span> is the value
+  returned, and <span class="bracket"><span class="id">t</span></span> the trace of observables (nonempty if this is
+  a volatile access). </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">deref_loc</span> (<span class="id">ty</span>: <span class="id">type</span>) (<span class="id">m</span>: <span class="id">mem</span>) (<span class="id">b</span>: <span class="id">block</span>) (<span class="id">ofs</span>: <span class="id">ptrofs</span>) : <span class="id">trace</span> -&gt; <span class="id">val</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">deref_loc_value</span>: <span class="kwd">forall</span> <span class="id">chunk</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">access_mode</span> <span class="id">ty</span> = <span class="id">By_value</span> <span class="id">chunk</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">type_is_volatile</span> <span class="id">ty</span> = <span class="id">false</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Mem.loadv</span> <span class="id">chunk</span> <span class="id">m</span> (<span class="id">Vptr</span> <span class="id">b</span> <span class="id">ofs</span>) = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">deref_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">E0</span> <span class="id">v</span><br/>
+&nbsp;&nbsp;| <span class="id">deref_loc_volatile</span>: <span class="kwd">forall</span> <span class="id">chunk</span> <span class="id">t</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">access_mode</span> <span class="id">ty</span> = <span class="id">By_value</span> <span class="id">chunk</span> -&gt; <span class="id">type_is_volatile</span> <span class="id">ty</span> = <span class="id">true</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">volatile_load</span> <span class="id">ge</span> <span class="id">chunk</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">t</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">deref_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">t</span> <span class="id">v</span><br/>
+&nbsp;&nbsp;| <span class="id">deref_loc_reference</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">access_mode</span> <span class="id">ty</span> = <span class="id">By_reference</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">deref_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">E0</span> (<span class="id">Vptr</span> <span class="id">b</span> <span class="id">ofs</span>)<br/>
+&nbsp;&nbsp;| <span class="id">deref_loc_copy</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">access_mode</span> <span class="id">ty</span> = <span class="id">By_copy</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">deref_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">E0</span> (<span class="id">Vptr</span> <span class="id">b</span> <span class="id">ofs</span>).<br/>
+<br/>
+<div class="doc">Symmetrically, <span class="bracket"><span class="id">assign_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">v</span> <span class="id">t</span> <span class="id">m</span>'</span> returns the
+  memory state after storing the value <span class="bracket"><span class="id">v</span></span> in the datum
+  of type <span class="bracket"><span class="id">ty</span></span> residing in memory <span class="bracket"><span class="id">m</span></span> at block <span class="bracket"><span class="id">b</span></span>, offset <span class="bracket"><span class="id">ofs</span></span>.
+  This is allowed only if <span class="bracket"><span class="id">ty</span></span> indicates an access by value or by copy.
+  <span class="bracket"><span class="id">m</span>'</span> is the updated memory state and <span class="bracket"><span class="id">t</span></span> the trace of observables
+  (nonempty if this is a volatile store). </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">assign_loc</span> (<span class="id">ty</span>: <span class="id">type</span>) (<span class="id">m</span>: <span class="id">mem</span>) (<span class="id">b</span>: <span class="id">block</span>) (<span class="id">ofs</span>: <span class="id">ptrofs</span>):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">val</span> -&gt; <span class="id">trace</span> -&gt; <span class="id">mem</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">assign_loc_value</span>: <span class="kwd">forall</span> <span class="id">v</span> <span class="id">chunk</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">access_mode</span> <span class="id">ty</span> = <span class="id">By_value</span> <span class="id">chunk</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">type_is_volatile</span> <span class="id">ty</span> = <span class="id">false</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Mem.storev</span> <span class="id">chunk</span> <span class="id">m</span> (<span class="id">Vptr</span> <span class="id">b</span> <span class="id">ofs</span>) <span class="id">v</span> = <span class="id">Some</span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">assign_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">v</span> <span class="id">E0</span> <span class="id">m</span>'<br/>
+&nbsp;&nbsp;| <span class="id">assign_loc_volatile</span>: <span class="kwd">forall</span> <span class="id">v</span> <span class="id">chunk</span> <span class="id">t</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">access_mode</span> <span class="id">ty</span> = <span class="id">By_value</span> <span class="id">chunk</span> -&gt; <span class="id">type_is_volatile</span> <span class="id">ty</span> = <span class="id">true</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">volatile_store</span> <span class="id">ge</span> <span class="id">chunk</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">v</span> <span class="id">t</span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">assign_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">v</span> <span class="id">t</span> <span class="id">m</span>'<br/>
+&nbsp;&nbsp;| <span class="id">assign_loc_copy</span>: <span class="kwd">forall</span> <span class="id">b</span>' <span class="id">ofs</span>' <span class="id">bytes</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">access_mode</span> <span class="id">ty</span> = <span class="id">By_copy</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">alignof_blockcopy</span> <span class="id">ge</span> <span class="id">ty</span> | <span class="id">Ptrofs.unsigned</span> <span class="id">ofs</span>') -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">alignof_blockcopy</span> <span class="id">ge</span> <span class="id">ty</span> | <span class="id">Ptrofs.unsigned</span> <span class="id">ofs</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">b</span>' &lt;&gt; <span class="id">b</span> \/ <span class="id">Ptrofs.unsigned</span> <span class="id">ofs</span>' = <span class="id">Ptrofs.unsigned</span> <span class="id">ofs</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\/ <span class="id">Ptrofs.unsigned</span> <span class="id">ofs</span>' + <span class="id">sizeof</span> <span class="id">ge</span> <span class="id">ty</span> &lt;= <span class="id">Ptrofs.unsigned</span> <span class="id">ofs</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\/ <span class="id">Ptrofs.unsigned</span> <span class="id">ofs</span> + <span class="id">sizeof</span> <span class="id">ge</span> <span class="id">ty</span> &lt;= <span class="id">Ptrofs.unsigned</span> <span class="id">ofs</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Mem.loadbytes</span> <span class="id">m</span> <span class="id">b</span>' (<span class="id">Ptrofs.unsigned</span> <span class="id">ofs</span>') (<span class="id">sizeof</span> <span class="id">ge</span> <span class="id">ty</span>) = <span class="id">Some</span> <span class="id">bytes</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Mem.storebytes</span> <span class="id">m</span> <span class="id">b</span> (<span class="id">Ptrofs.unsigned</span> <span class="id">ofs</span>) <span class="id">bytes</span> = <span class="id">Some</span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">assign_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> (<span class="id">Vptr</span> <span class="id">b</span>' <span class="id">ofs</span>') <span class="id">E0</span> <span class="id">m</span>'.<br/>
+<br/>
+<div class="doc">Allocation of function-local variables.
+  <span class="bracket"><span class="id">alloc_variables</span> <span class="id">e1</span> <span class="id">m1</span> <span class="id">vars</span> <span class="id">e2</span> <span class="id">m2</span></span> allocates one memory block
+  for each variable declared in <span class="bracket"><span class="id">vars</span></span>, and associates the variable
+  name with this block.  <span class="bracket"><span class="id">e1</span></span> and <span class="bracket"><span class="id">m1</span></span> are the initial local environment
+  and memory state.  <span class="bracket"><span class="id">e2</span></span> and <span class="bracket"><span class="id">m2</span></span> are the final local environment
+  and memory state. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">alloc_variables</span>: <span class="id">env</span> -&gt; <span class="id">mem</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">list</span> (<span class="id">ident</span> * <span class="id">type</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">env</span> -&gt; <span class="id">mem</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">alloc_variables_nil</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">alloc_variables</span> <span class="id">e</span> <span class="id">m</span> <span class="id">nil</span> <span class="id">e</span> <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">alloc_variables_cons</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">e</span> <span class="id">m</span> <span class="id">id</span> <span class="id">ty</span> <span class="id">vars</span> <span class="id">m1</span> <span class="id">b1</span> <span class="id">m2</span> <span class="id">e2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Mem.alloc</span> <span class="id">m</span> 0 (<span class="id">sizeof</span> <span class="id">ge</span> <span class="id">ty</span>) = (<span class="id">m1</span>, <span class="id">b1</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">alloc_variables</span> (<span class="id">PTree.set</span> <span class="id">id</span> (<span class="id">b1</span>, <span class="id">ty</span>) <span class="id">e</span>) <span class="id">m1</span> <span class="id">vars</span> <span class="id">e2</span> <span class="id">m2</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">alloc_variables</span> <span class="id">e</span> <span class="id">m</span> ((<span class="id">id</span>, <span class="id">ty</span>) :: <span class="id">vars</span>) <span class="id">e2</span> <span class="id">m2</span>.<br/>
+<br/>
+<div class="doc">Initialization of local variables that are parameters to a function.
+  <span class="bracket"><span class="id">bind_parameters</span> <span class="id">e</span> <span class="id">m1</span> <span class="id">params</span> <span class="id">args</span> <span class="id">m2</span></span> stores the values <span class="bracket"><span class="id">args</span></span>
+  in the memory blocks corresponding to the variables <span class="bracket"><span class="id">params</span></span>.
+  <span class="bracket"><span class="id">m1</span></span> is the initial memory state and <span class="bracket"><span class="id">m2</span></span> the final memory state. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">bind_parameters</span> (<span class="id">e</span>: <span class="id">env</span>):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">mem</span> -&gt; <span class="id">list</span> (<span class="id">ident</span> * <span class="id">type</span>) -&gt; <span class="id">list</span> <span class="id">val</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">mem</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">bind_parameters_nil</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bind_parameters</span> <span class="id">e</span> <span class="id">m</span> <span class="id">nil</span> <span class="id">nil</span> <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">bind_parameters_cons</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m</span> <span class="id">id</span> <span class="id">ty</span> <span class="id">params</span> <span class="id">v1</span> <span class="id">vl</span> <span class="id">b</span> <span class="id">m1</span> <span class="id">m2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">PTree.get</span> <span class="id">id</span> <span class="id">e</span> = <span class="id">Some</span>(<span class="id">b</span>, <span class="id">ty</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">assign_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">Ptrofs.zero</span> <span class="id">v1</span> <span class="id">E0</span> <span class="id">m1</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bind_parameters</span> <span class="id">e</span> <span class="id">m1</span> <span class="id">params</span> <span class="id">vl</span> <span class="id">m2</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bind_parameters</span> <span class="id">e</span> <span class="id">m</span> ((<span class="id">id</span>, <span class="id">ty</span>) :: <span class="id">params</span>) (<span class="id">v1</span> :: <span class="id">vl</span>) <span class="id">m2</span>.<br/>
+<br/>
+<div class="doc">Return the list of blocks in the codomain of <span class="bracket"><span class="id">e</span></span>, with low and high bounds. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">block_of_binding</span> (<span class="id">id_b_ty</span>: <span class="id">ident</span> * (<span class="id">block</span> * <span class="id">type</span>)) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">id_b_ty</span> <span class="kwd">with</span> (<span class="id">id</span>, (<span class="id">b</span>, <span class="id">ty</span>)) =&gt; (<span class="id">b</span>, 0, <span class="id">sizeof</span> <span class="id">ge</span> <span class="id">ty</span>) <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">blocks_of_env</span> (<span class="id">e</span>: <span class="id">env</span>) : <span class="id">list</span> (<span class="id">block</span> * <span class="id">Z</span> * <span class="id">Z</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">List.map</span> <span class="id">block_of_binding</span> (<span class="id">PTree.elements</span> <span class="id">e</span>).<br/>
+<br/>
+<div class="doc">Selection of the appropriate case of a <span class="bracket"><span class="id">switch</span></span>, given the value <span class="bracket"><span class="id">n</span></span>
+  of the selector expression. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">select_switch_default</span> (<span class="id">sl</span>: <span class="id">labeled_statements</span>): <span class="id">labeled_statements</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">sl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">LSnil</span> =&gt; <span class="id">sl</span><br/>
+&nbsp;&nbsp;| <span class="id">LScons</span> <span class="id">None</span> <span class="id">s</span> <span class="id">sl</span>' =&gt; <span class="id">sl</span><br/>
+&nbsp;&nbsp;| <span class="id">LScons</span> (<span class="id">Some</span> <span class="id">i</span>) <span class="id">s</span> <span class="id">sl</span>' =&gt; <span class="id">select_switch_default</span> <span class="id">sl</span>'<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">select_switch_case</span> (<span class="id">n</span>: <span class="id">Z</span>) (<span class="id">sl</span>: <span class="id">labeled_statements</span>): <span class="id">option</span> <span class="id">labeled_statements</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">sl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">LSnil</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;| <span class="id">LScons</span> <span class="id">None</span> <span class="id">s</span> <span class="id">sl</span>' =&gt; <span class="id">select_switch_case</span> <span class="id">n</span> <span class="id">sl</span>'<br/>
+&nbsp;&nbsp;| <span class="id">LScons</span> (<span class="id">Some</span> <span class="id">c</span>) <span class="id">s</span> <span class="id">sl</span>' =&gt; <span class="kwd">if</span> <span class="id">zeq</span> <span class="id">c</span> <span class="id">n</span> <span class="kwd">then</span> <span class="id">Some</span> <span class="id">sl</span> <span class="kwd">else</span> <span class="id">select_switch_case</span> <span class="id">n</span> <span class="id">sl</span>'<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">select_switch</span> (<span class="id">n</span>: <span class="id">Z</span>) (<span class="id">sl</span>: <span class="id">labeled_statements</span>): <span class="id">labeled_statements</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">select_switch_case</span> <span class="id">n</span> <span class="id">sl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">sl</span>' =&gt; <span class="id">sl</span>'<br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">select_switch_default</span> <span class="id">sl</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Turn a labeled statement into a sequence </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">seq_of_labeled_statement</span> (<span class="id">sl</span>: <span class="id">labeled_statements</span>) : <span class="id">statement</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">sl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">LSnil</span> =&gt; <span class="id">Sskip</span><br/>
+&nbsp;&nbsp;| <span class="id">LScons</span> <span class="id">_</span> <span class="id">s</span> <span class="id">sl</span>' =&gt; <span class="id">Ssequence</span> <span class="id">s</span> (<span class="id">seq_of_labeled_statement</span> <span class="id">sl</span>')<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Extract the values from a list of function arguments </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">cast_arguments</span> (<span class="id">m</span>: <span class="id">mem</span>): <span class="id">exprlist</span> -&gt; <span class="id">typelist</span> -&gt; <span class="id">list</span> <span class="id">val</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">cast_args_nil</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cast_arguments</span> <span class="id">m</span> <span class="id">Enil</span> <span class="id">Tnil</span> <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">cast_args_cons</span>: <span class="kwd">forall</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">el</span> <span class="id">targ1</span> <span class="id">targs</span> <span class="id">v1</span> <span class="id">vl</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sem_cast</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">targ1</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v1</span> -&gt; <span class="id">cast_arguments</span> <span class="id">m</span> <span class="id">el</span> <span class="id">targs</span> <span class="id">vl</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cast_arguments</span> <span class="id">m</span> (<span class="id">Econs</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) <span class="id">el</span>) (<span class="id">Tcons</span> <span class="id">targ1</span> <span class="id">targs</span>) (<span class="id">v1</span> :: <span class="id">vl</span>).<br/>
+<br/>
+<h2> Reduction semantics for expressions </h2>
+<br/>
+<span class="kwd">Section</span> <span class="id">EXPR</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">e</span>: <span class="id">env</span>.<br/>
+<br/>
+<div class="doc">The semantics of expressions follows the popular Wright-Felleisen style.
+  It is a small-step semantics that reduces one redex at a time.
+  We first define head reductions (at the top of an expression, then
+  use reduction contexts to define reduction within an expression. </div>
+<br/>
+<div class="doc">Head reduction for l-values. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">lred</span>: <span class="id">expr</span> -&gt; <span class="id">mem</span> -&gt; <span class="id">expr</span> -&gt; <span class="id">mem</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">red_var_local</span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">e</span>!<span class="id">x</span> = <span class="id">Some</span>(<span class="id">b</span>, <span class="id">ty</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lred</span> (<span class="id">Evar</span> <span class="id">x</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Eloc</span> <span class="id">b</span> <span class="id">Ptrofs.zero</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_var_global</span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">e</span>!<span class="id">x</span> = <span class="id">None</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Genv.find_symbol</span> <span class="id">ge</span> <span class="id">x</span> = <span class="id">Some</span> <span class="id">b</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lred</span> (<span class="id">Evar</span> <span class="id">x</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Eloc</span> <span class="id">b</span> <span class="id">Ptrofs.zero</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_deref</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty1</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lred</span> (<span class="id">Ederef</span> (<span class="kwd">Eval</span> (<span class="id">Vptr</span> <span class="id">b</span> <span class="id">ofs</span>) <span class="id">ty1</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_field_struct</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">id</span> <span class="id">co</span> <span class="id">a</span> <span class="id">f</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">delta</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ge</span>.(<span class="id">genv_cenv</span>)!<span class="id">id</span> = <span class="id">Some</span> <span class="id">co</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">field_offset</span> <span class="id">ge</span> <span class="id">f</span> (<span class="id">co_members</span> <span class="id">co</span>) = <span class="id">OK</span> <span class="id">delta</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lred</span> (<span class="id">Efield</span> (<span class="kwd">Eval</span> (<span class="id">Vptr</span> <span class="id">b</span> <span class="id">ofs</span>) (<span class="id">Tstruct</span> <span class="id">id</span> <span class="id">a</span>)) <span class="id">f</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Eloc</span> <span class="id">b</span> (<span class="id">Ptrofs.add</span> <span class="id">ofs</span> (<span class="id">Ptrofs.repr</span> <span class="id">delta</span>)) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_field_union</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">id</span> <span class="id">co</span> <span class="id">a</span> <span class="id">f</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ge</span>.(<span class="id">genv_cenv</span>)!<span class="id">id</span> = <span class="id">Some</span> <span class="id">co</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lred</span> (<span class="id">Efield</span> (<span class="kwd">Eval</span> (<span class="id">Vptr</span> <span class="id">b</span> <span class="id">ofs</span>) (<span class="id">Tunion</span> <span class="id">id</span> <span class="id">a</span>)) <span class="id">f</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty</span>) <span class="id">m</span>.<br/>
+<br/>
+<div class="doc">Head reductions for r-values </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">rred</span>: <span class="id">expr</span> -&gt; <span class="id">mem</span> -&gt; <span class="id">trace</span> -&gt; <span class="id">expr</span> -&gt; <span class="id">mem</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">red_rvalof</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">t</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">deref_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">t</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Evalof</span> (<span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">t</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_addrof</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty1</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Eaddrof</span> (<span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty1</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="kwd">Eval</span> (<span class="id">Vptr</span> <span class="id">b</span> <span class="id">ofs</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_unop</span>: <span class="kwd">forall</span> <span class="id">op</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sem_unary_operation</span> <span class="id">op</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Eunop</span> <span class="id">op</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty1</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_binop</span>: <span class="kwd">forall</span> <span class="id">op</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">v2</span> <span class="id">ty2</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sem_binary_operation</span> <span class="id">ge</span> <span class="id">op</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">v2</span> <span class="id">ty2</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Ebinop</span> <span class="id">op</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty1</span>) (<span class="kwd">Eval</span> <span class="id">v2</span> <span class="id">ty2</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_cast</span>: <span class="kwd">forall</span> <span class="id">ty</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">m</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sem_cast</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">ty</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Ecast</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty1</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_seqand_true</span>: <span class="kwd">forall</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">r2</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">true</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Eseqand</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty1</span>) <span class="id">r2</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">Eparen</span> <span class="id">r2</span> <span class="id">type_bool</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_seqand_false</span>: <span class="kwd">forall</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">r2</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">false</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Eseqand</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty1</span>) <span class="id">r2</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="kwd">Eval</span> (<span class="id">Vint</span> <span class="id">Int.zero</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_seqor_true</span>: <span class="kwd">forall</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">r2</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">true</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Eseqor</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty1</span>) <span class="id">r2</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="kwd">Eval</span> (<span class="id">Vint</span> <span class="id">Int.one</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_seqor_false</span>: <span class="kwd">forall</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">r2</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">false</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Eseqor</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty1</span>) <span class="id">r2</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">Eparen</span> <span class="id">r2</span> <span class="id">type_bool</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_condition</span>: <span class="kwd">forall</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">ty</span> <span class="id">b</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">b</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Econdition</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty1</span>) <span class="id">r1</span> <span class="id">r2</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">Eparen</span> (<span class="kwd">if</span> <span class="id">b</span> <span class="kwd">then</span> <span class="id">r1</span> <span class="kwd">else</span> <span class="id">r2</span>) <span class="id">ty</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_sizeof</span>: <span class="kwd">forall</span> <span class="id">ty1</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Esizeof</span> <span class="id">ty1</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="kwd">Eval</span> (<span class="id">Vptrofs</span> (<span class="id">Ptrofs.repr</span> (<span class="id">sizeof</span> <span class="id">ge</span> <span class="id">ty1</span>))) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_alignof</span>: <span class="kwd">forall</span> <span class="id">ty1</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Ealignof</span> <span class="id">ty1</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="kwd">Eval</span> (<span class="id">Vptrofs</span> (<span class="id">Ptrofs.repr</span> (<span class="id">alignof</span> <span class="id">ge</span> <span class="id">ty1</span>))) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_assign</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty1</span> <span class="id">v2</span> <span class="id">ty2</span> <span class="id">m</span> <span class="id">v</span> <span class="id">t</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sem_cast</span> <span class="id">v2</span> <span class="id">ty2</span> <span class="id">ty1</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">assign_loc</span> <span class="id">ty1</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">v</span> <span class="id">t</span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Eassign</span> (<span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty1</span>) (<span class="kwd">Eval</span> <span class="id">v2</span> <span class="id">ty2</span>) <span class="id">ty1</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">t</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty1</span>) <span class="id">m</span>'<br/>
+&nbsp;&nbsp;| <span class="id">red_assignop</span>: <span class="kwd">forall</span> <span class="id">op</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty1</span> <span class="id">v2</span> <span class="id">ty2</span> <span class="id">tyres</span> <span class="id">m</span> <span class="id">t</span> <span class="id">v1</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">deref_loc</span> <span class="id">ty1</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">t</span> <span class="id">v1</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Eassignop</span> <span class="id">op</span> (<span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty1</span>) (<span class="kwd">Eval</span> <span class="id">v2</span> <span class="id">ty2</span>) <span class="id">tyres</span> <span class="id">ty1</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">t</span> (<span class="id">Eassign</span> (<span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty1</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Ebinop</span> <span class="id">op</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty1</span>) (<span class="kwd">Eval</span> <span class="id">v2</span> <span class="id">ty2</span>) <span class="id">tyres</span>) <span class="id">ty1</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_postincr</span>: <span class="kwd">forall</span> <span class="id">id</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">t</span> <span class="id">v1</span> <span class="id">op</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">deref_loc</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">t</span> <span class="id">v1</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">op</span> = <span class="kwd">match</span> <span class="id">id</span> <span class="kwd">with</span> <span class="id">Incr</span> =&gt; <span class="id">Oadd</span> | <span class="id">Decr</span> =&gt; <span class="id">Osub</span> <span class="kwd">end</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Epostincr</span> <span class="id">id</span> (<span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">t</span> (<span class="id">Ecomma</span> (<span class="id">Eassign</span> (<span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Ebinop</span> <span class="id">op</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">Eval</span> (<span class="id">Vint</span> <span class="id">Int.one</span>) <span class="id">type_int32s</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">incrdecr_type</span> <span class="id">ty</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty</span>) <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_comma</span>: <span class="kwd">forall</span> <span class="id">v</span> <span class="id">ty1</span> <span class="id">r2</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">typeof</span> <span class="id">r2</span> = <span class="id">ty</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Ecomma</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty1</span>) <span class="id">r2</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> <span class="id">r2</span> <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_paren</span>: <span class="kwd">forall</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">ty2</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sem_cast</span> <span class="id">v1</span> <span class="id">ty1</span> <span class="id">ty2</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Eparen</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty1</span>) <span class="id">ty2</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">red_builtin</span>: <span class="kwd">forall</span> <span class="id">ef</span> <span class="id">tyargs</span> <span class="id">el</span> <span class="id">ty</span> <span class="id">m</span> <span class="id">vargs</span> <span class="id">t</span> <span class="id">vres</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cast_arguments</span> <span class="id">m</span> <span class="id">el</span> <span class="id">tyargs</span> <span class="id">vargs</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">external_call</span> <span class="id">ef</span> <span class="id">ge</span> <span class="id">vargs</span> <span class="id">m</span> <span class="id">t</span> <span class="id">vres</span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> (<span class="id">Ebuiltin</span> <span class="id">ef</span> <span class="id">tyargs</span> <span class="id">el</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">t</span> (<span class="kwd">Eval</span> <span class="id">vres</span> <span class="id">ty</span>) <span class="id">m</span>'.<br/>
+<br/>
+<br/>
+<div class="doc">Head reduction for function calls.
+    (More exactly, identification of function calls that can reduce.) </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">callred</span>: <span class="id">expr</span> -&gt; <span class="id">mem</span> -&gt; <span class="id">fundef</span> -&gt; <span class="id">list</span> <span class="id">val</span> -&gt; <span class="id">type</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">red_call</span>: <span class="kwd">forall</span> <span class="id">vf</span> <span class="id">tyf</span> <span class="id">m</span> <span class="id">tyargs</span> <span class="id">tyres</span> <span class="id">cconv</span> <span class="id">el</span> <span class="id">ty</span> <span class="id">fd</span> <span class="id">vargs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Genv.find_funct</span> <span class="id">ge</span> <span class="id">vf</span> = <span class="id">Some</span> <span class="id">fd</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cast_arguments</span> <span class="id">m</span> <span class="id">el</span> <span class="id">tyargs</span> <span class="id">vargs</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">type_of_fundef</span> <span class="id">fd</span> = <span class="id">Tfunction</span> <span class="id">tyargs</span> <span class="id">tyres</span> <span class="id">cconv</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">classify_fun</span> <span class="id">tyf</span> = <span class="id">fun_case_f</span> <span class="id">tyargs</span> <span class="id">tyres</span> <span class="id">cconv</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">callred</span> (<span class="id">Ecall</span> (<span class="kwd">Eval</span> <span class="id">vf</span> <span class="id">tyf</span>) <span class="id">el</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">fd</span> <span class="id">vargs</span> <span class="id">ty</span>.<br/>
+<br/>
+<div class="doc">Reduction contexts.  In accordance with C's nondeterministic semantics,
+  we allow reduction both to the left and to the right of a binary operator.
+  To enforce C's notion of sequence point, reductions within a conditional
+  <span class="bracket"><span class="id">a</span> ? <span class="id">b</span> : <span class="id">c</span></span> can only take place in <span class="bracket"><span class="id">a</span></span>, not in <span class="bracket"><span class="id">b</span></span> nor <span class="bracket"><span class="id">c</span></span>;
+  reductions within a sequential "or" / "and" <span class="bracket"><span class="id">a</span> &amp;&amp; <span class="id">b</span></span> or <span class="bracket"><span class="id">a</span> || <span class="id">b</span></span> can
+  only take place in <span class="bracket"><span class="id">a</span></span>, not in <span class="bracket"><span class="id">b</span></span>;
+  and reductions within a sequence <span class="bracket"><span class="id">a</span>, <span class="id">b</span></span> can only take place in <span class="bracket"><span class="id">a</span></span>,
+  not in <span class="bracket"><span class="id">b</span></span>.
+  Reduction contexts are represented by functions <span class="bracket"><span class="id">C</span></span> from expressions
+  to expressions, suitably constrained by the <span class="bracket"><span class="id">context</span> <span class="id">from</span> <span class="id">to</span> <span class="id">C</span></span>
+  predicate below.  Contexts are "kinded" with respect to l-values and
+  r-values: <span class="bracket"><span class="id">from</span></span> is the kind of the hole in the context and <span class="bracket"><span class="id">to</span></span> is
+  the kind of the term resulting from filling the hole.
+</div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">kind</span> : <span class="kwd">Type</span> := <span class="id">LV</span> | <span class="id">RV</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">context</span>: <span class="id">kind</span> -&gt; <span class="id">kind</span> -&gt; (<span class="id">expr</span> -&gt; <span class="id">expr</span>) -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">ctx_top</span>: <span class="kwd">forall</span> <span class="id">k</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">k</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">x</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_deref</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">LV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Ederef</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_field</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">f</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">LV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Efield</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">f</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_rvalof</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">LV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Evalof</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_addrof</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">LV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Eaddrof</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_unop</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">op</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Eunop</span> <span class="id">op</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_binop_left</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">op</span> <span class="id">e2</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Ebinop</span> <span class="id">op</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">e2</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_binop_right</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">op</span> <span class="id">e1</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Ebinop</span> <span class="id">op</span> <span class="id">e1</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_cast</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Ecast</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_seqand</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">r2</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Eseqand</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">r2</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_seqor</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">r2</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Eseqor</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">r2</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_condition</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">r2</span> <span class="id">r3</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Econdition</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">r2</span> <span class="id">r3</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_assign_left</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">e2</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">LV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Eassign</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">e2</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_assign_right</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">e1</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Eassign</span> <span class="id">e1</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_assignop_left</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">op</span> <span class="id">e2</span> <span class="id">tyres</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">LV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Eassignop</span> <span class="id">op</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">e2</span> <span class="id">tyres</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_assignop_right</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">op</span> <span class="id">e1</span> <span class="id">tyres</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Eassignop</span> <span class="id">op</span> <span class="id">e1</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">tyres</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_postincr</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">id</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">LV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Epostincr</span> <span class="id">id</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_call_left</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">el</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Ecall</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">el</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_call_right</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">e1</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">contextlist</span> <span class="id">k</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Ecall</span> <span class="id">e1</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_builtin</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">ef</span> <span class="id">tyargs</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">contextlist</span> <span class="id">k</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Ebuiltin</span> <span class="id">ef</span> <span class="id">tyargs</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_comma</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">e2</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Ecomma</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">e2</span> <span class="id">ty</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_paren</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">tycast</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Eparen</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">tycast</span> <span class="id">ty</span>)<br/>
+<br/>
+<span class="kwd">with</span> <span class="id">contextlist</span>: <span class="id">kind</span> -&gt; (<span class="id">expr</span> -&gt; <span class="id">exprlist</span>) -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">ctx_list_head</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">el</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">contextlist</span> <span class="id">k</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Econs</span> (<span class="id">C</span> <span class="id">x</span>) <span class="id">el</span>)<br/>
+&nbsp;&nbsp;| <span class="id">ctx_list_tail</span>: <span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">e1</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">contextlist</span> <span class="id">k</span> <span class="id">C</span> -&gt; <span class="id">contextlist</span> <span class="id">k</span> (<span class="kwd">fun</span> <span class="id">x</span> =&gt; <span class="id">Econs</span> <span class="id">e1</span> (<span class="id">C</span> <span class="id">x</span>)).<br/>
+<br/>
+<div class="doc">In a nondeterministic semantics, expressions can go wrong according
+  to one reduction order while being defined according to another.
+  Consider for instance <span class="bracket">(<span class="id">x</span> = 1) + (10 / <span class="id">x</span>)</span> where <span class="bracket"><span class="id">x</span></span> is initially <span class="bracket">0</span>.
+  This expression goes wrong if evaluated right-to-left, but is defined
+  if evaluated left-to-right.  Since our compiler is going to pick one
+  particular evaluation order, we must make sure that all orders are safe,
+  i.e. never evaluate a subexpression that goes wrong.
+  Being safe is a stronger requirement than just not getting stuck during
+  reductions.  Consider <span class="bracket"><span class="id">f</span>() + (10 / <span class="id">x</span>)</span>, where <span class="bracket"><span class="id">f</span>()</span> does not terminate.
+  This expression is never stuck because the evaluation of <span class="bracket"><span class="id">f</span>()</span> can make
+  infinitely many transitions.  Yet it contains a subexpression <span class="bracket">10 / <span class="id">x</span></span>
+  that can go wrong if <span class="bracket"><span class="id">x</span> = 0</span>, and the compiler may choose to evaluate
+  <span class="bracket">10 / <span class="id">x</span></span> first, before calling <span class="bracket"><span class="id">f</span>()</span>.
+  Therefore, we must make sure that not only an expression cannot get stuck,
+  but none of its subexpressions can either.  We say that a subexpression
+  is not immediately stuck if it is a value (of the appropriate kind)
+  or it can reduce (at head or within). </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">imm_safe</span>: <span class="id">kind</span> -&gt; <span class="id">expr</span> -&gt; <span class="id">mem</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">imm_safe_val</span>: <span class="kwd">forall</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">imm_safe</span> <span class="id">RV</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">imm_safe_loc</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">imm_safe</span> <span class="id">LV</span> (<span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">ty</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">imm_safe_lred</span>: <span class="kwd">forall</span> <span class="id">to</span> <span class="id">C</span> <span class="id">e</span> <span class="id">m</span> <span class="id">e</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lred</span> <span class="id">e</span> <span class="id">m</span> <span class="id">e</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">LV</span> <span class="id">to</span> <span class="id">C</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">imm_safe</span> <span class="id">to</span> (<span class="id">C</span> <span class="id">e</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">imm_safe_rred</span>: <span class="kwd">forall</span> <span class="id">to</span> <span class="id">C</span> <span class="id">e</span> <span class="id">m</span> <span class="id">t</span> <span class="id">e</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> <span class="id">e</span> <span class="id">m</span> <span class="id">t</span> <span class="id">e</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">RV</span> <span class="id">to</span> <span class="id">C</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">imm_safe</span> <span class="id">to</span> (<span class="id">C</span> <span class="id">e</span>) <span class="id">m</span><br/>
+&nbsp;&nbsp;| <span class="id">imm_safe_callred</span>: <span class="kwd">forall</span> <span class="id">to</span> <span class="id">C</span> <span class="id">e</span> <span class="id">m</span> <span class="id">fd</span> <span class="id">args</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">callred</span> <span class="id">e</span> <span class="id">m</span> <span class="id">fd</span> <span class="id">args</span> <span class="id">ty</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">RV</span> <span class="id">to</span> <span class="id">C</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">imm_safe</span> <span class="id">to</span> (<span class="id">C</span> <span class="id">e</span>) <span class="id">m</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">not_stuck</span> (<span class="id">e</span>: <span class="id">expr</span>) (<span class="id">m</span>: <span class="id">mem</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">k</span> <span class="id">C</span> <span class="id">e</span>' ,<br/>
+&nbsp;&nbsp;<span class="id">context</span> <span class="id">k</span> <span class="id">RV</span> <span class="id">C</span> -&gt; <span class="id">e</span> = <span class="id">C</span> <span class="id">e</span>' -&gt; <span class="id">imm_safe</span> <span class="id">k</span> <span class="id">e</span>' <span class="id">m</span>.<br/>
+<br/>
+<span class="kwd">End</span> <span class="id">EXPR</span>.<br/>
+<br/>
+<h2> Transition semantics. </h2>
+<br/>
+<div class="doc">Continuations describe the computations that remain to be performed
+    after the statement or expression under consideration has
+    evaluated completely. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">cont</span>: <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Kstop</span>: <span class="id">cont</span><br/>
+&nbsp;&nbsp;| <span class="id">Kdo</span>: <span class="id">cont</span> -&gt; <span class="id">cont</span>       <span class="docright">(* <span class="bracket"><span class="id">Kdo</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">x</span></span> in <span class="bracket"><span class="id">x</span>;</span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kseq</span>: <span class="id">statement</span> -&gt; <span class="id">cont</span> -&gt; <span class="id">cont</span>    <span class="docright">(* <span class="bracket"><span class="id">Kseq</span> <span class="id">s2</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">s1</span></span> in <span class="bracket"><span class="id">s1</span>;<span class="id">s2</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kifthenelse</span>: <span class="id">statement</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cont</span> -&gt; <span class="id">cont</span>     <span class="docright">(* <span class="bracket"><span class="id">Kifthenelse</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">x</span></span> in <span class="bracket"><span class="kwd">if</span> (<span class="id">x</span>) { <span class="id">s1</span> } <span class="kwd">else</span> { <span class="id">s2</span> }</span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kwhile1</span>: <span class="id">expr</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cont</span> -&gt; <span class="id">cont</span>      <span class="docright">(* <span class="bracket"><span class="id">Kwhile1</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">x</span></span> in <span class="bracket"><span class="id">while</span>(<span class="id">x</span>) <span class="id">s</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kwhile2</span>: <span class="id">expr</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cont</span> -&gt; <span class="id">cont</span>      <span class="docright">(* <span class="bracket"><span class="id">Kwhile</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">s</span></span> in <span class="bracket"><span class="id">while</span> (<span class="id">x</span>) <span class="id">s</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kdowhile1</span>: <span class="id">expr</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cont</span> -&gt; <span class="id">cont</span>    <span class="docright">(* <span class="bracket"><span class="id">Kdowhile1</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">s</span></span> in <span class="bracket"><span class="tactic">do</span> <span class="id">s</span> <span class="id">while</span> (<span class="id">x</span>)</span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kdowhile2</span>: <span class="id">expr</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cont</span> -&gt; <span class="id">cont</span>    <span class="docright">(* <span class="bracket"><span class="id">Kdowhile2</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">x</span></span> in <span class="bracket"><span class="tactic">do</span> <span class="id">s</span> <span class="id">while</span> (<span class="id">x</span>)</span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kfor2</span>: <span class="id">expr</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cont</span> -&gt; <span class="id">cont</span>   <span class="docright">(* <span class="bracket"><span class="id">Kfor2</span> <span class="id">e2</span> <span class="id">e3</span> <span class="id">s</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">e2</span></span> in <span class="bracket"><span class="kwd">for</span>(<span class="id">e1</span>;<span class="id">e2</span>;<span class="id">e3</span>) <span class="id">s</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kfor3</span>: <span class="id">expr</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cont</span> -&gt; <span class="id">cont</span>   <span class="docright">(* <span class="bracket"><span class="id">Kfor3</span> <span class="id">e2</span> <span class="id">e3</span> <span class="id">s</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">s</span></span> in <span class="bracket"><span class="kwd">for</span>(<span class="id">e1</span>;<span class="id">e2</span>;<span class="id">e3</span>) <span class="id">s</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kfor4</span>: <span class="id">expr</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cont</span> -&gt; <span class="id">cont</span>   <span class="docright">(* <span class="bracket"><span class="id">Kfor4</span> <span class="id">e2</span> <span class="id">e3</span> <span class="id">s</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">e3</span></span> in <span class="bracket"><span class="kwd">for</span>(<span class="id">e1</span>;<span class="id">e2</span>;<span class="id">e3</span>) <span class="id">s</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kswitch1</span>: <span class="id">labeled_statements</span> -&gt; <span class="id">cont</span> -&gt; <span class="id">cont</span>     <span class="docright">(* <span class="bracket"><span class="id">Kswitch1</span> <span class="id">ls</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">e</span></span> in <span class="bracket"><span class="id">switch</span>(<span class="id">e</span>) { <span class="id">ls</span> }</span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kswitch2</span>: <span class="id">cont</span> -&gt; <span class="id">cont</span>       <span class="docright">(* catches <span class="bracket"><span class="id">break</span></span> statements arising out of <span class="bracket"><span class="id">switch</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kreturn</span>: <span class="id">cont</span> -&gt; <span class="id">cont</span>        <span class="docright">(* <span class="bracket"><span class="id">Kreturn</span> <span class="id">k</span></span> = after <span class="bracket"><span class="id">e</span></span> in <span class="bracket"><span class="kwd">return</span> <span class="id">e</span>;</span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Kcall</span>: <span class="id">function</span> -&gt;           <span class="docright">(* calling function  *)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">env</span> -&gt;                <span class="docright">(* local env of calling function  *)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">expr</span> -&gt; <span class="id">expr</span>) -&gt;     <span class="docright">(* context of the call  *)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">type</span> -&gt;               <span class="docright">(* type of call expression  *)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cont</span> -&gt; <span class="id">cont</span>.<br/>
+<br/>
+<div class="doc">Pop continuation until a call or stop </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">call_cont</span> (<span class="id">k</span>: <span class="id">cont</span>) : <span class="id">cont</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">k</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Kstop</span> =&gt; <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kdo</span> <span class="id">k</span> =&gt; <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kseq</span> <span class="id">s</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kifthenelse</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kwhile1</span> <span class="id">e</span> <span class="id">s</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kwhile2</span> <span class="id">e</span> <span class="id">s</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kdowhile1</span> <span class="id">e</span> <span class="id">s</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kdowhile2</span> <span class="id">e</span> <span class="id">s</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kfor2</span> <span class="id">e2</span> <span class="id">e3</span> <span class="id">s</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kfor3</span> <span class="id">e2</span> <span class="id">e3</span> <span class="id">s</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kfor4</span> <span class="id">e2</span> <span class="id">e3</span> <span class="id">s</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kswitch1</span> <span class="id">ls</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kswitch2</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kreturn</span> <span class="id">k</span> =&gt; <span class="id">call_cont</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Kcall</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">k</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">is_call_cont</span> (<span class="id">k</span>: <span class="id">cont</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">k</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Kstop</span> =&gt; <span class="id">True</span><br/>
+&nbsp;&nbsp;| <span class="id">Kcall</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">True</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">False</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Execution states of the program are grouped in 4 classes corresponding
+  to the part of the program we are currently executing.  It can be
+  a statement (<span class="bracket"><span class="id">State</span></span>), an expression (<span class="bracket"><span class="id">ExprState</span></span>), a transition
+  from a calling function to a called function (<span class="bracket"><span class="id">Callstate</span></span>), or
+  the symmetrical transition from a function back to its caller
+  (<span class="bracket"><span class="id">Returnstate</span></span>). </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">state</span>: <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">State</span>                               <span class="docright">(* execution of a statement  *)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">f</span>: <span class="id">function</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">s</span>: <span class="id">statement</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">k</span>: <span class="id">cont</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">e</span>: <span class="id">env</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">m</span>: <span class="id">mem</span>) : <span class="id">state</span><br/>
+&nbsp;&nbsp;| <span class="id">ExprState</span>                           <span class="docright">(* reduction of an expression  *)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">f</span>: <span class="id">function</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">r</span>: <span class="id">expr</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">k</span>: <span class="id">cont</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">e</span>: <span class="id">env</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">m</span>: <span class="id">mem</span>) : <span class="id">state</span><br/>
+&nbsp;&nbsp;| <span class="id">Callstate</span>                           <span class="docright">(* calling a function  *)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">fd</span>: <span class="id">fundef</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">args</span>: <span class="id">list</span> <span class="id">val</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">k</span>: <span class="id">cont</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">m</span>: <span class="id">mem</span>) : <span class="id">state</span><br/>
+&nbsp;&nbsp;| <span class="id">Returnstate</span>                         <span class="docright">(* returning from a function  *)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">res</span>: <span class="id">val</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">k</span>: <span class="id">cont</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">m</span>: <span class="id">mem</span>) : <span class="id">state</span><br/>
+&nbsp;&nbsp;| <span class="id">Stuckstate</span>.                         <span class="docright">(* undefined behavior occurred  *)</span><br/>
+<br/>
+<div class="doc">Find the statement and manufacture the continuation
+  corresponding to a label. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">find_label</span> (<span class="id">lbl</span>: <span class="id">label</span>) (<span class="id">s</span>: <span class="id">statement</span>) (<span class="id">k</span>: <span class="id">cont</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="kwd">struct</span> <span class="id">s</span>}: <span class="id">option</span> (<span class="id">statement</span> * <span class="id">cont</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">s</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Ssequence</span> <span class="id">s1</span> <span class="id">s2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">find_label</span> <span class="id">lbl</span> <span class="id">s1</span> (<span class="id">Kseq</span> <span class="id">s2</span> <span class="id">k</span>) <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">sk</span> =&gt; <span class="id">Some</span> <span class="id">sk</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">find_label</span> <span class="id">lbl</span> <span class="id">s2</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Sifthenelse</span> <span class="id">a</span> <span class="id">s1</span> <span class="id">s2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">find_label</span> <span class="id">lbl</span> <span class="id">s1</span> <span class="id">k</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">sk</span> =&gt; <span class="id">Some</span> <span class="id">sk</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">find_label</span> <span class="id">lbl</span> <span class="id">s2</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Swhile</span> <span class="id">a</span> <span class="id">s1</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_label</span> <span class="id">lbl</span> <span class="id">s1</span> (<span class="id">Kwhile2</span> <span class="id">a</span> <span class="id">s1</span> <span class="id">k</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Sdowhile</span> <span class="id">a</span> <span class="id">s1</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_label</span> <span class="id">lbl</span> <span class="id">s1</span> (<span class="id">Kdowhile1</span> <span class="id">a</span> <span class="id">s1</span> <span class="id">k</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Sfor</span> <span class="id">a1</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s1</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">find_label</span> <span class="id">lbl</span> <span class="id">a1</span> (<span class="id">Kseq</span> (<span class="id">Sfor</span> <span class="id">Sskip</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s1</span>) <span class="id">k</span>) <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">sk</span> =&gt; <span class="id">Some</span> <span class="id">sk</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">find_label</span> <span class="id">lbl</span> <span class="id">s1</span> (<span class="id">Kfor3</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s1</span> <span class="id">k</span>) <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">sk</span> =&gt; <span class="id">Some</span> <span class="id">sk</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">find_label</span> <span class="id">lbl</span> <span class="id">a3</span> (<span class="id">Kfor4</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s1</span> <span class="id">k</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Sswitch</span> <span class="id">e</span> <span class="id">sl</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_label_ls</span> <span class="id">lbl</span> <span class="id">sl</span> (<span class="id">Kswitch2</span> <span class="id">k</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Slabel</span> <span class="id">lbl</span>' <span class="id">s</span>' =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">ident_eq</span> <span class="id">lbl</span> <span class="id">lbl</span>' <span class="kwd">then</span> <span class="id">Some</span>(<span class="id">s</span>', <span class="id">k</span>) <span class="kwd">else</span> <span class="id">find_label</span> <span class="id">lbl</span> <span class="id">s</span>' <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">find_label_ls</span> (<span class="id">lbl</span>: <span class="id">label</span>) (<span class="id">sl</span>: <span class="id">labeled_statements</span>) (<span class="id">k</span>: <span class="id">cont</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="kwd">struct</span> <span class="id">sl</span>}: <span class="id">option</span> (<span class="id">statement</span> * <span class="id">cont</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">sl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">LSnil</span> =&gt; <span class="id">None</span><br/>
+&nbsp;&nbsp;| <span class="id">LScons</span> <span class="id">_</span> <span class="id">s</span> <span class="id">sl</span>' =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">find_label</span> <span class="id">lbl</span> <span class="id">s</span> (<span class="id">Kseq</span> (<span class="id">seq_of_labeled_statement</span> <span class="id">sl</span>') <span class="id">k</span>) <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">sk</span> =&gt; <span class="id">Some</span> <span class="id">sk</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">find_label_ls</span> <span class="id">lbl</span> <span class="id">sl</span>' <span class="id">k</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">We separate the transition rules in two groups:
+<ul>
+<li>
+ one group that deals with reductions over expressions;
+</li>
+<li>
+ the other group that deals with everything else: statements, function calls, etc.
+</li>
+</ul>
+This makes it easy to express different reduction strategies for expressions:
+the second group of rules can be reused as is. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">estep</span>: <span class="id">state</span> -&gt; <span class="id">trace</span> -&gt; <span class="id">state</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_lred</span>: <span class="kwd">forall</span> <span class="id">C</span> <span class="id">f</span> <span class="id">a</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> <span class="id">a</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">lred</span> <span class="id">e</span> <span class="id">a</span> <span class="id">m</span> <span class="id">a</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">LV</span> <span class="id">RV</span> <span class="id">C</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">estep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="id">C</span> <span class="id">a</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="id">C</span> <span class="id">a</span>') <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>')<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_rred</span>: <span class="kwd">forall</span> <span class="id">C</span> <span class="id">f</span> <span class="id">a</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> <span class="id">t</span> <span class="id">a</span>' <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rred</span> <span class="id">a</span> <span class="id">m</span> <span class="id">t</span> <span class="id">a</span>' <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">RV</span> <span class="id">RV</span> <span class="id">C</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">estep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="id">C</span> <span class="id">a</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">t</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="id">C</span> <span class="id">a</span>') <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>')<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_call</span>: <span class="kwd">forall</span> <span class="id">C</span> <span class="id">f</span> <span class="id">a</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> <span class="id">fd</span> <span class="id">vargs</span> <span class="id">ty</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">callred</span> <span class="id">a</span> <span class="id">m</span> <span class="id">fd</span> <span class="id">vargs</span> <span class="id">ty</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">RV</span> <span class="id">RV</span> <span class="id">C</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">estep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="id">C</span> <span class="id">a</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">Callstate</span> <span class="id">fd</span> <span class="id">vargs</span> (<span class="id">Kcall</span> <span class="id">f</span> <span class="id">e</span> <span class="id">C</span> <span class="id">ty</span> <span class="id">k</span>) <span class="id">m</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_stuck</span>: <span class="kwd">forall</span> <span class="id">C</span> <span class="id">f</span> <span class="id">a</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> <span class="id">K</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">context</span> <span class="id">K</span> <span class="id">RV</span> <span class="id">C</span> -&gt; ~(<span class="id">imm_safe</span> <span class="id">e</span> <span class="id">K</span> <span class="id">a</span> <span class="id">m</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">estep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="id">C</span> <span class="id">a</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> <span class="id">Stuckstate</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">sstep</span>: <span class="id">state</span> -&gt; <span class="id">trace</span> -&gt; <span class="id">state</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_do_1</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">x</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sdo</span> <span class="id">x</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">ExprState</span> <span class="id">f</span> <span class="id">x</span> (<span class="id">Kdo</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_do_2</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) (<span class="id">Kdo</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_seq</span>:  <span class="kwd">forall</span> <span class="id">f</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Ssequence</span> <span class="id">s1</span> <span class="id">s2</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">s1</span> (<span class="id">Kseq</span> <span class="id">s2</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_skip_seq</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> (<span class="id">Kseq</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_continue_seq</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Scontinue</span> (<span class="id">Kseq</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Scontinue</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_break_seq</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sbreak</span> (<span class="id">Kseq</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sbreak</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_ifthenelse_1</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">a</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sifthenelse</span> <span class="id">a</span> <span class="id">s1</span> <span class="id">s2</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">ExprState</span> <span class="id">f</span> <span class="id">a</span> (<span class="id">Kifthenelse</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_ifthenelse_2</span>:  <span class="kwd">forall</span> <span class="id">f</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">b</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) (<span class="id">Kifthenelse</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> (<span class="kwd">if</span> <span class="id">b</span> <span class="kwd">then</span> <span class="id">s1</span> <span class="kwd">else</span> <span class="id">s2</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_while</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Swhile</span> <span class="id">x</span> <span class="id">s</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">ExprState</span> <span class="id">f</span> <span class="id">x</span> (<span class="id">Kwhile1</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_while_false</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">false</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) (<span class="id">Kwhile1</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_while_true</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> ,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">true</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) (<span class="id">Kwhile1</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">s</span> (<span class="id">Kwhile2</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_skip_or_continue_while</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">s0</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">s0</span> = <span class="id">Sskip</span> \/ <span class="id">s0</span> = <span class="id">Scontinue</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">s0</span> (<span class="id">Kwhile2</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Swhile</span> <span class="id">x</span> <span class="id">s</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_break_while</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sbreak</span> (<span class="id">Kwhile2</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_dowhile</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">a</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sdowhile</span> <span class="id">a</span> <span class="id">s</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">s</span> (<span class="id">Kdowhile1</span> <span class="id">a</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_skip_or_continue_dowhile</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">s0</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">s0</span> = <span class="id">Sskip</span> \/ <span class="id">s0</span> = <span class="id">Scontinue</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">s0</span> (<span class="id">Kdowhile1</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">ExprState</span> <span class="id">f</span> <span class="id">x</span> (<span class="id">Kdowhile2</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_dowhile_false</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">false</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) (<span class="id">Kdowhile2</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_dowhile_true</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">true</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) (<span class="id">Kdowhile2</span> <span class="id">x</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sdowhile</span> <span class="id">x</span> <span class="id">s</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_break_dowhile</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">a</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sbreak</span> (<span class="id">Kdowhile1</span> <span class="id">a</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_for_start</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">a1</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">a1</span> &lt;&gt; <span class="id">Sskip</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sfor</span> <span class="id">a1</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">a1</span> (<span class="id">Kseq</span> (<span class="id">Sfor</span> <span class="id">Sskip</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span>) <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_for</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sfor</span> <span class="id">Sskip</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">ExprState</span> <span class="id">f</span> <span class="id">a2</span> (<span class="id">Kfor2</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_for_false</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">false</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) (<span class="id">Kfor2</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_for_true</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bool_val</span> <span class="id">v</span> <span class="id">ty</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">true</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) (<span class="id">Kfor2</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">s</span> (<span class="id">Kfor3</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_skip_or_continue_for3</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">x</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">x</span> = <span class="id">Sskip</span> \/ <span class="id">x</span> = <span class="id">Scontinue</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">x</span> (<span class="id">Kfor3</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">a3</span> (<span class="id">Kfor4</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_break_for3</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sbreak</span> (<span class="id">Kfor3</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_skip_for4</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> (<span class="id">Kfor4</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sfor</span> <span class="id">Sskip</span> <span class="id">a2</span> <span class="id">a3</span> <span class="id">s</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_return_0</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Mem.free_list</span> <span class="id">m</span> (<span class="id">blocks_of_env</span> <span class="id">e</span>) = <span class="id">Some</span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sreturn</span> <span class="id">None</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">Returnstate</span> <span class="id">Vundef</span> (<span class="id">call_cont</span> <span class="id">k</span>) <span class="id">m</span>')<br/>
+&nbsp;&nbsp;| <span class="id">step_return_1</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">x</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sreturn</span> (<span class="id">Some</span> <span class="id">x</span>)) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">ExprState</span> <span class="id">f</span> <span class="id">x</span> (<span class="id">Kreturn</span> <span class="id">k</span>) <span class="id">e</span>  <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_return_2</span>:  <span class="kwd">forall</span> <span class="id">f</span> <span class="id">v1</span> <span class="id">ty</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> <span class="id">v2</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sem_cast</span> <span class="id">v1</span> <span class="id">ty</span> <span class="id">f</span>.(<span class="id">fn_return</span>) <span class="id">m</span> = <span class="id">Some</span> <span class="id">v2</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Mem.free_list</span> <span class="id">m</span> (<span class="id">blocks_of_env</span> <span class="id">e</span>) = <span class="id">Some</span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="kwd">Eval</span> <span class="id">v1</span> <span class="id">ty</span>) (<span class="id">Kreturn</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">Returnstate</span> <span class="id">v2</span> (<span class="id">call_cont</span> <span class="id">k</span>) <span class="id">m</span>')<br/>
+&nbsp;&nbsp;| <span class="id">step_skip_call</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">is_call_cont</span> <span class="id">k</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Mem.free_list</span> <span class="id">m</span> (<span class="id">blocks_of_env</span> <span class="id">e</span>) = <span class="id">Some</span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">Returnstate</span> <span class="id">Vundef</span> <span class="id">k</span> <span class="id">m</span>')<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_switch</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">x</span> <span class="id">sl</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sswitch</span> <span class="id">x</span> <span class="id">sl</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">ExprState</span> <span class="id">f</span> <span class="id">x</span> (<span class="id">Kswitch1</span> <span class="id">sl</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_expr_switch</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">ty</span> <span class="id">sl</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> <span class="id">v</span> <span class="id">n</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sem_switch_arg</span> <span class="id">v</span> <span class="id">ty</span> = <span class="id">Some</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>) (<span class="id">Kswitch1</span> <span class="id">sl</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">seq_of_labeled_statement</span> (<span class="id">select_switch</span> <span class="id">n</span> <span class="id">sl</span>)) (<span class="id">Kswitch2</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_skip_break_switch</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">x</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">x</span> = <span class="id">Sskip</span> \/ <span class="id">x</span> = <span class="id">Sbreak</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">x</span> (<span class="id">Kswitch2</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Sskip</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">step_continue_switch</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Scontinue</span> (<span class="id">Kswitch2</span> <span class="id">k</span>) <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">Scontinue</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_label</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">lbl</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Slabel</span> <span class="id">lbl</span> <span class="id">s</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">s</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_goto</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">lbl</span> <span class="id">k</span> <span class="id">e</span> <span class="id">m</span> <span class="id">s</span>' <span class="id">k</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">find_label</span> <span class="id">lbl</span> <span class="id">f</span>.(<span class="id">fn_body</span>) (<span class="id">call_cont</span> <span class="id">k</span>) = <span class="id">Some</span> (<span class="id">s</span>', <span class="id">k</span>') -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">State</span> <span class="id">f</span> (<span class="id">Sgoto</span> <span class="id">lbl</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">s</span>' <span class="id">k</span>' <span class="id">e</span> <span class="id">m</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_internal_function</span>: <span class="kwd">forall</span> <span class="id">f</span> <span class="id">vargs</span> <span class="id">k</span> <span class="id">m</span> <span class="id">e</span> <span class="id">m1</span> <span class="id">m2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">list_norepet</span> (<span class="id">var_names</span> (<span class="id">fn_params</span> <span class="id">f</span>) ++ <span class="id">var_names</span> (<span class="id">fn_vars</span> <span class="id">f</span>)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">alloc_variables</span> <span class="id">empty_env</span> <span class="id">m</span> (<span class="id">f</span>.(<span class="id">fn_params</span>) ++ <span class="id">f</span>.(<span class="id">fn_vars</span>)) <span class="id">e</span> <span class="id">m1</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">bind_parameters</span> <span class="id">e</span> <span class="id">m1</span> <span class="id">f</span>.(<span class="id">fn_params</span>) <span class="id">vargs</span> <span class="id">m2</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">Callstate</span> (<span class="id">Internal</span> <span class="id">f</span>) <span class="id">vargs</span> <span class="id">k</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">State</span> <span class="id">f</span> <span class="id">f</span>.(<span class="id">fn_body</span>) <span class="id">k</span> <span class="id">e</span> <span class="id">m2</span>)<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_external_function</span>: <span class="kwd">forall</span> <span class="id">ef</span> <span class="id">targs</span> <span class="id">tres</span> <span class="id">cc</span> <span class="id">vargs</span> <span class="id">k</span> <span class="id">m</span> <span class="id">vres</span> <span class="id">t</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">external_call</span> <span class="id">ef</span>  <span class="id">ge</span> <span class="id">vargs</span> <span class="id">m</span> <span class="id">t</span> <span class="id">vres</span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">Callstate</span> (<span class="id">External</span> <span class="id">ef</span> <span class="id">targs</span> <span class="id">tres</span> <span class="id">cc</span>) <span class="id">vargs</span> <span class="id">k</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">t</span> (<span class="id">Returnstate</span> <span class="id">vres</span> <span class="id">k</span> <span class="id">m</span>')<br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">step_returnstate</span>: <span class="kwd">forall</span> <span class="id">v</span> <span class="id">f</span> <span class="id">e</span> <span class="id">C</span> <span class="id">ty</span> <span class="id">k</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">sstep</span> (<span class="id">Returnstate</span> <span class="id">v</span> (<span class="id">Kcall</span> <span class="id">f</span> <span class="id">e</span> <span class="id">C</span> <span class="id">ty</span> <span class="id">k</span>) <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">E0</span> (<span class="id">ExprState</span> <span class="id">f</span> (<span class="id">C</span> (<span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span>)) <span class="id">k</span> <span class="id">e</span> <span class="id">m</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">step</span> (<span class="id">S</span>: <span class="id">state</span>) (<span class="id">t</span>: <span class="id">trace</span>) (<span class="id">S</span>': <span class="id">state</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id">estep</span> <span class="id">S</span> <span class="id">t</span> <span class="id">S</span>' \/ <span class="id">sstep</span> <span class="id">S</span> <span class="id">t</span> <span class="id">S</span>'.<br/>
+<br/>
+<span class="kwd">End</span> <span class="id">SEMANTICS</span>.<br/>
+<br/>
+<h1> Whole-program semantics </h1>
+<br/>
+<div class="doc">Execution of whole programs are described as sequences of transitions
+  from an initial state to a final state.  An initial state is a <span class="bracket"><span class="id">Callstate</span></span>
+  corresponding to the invocation of the ``main'' function of the program
+  without arguments and with an empty continuation. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">initial_state</span> (<span class="id">p</span>: <span class="id">program</span>): <span class="id">state</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">initial_state_intro</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">f</span> <span class="id">m0</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">ge</span> := <span class="id">globalenv</span> <span class="id">p</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Genv.init_mem</span> <span class="id">p</span> = <span class="id">Some</span> <span class="id">m0</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Genv.find_symbol</span> <span class="id">ge</span> <span class="id">p</span>.(<span class="id">prog_main</span>) = <span class="id">Some</span> <span class="id">b</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Genv.find_funct_ptr</span> <span class="id">ge</span> <span class="id">b</span> = <span class="id">Some</span> <span class="id">f</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">type_of_fundef</span> <span class="id">f</span> = <span class="id">Tfunction</span> <span class="id">Tnil</span> <span class="id">type_int32s</span> <span class="id">cc_default</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">initial_state</span> <span class="id">p</span> (<span class="id">Callstate</span> <span class="id">f</span> <span class="id">nil</span> <span class="id">Kstop</span> <span class="id">m0</span>).<br/>
+<br/>
+<div class="doc">A final state is a <span class="bracket"><span class="id">Returnstate</span></span> with an empty continuation. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">final_state</span>: <span class="id">state</span> -&gt; <span class="id">int</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">final_state_intro</span>: <span class="kwd">forall</span> <span class="id">r</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">final_state</span> (<span class="id">Returnstate</span> (<span class="id">Vint</span> <span class="id">r</span>) <span class="id">Kstop</span> <span class="id">m</span>) <span class="id">r</span>.<br/>
+<br/>
+<div class="doc">Wrapping up these definitions in a small-step semantics. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">semantics</span> (<span class="id">p</span>: <span class="id">program</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">Semantics_gen</span> <span class="id">step</span> (<span class="id">initial_state</span> <span class="id">p</span>) <span class="id">final_state</span> (<span class="id">globalenv</span> <span class="id">p</span>) (<span class="id">globalenv</span> <span class="id">p</span>).<br/>
+<br/>
+<div class="doc">This semantics has the single-event property. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">semantics_single_events</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p</span>, <span class="id">single_events</span> (<span class="id">semantics</span> <span class="id">p</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4046')">Proof.</div>
+<div class="proofscript" id="proof4046">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">semantics</span>; <span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">ge</span> := <span class="id">globalenv</span> <span class="id">p</span>) <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">DEREF</span>: <span class="kwd">forall</span> <span class="id">chunk</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">t</span> <span class="id">v</span>, <span class="id">deref_loc</span> <span class="id">ge</span> <span class="id">chunk</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">t</span> <span class="id">v</span> -&gt; (<span class="id">length</span> <span class="id">t</span> &lt;= 1)%<span class="id">nat</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>; <span class="tactic">simpl</span>; <span class="tactic">try</span> <span class="tactic">omega</span>. <span class="id">inv</span> <span class="id">H3</span>; <span class="tactic">simpl</span>; <span class="tactic">try</span> <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">ASSIGN</span>: <span class="kwd">forall</span> <span class="id">chunk</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">t</span> <span class="id">v</span> <span class="id">m</span>', <span class="id">assign_loc</span> <span class="id">ge</span> <span class="id">chunk</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">v</span> <span class="id">t</span> <span class="id">m</span>' -&gt; (<span class="id">length</span> <span class="id">t</span> &lt;= 1)%<span class="id">nat</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>; <span class="tactic">simpl</span>; <span class="tactic">try</span> <span class="tactic">omega</span>. <span class="id">inv</span> <span class="id">H3</span>; <span class="tactic">simpl</span>; <span class="tactic">try</span> <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>; <span class="tactic">simpl</span>; <span class="tactic">try</span> <span class="tactic">omega</span>. <span class="id">inv</span> <span class="id">H0</span>; <span class="tactic">eauto</span>; <span class="tactic">simpl</span>; <span class="tactic">try</span> <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">external_call_trace_length</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>; <span class="tactic">simpl</span>; <span class="tactic">try</span> <span class="tactic">omega</span>. <span class="tactic">eapply</span> <span class="id">external_call_trace_length</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

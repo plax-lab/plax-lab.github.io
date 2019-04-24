@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Cabs</title>
+<meta name="description" content="Documentation of Coq module Cabs" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Cabs</h1>
+<div class="coq">
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">BinPos</span>.<br/>
+<br/>
+<span class="kwd">Parameter</span> <span class="id">string</span> : <span class="kwd">Type</span>.<br/>
+<span class="kwd">Parameter</span> <span class="id">char_code</span> : <span class="kwd">Type</span>.<br/>
+<span class="kwd">Parameter</span> <span class="id">cabsloc</span> : <span class="kwd">Type</span>.<br/>
+<br/>
+<span class="kwd">Record</span> <span class="id">floatInfo</span> := {<br/>
+&nbsp;&nbsp;<span class="id">isHex_FI</span>:<span class="id">bool</span>;<br/>
+&nbsp;&nbsp;<span class="id">integer_FI</span>:<span class="id">option</span> <span class="id">string</span>;<br/>
+&nbsp;&nbsp;<span class="id">fraction_FI</span>:<span class="id">option</span> <span class="id">string</span>;<br/>
+&nbsp;&nbsp;<span class="id">exponent_FI</span>:<span class="id">option</span> <span class="id">string</span>;<br/>
+&nbsp;&nbsp;<span class="id">suffix_FI</span>:<span class="id">option</span> <span class="id">string</span><br/>
+}.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">structOrUnion</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">STRUCT</span> | <span class="id">UNION</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">typeSpecifier</span> := <br/>
+&nbsp;&nbsp;| <span class="id">Tvoid</span>                  <br/>
+&nbsp;&nbsp;| <span class="id">Tchar</span><br/>
+&nbsp;&nbsp;| <span class="id">Tshort</span><br/>
+&nbsp;&nbsp;| <span class="id">Tint</span><br/>
+&nbsp;&nbsp;| <span class="id">Tlong</span><br/>
+&nbsp;&nbsp;| <span class="id">Tfloat</span><br/>
+&nbsp;&nbsp;| <span class="id">Tdouble</span><br/>
+&nbsp;&nbsp;| <span class="id">Tsigned</span><br/>
+&nbsp;&nbsp;| <span class="id">Tunsigned</span><br/>
+&nbsp;&nbsp;| <span class="id">T_Bool</span><br/>
+&nbsp;&nbsp;| <span class="id">Tnamed</span> : <span class="id">string</span> -&gt; <span class="id">typeSpecifier</span><br/>
+&nbsp;&nbsp;| <span class="id">Tstruct_union</span> : <span class="id">structOrUnion</span> -&gt; <span class="id">option</span> <span class="id">string</span> -&gt; <span class="id">option</span> (<span class="id">list</span> <span class="id">field_group</span>) -&gt; <span class="id">list</span> <span class="id">attribute</span> -&gt; <span class="id">typeSpecifier</span><br/>
+&nbsp;&nbsp;| <span class="id">Tenum</span> : <span class="id">option</span> <span class="id">string</span> -&gt; <span class="id">option</span> (<span class="id">list</span> (<span class="id">string</span> * <span class="id">option</span> <span class="id">expression</span> * <span class="id">cabsloc</span>)) -&gt; <span class="id">list</span> <span class="id">attribute</span> -&gt; <span class="id">typeSpecifier</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">storage</span> :=<br/>
+&nbsp;&nbsp;<span class="id">AUTO</span> | <span class="id">STATIC</span> | <span class="id">EXTERN</span> | <span class="id">REGISTER</span> | <span class="id">TYPEDEF</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">cvspec</span> :=<br/>
+| <span class="id">CV_CONST</span> | <span class="id">CV_VOLATILE</span> | <span class="id">CV_RESTRICT</span><br/>
+| <span class="id">CV_ATTR</span> : <span class="id">attribute</span> -&gt; <span class="id">cvspec</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">funspec</span> :=<br/>
+&nbsp;<span class="id">INLINE</span> | <span class="id">NORETURN</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">spec_elem</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">SpecCV</span> : <span class="id">cvspec</span> -&gt; <span class="id">spec_elem</span>            <br/>
+&nbsp;&nbsp;| <span class="id">SpecStorage</span> : <span class="id">storage</span> -&gt; <span class="id">spec_elem</span><br/>
+&nbsp;&nbsp;| <span class="id">SpecFunction</span>: <span class="id">funspec</span> -&gt; <span class="id">spec_elem</span><br/>
+&nbsp;&nbsp;| <span class="id">SpecType</span> : <span class="id">typeSpecifier</span> -&gt; <span class="id">spec_elem</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">decl_type</span> :=<br/>
+&nbsp;| <span class="id">JUSTBASE</span><br/>
+&nbsp;| <span class="id">ARRAY</span> : <span class="id">decl_type</span> -&gt; <span class="id">list</span> <span class="id">cvspec</span> -&gt; <span class="id">option</span> <span class="id">expression</span> -&gt; <span class="id">decl_type</span><br/>
+&nbsp;| <span class="id">PTR</span> : <span class="id">list</span> <span class="id">cvspec</span> -&gt; <span class="id">decl_type</span> -&gt; <span class="id">decl_type</span><br/>
+&nbsp;| <span class="id">PROTO</span> : <span class="id">decl_type</span> -&gt; <span class="id">list</span> <span class="id">parameter</span> * <span class="id">bool</span> -&gt; <span class="id">decl_type</span><br/>
+&nbsp;| <span class="id">PROTO_OLD</span> : <span class="id">decl_type</span> -&gt; <span class="id">list</span> <span class="id">string</span> -&gt; <span class="id">decl_type</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">parameter</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">PARAM</span> : <span class="id">list</span> <span class="id">spec_elem</span> -&gt; <span class="id">option</span> <span class="id">string</span> -&gt; <span class="id">decl_type</span> -&gt; <span class="id">list</span> <span class="id">attribute</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">parameter</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">field_group</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Field_group</span> : <span class="id">list</span> <span class="id">spec_elem</span> -&gt; <span class="id">list</span> (<span class="id">option</span> <span class="id">name</span> * <span class="id">option</span> <span class="id">expression</span>) -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">field_group</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">name</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Name</span> : <span class="id">string</span> -&gt; <span class="id">decl_type</span> -&gt; <span class="id">list</span> <span class="id">attribute</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">name</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">init_name</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Init_name</span> : <span class="id">name</span> -&gt; <span class="id">init_expression</span> -&gt; <span class="id">init_name</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">binary_operator</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">ADD</span> | <span class="id">SUB</span> | <span class="id">MUL</span> | <span class="id">DIV</span> | <span class="id">MOD</span><br/>
+&nbsp;&nbsp;| <span class="id">AND</span> | <span class="id">OR</span><br/>
+&nbsp;&nbsp;| <span class="id">BAND</span> | <span class="id">BOR</span> | <span class="id">XOR</span> | <span class="id">SHL</span> | <span class="id">SHR</span><br/>
+&nbsp;&nbsp;| <span class="id">EQ</span> | <span class="id">NE</span> | <span class="id">LT</span> | <span class="id">GT</span> | <span class="id">LE</span> | <span class="id">GE</span><br/>
+&nbsp;&nbsp;| <span class="id">ASSIGN</span><br/>
+&nbsp;&nbsp;| <span class="id">ADD_ASSIGN</span> | <span class="id">SUB_ASSIGN</span> | <span class="id">MUL_ASSIGN</span> | <span class="id">DIV_ASSIGN</span> | <span class="id">MOD_ASSIGN</span><br/>
+&nbsp;&nbsp;| <span class="id">BAND_ASSIGN</span> | <span class="id">BOR_ASSIGN</span> | <span class="id">XOR_ASSIGN</span> | <span class="id">SHL_ASSIGN</span> | <span class="id">SHR_ASSIGN</span><br/>
+&nbsp;&nbsp;| <span class="id">COMMA</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">unary_operator</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">MINUS</span> | <span class="id">PLUS</span> | <span class="id">NOT</span> | <span class="id">BNOT</span> | <span class="id">MEMOF</span> | <span class="id">ADDROF</span><br/>
+&nbsp;&nbsp;| <span class="id">PREINCR</span> | <span class="id">PREDECR</span> | <span class="id">POSINCR</span> | <span class="id">POSDECR</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">expression</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">UNARY</span> : <span class="id">unary_operator</span> -&gt; <span class="id">expression</span> -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">BINARY</span> : <span class="id">binary_operator</span> -&gt; <span class="id">expression</span> -&gt; <span class="id">expression</span> -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">QUESTION</span> : <span class="id">expression</span> -&gt; <span class="id">expression</span> -&gt; <span class="id">expression</span> -&gt; <span class="id">expression</span><br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">CAST</span> : (<span class="id">list</span> <span class="id">spec_elem</span> * <span class="id">decl_type</span>) -&gt; <span class="id">init_expression</span> -&gt; <span class="id">expression</span><br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">CALL</span> : <span class="id">expression</span> -&gt; <span class="id">list</span> <span class="id">expression</span> -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">BUILTIN_VA_ARG</span> : <span class="id">expression</span> -&gt; <span class="id">list</span> <span class="id">spec_elem</span> * <span class="id">decl_type</span> -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">CONSTANT</span> : <span class="id">constant</span> -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">VARIABLE</span> : <span class="id">string</span> -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">EXPR_SIZEOF</span> : <span class="id">expression</span> -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">TYPE_SIZEOF</span> : (<span class="id">list</span> <span class="id">spec_elem</span> * <span class="id">decl_type</span>) -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">INDEX</span> : <span class="id">expression</span> -&gt; <span class="id">expression</span> -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">MEMBEROF</span> : <span class="id">expression</span> -&gt; <span class="id">string</span> -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">MEMBEROFPTR</span> : <span class="id">expression</span> -&gt; <span class="id">string</span> -&gt; <span class="id">expression</span><br/>
+<br/>
+&nbsp;&nbsp;| <span class="id">EXPR_ALIGNOF</span> : <span class="id">expression</span> -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">TYPE_ALIGNOF</span> : (<span class="id">list</span> <span class="id">spec_elem</span> * <span class="id">decl_type</span>) -&gt; <span class="id">expression</span><br/>
+&nbsp;&nbsp;| <span class="id">BUILTIN_OFFSETOF</span> : (<span class="id">list</span> <span class="id">spec_elem</span> * <span class="id">decl_type</span>) -&gt; <span class="id">list</span> <span class="id">initwhat</span> -&gt; <span class="id">expression</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">constant</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">CONST_INT</span> : <span class="id">string</span> -&gt; <span class="id">constant</span><br/>
+&nbsp;&nbsp;| <span class="id">CONST_FLOAT</span> : <span class="id">floatInfo</span> -&gt; <span class="id">constant</span><br/>
+&nbsp;&nbsp;| <span class="id">CONST_CHAR</span> : <span class="id">bool</span> -&gt; <span class="id">list</span> <span class="id">char_code</span> -&gt; <span class="id">constant</span><br/>
+&nbsp;&nbsp;| <span class="id">CONST_STRING</span> : <span class="id">bool</span> -&gt; <span class="id">list</span> <span class="id">char_code</span> -&gt; <span class="id">constant</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">init_expression</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">NO_INIT</span><br/>
+&nbsp;&nbsp;| <span class="id">SINGLE_INIT</span> : <span class="id">expression</span> -&gt; <span class="id">init_expression</span><br/>
+&nbsp;&nbsp;| <span class="id">COMPOUND_INIT</span> : <span class="id">list</span> (<span class="id">list</span> <span class="id">initwhat</span> * <span class="id">init_expression</span>) -&gt; <span class="id">init_expression</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">initwhat</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">INFIELD_INIT</span> : <span class="id">string</span> -&gt; <span class="id">initwhat</span><br/>
+&nbsp;&nbsp;| <span class="id">ATINDEX_INIT</span> : <span class="id">expression</span> -&gt; <span class="id">initwhat</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">attribute</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">GCC_ATTR</span> : <span class="id">list</span> <span class="id">gcc_attribute</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">attribute</span><br/>
+&nbsp;&nbsp;| <span class="id">PACKED_ATTR</span> : <span class="id">list</span> <span class="id">expression</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">attribute</span><br/>
+&nbsp;&nbsp;| <span class="id">ALIGNAS_ATTR</span> : <span class="id">list</span> <span class="id">expression</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">attribute</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">gcc_attribute</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">GCC_ATTR_EMPTY</span><br/>
+&nbsp;&nbsp;| <span class="id">GCC_ATTR_NOARGS</span> : <span class="id">gcc_attribute_word</span> -&gt; <span class="id">gcc_attribute</span><br/>
+&nbsp;&nbsp;| <span class="id">GCC_ATTR_ARGS</span> : <span class="id">gcc_attribute_word</span> -&gt; <span class="id">list</span> <span class="id">expression</span> -&gt; <span class="id">gcc_attribute</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">gcc_attribute_word</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">GCC_ATTR_IDENT</span> : <span class="id">string</span> -&gt; <span class="id">gcc_attribute_word</span><br/>
+&nbsp;&nbsp;| <span class="id">GCC_ATTR_CONST</span><br/>
+&nbsp;&nbsp;| <span class="id">GCC_ATTR_PACKED</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">init_name_group</span> := (<span class="id">list</span> <span class="id">spec_elem</span> * <span class="id">list</span> <span class="id">init_name</span>)%<span class="id">type</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">name_group</span> := (<span class="id">list</span> <span class="id">spec_elem</span> * <span class="id">list</span> <span class="id">name</span>)%<span class="id">type</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">asm_operand</span> :=<br/>
+| <span class="id">ASMOPERAND</span>: <span class="id">option</span> <span class="id">string</span> -&gt; <span class="id">bool</span> -&gt; <span class="id">list</span> <span class="id">char_code</span> -&gt; <span class="id">expression</span> -&gt; <span class="id">asm_operand</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">asm_flag</span> := (<span class="id">bool</span> * <span class="id">list</span> <span class="id">char_code</span>)%<span class="id">type</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">definition</span> :=<br/>
+&nbsp;| <span class="id">FUNDEF</span> : <span class="id">list</span> <span class="id">spec_elem</span> -&gt; <span class="id">name</span> -&gt; <span class="id">list</span> <span class="id">definition</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">definition</span><br/>
+&nbsp;| <span class="id">DECDEF</span> : <span class="id">init_name_group</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">definition</span>  <br/>
+&nbsp;| <span class="id">PRAGMA</span> : <span class="id">string</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">definition</span><br/>
+<br/>
+<br/>
+<span class="kwd">with</span> <span class="id">statement</span> :=<br/>
+&nbsp;| <span class="id">NOP</span> : <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">COMPUTATION</span> : <span class="id">expression</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">BLOCK</span> : <span class="id">list</span> <span class="id">statement</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">If</span> : <span class="id">expression</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">option</span> <span class="id">statement</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">WHILE</span> : <span class="id">expression</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">DOWHILE</span> : <span class="id">expression</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">FOR</span> : <span class="id">option</span> <span class="id">for_clause</span> -&gt; <span class="id">option</span> <span class="id">expression</span> -&gt; <span class="id">option</span> <span class="id">expression</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">BREAK</span> : <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">CONTINUE</span> : <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">RETURN</span> : <span class="id">option</span> <span class="id">expression</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">SWITCH</span> : <span class="id">expression</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">CASE</span> : <span class="id">expression</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">DEFAULT</span> : <span class="id">statement</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">LABEL</span> : <span class="id">string</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">GOTO</span> : <span class="id">string</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">ASM</span> : <span class="id">list</span> <span class="id">cvspec</span> -&gt; <span class="id">bool</span> -&gt; <span class="id">list</span> <span class="id">char_code</span> -&gt; <span class="id">list</span> <span class="id">asm_operand</span> -&gt; <span class="id">list</span> <span class="id">asm_operand</span> -&gt; <span class="id">list</span> <span class="id">asm_flag</span> -&gt; <span class="id">cabsloc</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;| <span class="id">DEFINITION</span> : <span class="id">definition</span> -&gt; <span class="id">statement</span> <br/>
+<br/>
+<span class="kwd">with</span> <span class="id">for_clause</span> :=<br/>
+&nbsp;| <span class="id">FC_EXP</span> : <span class="id">expression</span> -&gt; <span class="id">for_clause</span><br/>
+&nbsp;| <span class="id">FC_DECL</span> : <span class="id">definition</span> -&gt; <span class="id">for_clause</span>.<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

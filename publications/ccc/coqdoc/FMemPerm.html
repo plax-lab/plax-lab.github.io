@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module FMemPerm</title>
+<meta name="description" content="Documentation of Coq module FMemPerm" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module FMemPerm</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Memperm.html">Memperm</a></span> <span class="id"><a href="Memtype.html">Memtype</a></span> <span class="id"><a href="Memory.html">Memory</a></span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="eq_perm_kind">eq_perm_kind</a></span>: <span class="id"><a href="Memperm.html#perm_kind">Memperm.perm_kind</a></span> -&gt; <span class="id"><a href="Memtype.html#perm_kind">perm_kind</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="eq_max">eq_max</a></span>: <span class="id"><a href="FMemPerm.html#eq_perm_kind">eq_perm_kind</a></span> <span class="id"><a href="Memperm.html#Max">Memperm.Max</a></span> <span class="id"><a href="Memtype.html#Max">Max</a></span><br/>
+| <span class="id"><a name="eq_cur">eq_cur</a></span>: <span class="id"><a href="FMemPerm.html#eq_perm_kind">eq_perm_kind</a></span> <span class="id"><a href="Memperm.html#Cur">Memperm.Cur</a></span> <span class="id"><a href="Memtype.html#Cur">Cur</a></span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="eq_permission">eq_permission</a></span>: <span class="id"><a href="Memperm.html#permission">Memperm.permission</a></span> -&gt; <span class="id"><a href="Memtype.html#permission">permission</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="eq_freeable">eq_freeable</a></span>: <span class="id"><a href="FMemPerm.html#eq_permission">eq_permission</a></span> <span class="id"><a href="Memperm.html#Freeable">Memperm.Freeable</a></span> <span class="id"><a href="Memtype.html#Freeable">Freeable</a></span><br/>
+| <span class="id"><a name="eq_writable">eq_writable</a></span>: <span class="id"><a href="FMemPerm.html#eq_permission">eq_permission</a></span> <span class="id"><a href="Memperm.html#Writable">Memperm.Writable</a></span> <span class="id"><a href="Memtype.html#Writable">Writable</a></span><br/>
+| <span class="id"><a name="eq_readable">eq_readable</a></span>: <span class="id"><a href="FMemPerm.html#eq_permission">eq_permission</a></span> <span class="id"><a href="Memperm.html#Readable">Memperm.Readable</a></span> <span class="id"><a href="Memtype.html#Readable">Readable</a></span><br/>
+| <span class="id"><a name="eq_nonempty">eq_nonempty</a></span>: <span class="id"><a href="FMemPerm.html#eq_permission">eq_permission</a></span> <span class="id"><a href="Memperm.html#Nonempty">Memperm.Nonempty</a></span> <span class="id"><a href="Memtype.html#Nonempty">Nonempty</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="perm_kind_convert">perm_kind_convert</a></span> (<span class="id">K</span>: <span class="id"><a href="Memtype.html#perm_kind">perm_kind</a></span>) : <span class="id"><a href="Memperm.html#perm_kind">Memperm.perm_kind</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="FMemPerm.html#K">K</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memtype.html#Max">Max</a></span> =&gt; <span class="id"><a href="Memperm.html#Max">Memperm.Max</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memtype.html#Cur">Cur</a></span> =&gt; <span class="id"><a href="Memperm.html#Cur">Memperm.Cur</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">perm_kind_convert</span>' (<span class="id">K</span>: <span class="id"><a href="Memperm.html#perm_kind">Memperm.perm_kind</a></span>) : <span class="id"><a href="Memtype.html#perm_kind">perm_kind</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="FMemPerm.html#K">K</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memperm.html#Max">Memperm.Max</a></span> =&gt; <span class="id"><a href="Memtype.html#Max">Max</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memperm.html#Cur">Memperm.Cur</a></span> =&gt; <span class="id"><a href="Memtype.html#Cur">Cur</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="permission_convert">permission_convert</a></span> (<span class="id">P</span>: <span class="id"><a href="Memtype.html#permission">permission</a></span>) : <span class="id"><a href="Memperm.html#permission">Memperm.permission</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="FMemPerm.html#P">P</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memtype.html#Freeable">Freeable</a></span> =&gt; <span class="id"><a href="Memperm.html#Freeable">Memperm.Freeable</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memtype.html#Writable">Writable</a></span> =&gt; <span class="id"><a href="Memperm.html#Writable">Memperm.Writable</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memtype.html#Readable">Readable</a></span> =&gt; <span class="id"><a href="Memperm.html#Readable">Memperm.Readable</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memtype.html#Nonempty">Nonempty</a></span> =&gt; <span class="id"><a href="Memperm.html#Nonempty">Memperm.Nonempty</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">permission_convert</span>' (<span class="id">P</span>: <span class="id"><a href="Memperm.html#permission">Memperm.permission</a></span>) : <span class="id"><a href="Memtype.html#permission">permission</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="FMemPerm.html#P">P</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memperm.html#Freeable">Memperm.Freeable</a></span> =&gt; <span class="id"><a href="Memtype.html#Freeable">Freeable</a></span> <br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memperm.html#Writable">Memperm.Writable</a></span> =&gt; <span class="id"><a href="Memtype.html#Writable">Writable</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memperm.html#Readable">Memperm.Readable</a></span> =&gt; <span class="id"><a href="Memtype.html#Readable">Readable</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memperm.html#Nonempty">Memperm.Nonempty</a></span> =&gt; <span class="id"><a href="Memtype.html#Nonempty">Nonempty</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">perm_order</span>''<span class="id">_equiv_1</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p1</span> <span class="id">p2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Memperm.perm_order</span>'' <span class="id"><a href="FMemPerm.html#p1">p1</a></span> <span class="id"><a href="FMemPerm.html#p2">p2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Mem.perm_order</span>'' (<span class="id"><a href="Coqlib.html#option_map">option_map</a></span> <span class="id">permission_convert</span>' <span class="id"><a href="FMemPerm.html#p1">p1</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="Coqlib.html#option_map">option_map</a></span> <span class="id">permission_convert</span>' <span class="id"><a href="FMemPerm.html#p2">p2</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5987')">Proof.</div>
+<div class="proofscript" id="proof5987">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">p1</span>, <span class="id">p2</span>; <span class="id">inv</span> <span class="id">H</span>; <span class="id">cbv</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">p0</span>; <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">p0</span>; <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">p</span>; <span class="id">constructor</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">perm_order_convert</span>'<span class="id">_eq</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p1</span> <span class="id">p2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Memperm.html#perm_order">Memperm.perm_order</a></span> <span class="id"><a href="FMemPerm.html#p1">p1</a></span> <span class="id"><a href="FMemPerm.html#p2">p2</a></span> &lt;-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Memtype.html#perm_order">perm_order</a></span> (<span class="id">permission_convert</span>' <span class="id"><a href="FMemPerm.html#p1">p1</a></span>) (<span class="id">permission_convert</span>' <span class="id"><a href="FMemPerm.html#p2">p2</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5988')">Proof.</div>
+<div class="proofscript" id="proof5988">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">split</span>; <span class="tactic">intros</span>; [<span class="tactic">destruct</span> <span class="id">p1</span>|<span class="tactic">destruct</span> <span class="id">p1</span>,<span class="id">p2</span>]; <span class="id">inv</span> <span class="id">H</span>; <span class="tactic">try</span> <span class="id">constructor</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="eq_perm_kind_convert">eq_perm_kind_convert</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">K</span> <span class="id">K</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="FMemPerm.html#eq_perm_kind">eq_perm_kind</a></span> <span class="id">K</span>' <span class="id"><a href="FMemPerm.html#K">K</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="FMemPerm.html#perm_kind_convert">perm_kind_convert</a></span> <span class="id"><a href="FMemPerm.html#K">K</a></span> = <span class="id">K</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5989')">Proof.</div>
+<div class="proofscript" id="proof5989">
+ <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">K</span>; <span class="id">inv</span> <span class="id">H</span>; <span class="tactic">auto</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">eq_permission_convert</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">P</span> <span class="id">P</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="FMemPerm.html#eq_permission">eq_permission</a></span> <span class="id">P</span>' <span class="id"><a href="FMemPerm.html#P">P</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">permission_convert</span>' <span class="id">P</span>' = <span class="id"><a href="FMemPerm.html#P">P</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5990')">Proof.</div>
+<div class="proofscript" id="proof5990">
+ <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">P</span>; <span class="id">inv</span> <span class="id">H</span>; <span class="tactic">auto</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="perm_kind_convert_eq">perm_kind_convert_eq</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">k</span>, <span class="id"><a href="FMemPerm.html#eq_perm_kind">eq_perm_kind</a></span> (<span class="id"><a href="FMemPerm.html#perm_kind_convert">perm_kind_convert</a></span> <span class="id"><a href="FMemPerm.html#k">k</a></span>) <span class="id"><a href="FMemPerm.html#k">k</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5991')">Proof.</div>
+<div class="proofscript" id="proof5991">
+ <span class="tactic">intros</span> <span class="id">k</span>. <span class="tactic">destruct</span> <span class="id">k</span>; <span class="tactic">simpl</span>; <span class="id">constructor</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="permission_convert_eq">permission_convert_eq</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p</span>, <span class="id"><a href="FMemPerm.html#eq_permission">eq_permission</a></span> (<span class="id"><a href="FMemPerm.html#permission_convert">permission_convert</a></span> <span class="id"><a href="FMemPerm.html#p">p</a></span>) <span class="id"><a href="FMemPerm.html#p">p</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5992')">Proof.</div>
+<div class="proofscript" id="proof5992">
+ <span class="tactic">intros</span> <span class="id">p</span>. <span class="tactic">destruct</span> <span class="id">p</span>; <span class="tactic">simpl</span>; <span class="id">constructor</span>. Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module TSOGlobUSim</title>
+<meta name="description" content="Documentation of Coq module TSOGlobUSim" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module TSOGlobUSim</h1>
+<div class="coq">
+<span class="id">From</span> <span class="id">mathcomp.ssreflect</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">fintype</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Maps.html">Maps</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AST.html">AST</a></span> <span class="id"><a href="Integers.html">Integers</a></span> <span class="id"><a href="Floats.html">Floats</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Events.html">Events</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span> <span class="id"><a href="Smallstep.html">Smallstep</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Locations.html">Locations</a></span> <span class="id"><a href="Stacklayout.html">Stacklayout</a></span> <span class="id"><a href="Conventions.html">Conventions</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Asm.html">Asm</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="CUAST.html">CUAST</a></span> <span class="id"><a href="FMemOpFP.html">FMemOpFP</a></span> <span class="id"><a href="ValFP.html">ValFP</a></span> <span class="id"><a href="Op_fp.html">Op_fp</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html">String</a></span> <span class="id"><a href="val_casted.html">val_casted</a></span> <span class="id"><a href="helpers.html">helpers</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="FMemory.html">FMemory</a></span> <span class="id"><a href="TSOMem.html">TSOMem</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="GAST.html">GAST</a></span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="ETrace.html">ETrace</a></span> <span class="id"><a href="Blockset.html">Blockset</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="loadframe.html">loadframe</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="ASM_local.html">ASM_local</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AsmLang.html">AsmLang</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AsmTSO.html">AsmTSO</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html">Coq.Lists.Streams</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="TSOGlobSem.html">TSOGlobSem</a></span> <span class="id"><a href="GlobSemantics.html">GlobSemantics</a></span>.<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> <span class="id"><a name="footprint">footprint</a></span> := <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> <span class="id"><a name="empfp">empfp</a></span> := <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>.<br/>
+<br/>
+<span class="kwd">Record</span> <span class="id"><a name="TSOGConfigUSim">TSOGConfigUSim</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id">sge</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id">tge</span>: <span class="id"><a href="TSOGlobSem.html#TSOGlobEnv.t">TSOGlobEnv.t</a></span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">match_state</span>: @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="TSOGlobUSim.html#sge">sge</a></span> -&gt; @<span class="id"><a href="TSOGlobSem.html#TSOProgConfig">TSOProgConfig</a></span> <span class="id"><a href="TSOGlobUSim.html#tge">tge</a></span> -&gt; <span class="kwd">Prop</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_taustep">match_taustep</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">tpc</span>' <span class="id">fpT</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_globstep">tso_globstep</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> <span class="id"><a href="TSOGlobSem.html#tau">tau</a></span> <span class="id">fpT</span>' <span class="id">tpc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">spc</span>' <span class="id">fpS</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id">fpS</span>' <span class="id">spc</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id">spc</span>' <span class="id">tpc</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics.html#abort">GlobSemantics.abort</a></span> <span class="id">spc</span>')<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_swstep">match_swstep</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">tpc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_globstep">tso_globstep</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> <span class="id"><a href="TSOGlobSem.html#sw">sw</a></span> <span class="id"><a href="TSOGlobUSim.html#empfp">empfp</a></span> <span class="id">tpc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">spc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="ETrace.html#sw">ETrace.sw</a></span> <span class="id"><a href="TSOGlobUSim.html#empfp">empfp</a></span> <span class="id">spc</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id">spc</span>' <span class="id">tpc</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_unbufferstep">match_unbufferstep</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t</span>' <span class="id">tpc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_globstep">tso_globstep</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> (<span class="id"><a href="TSOGlobSem.html#ub">ub</a></span> <span class="id">t</span>') <span class="id"><a href="TSOGlobUSim.html#empfp">empfp</a></span> <span class="id">tpc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id">tpc</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_eventstep">match_eventstep</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">v</span> <span class="id">tpc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_globstep">tso_globstep</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> (<span class="id"><a href="TSOGlobSem.html#evt">evt</a></span> <span class="id"><a href="TSOGlobUSim.html#v">v</a></span>) <span class="id"><a href="TSOGlobUSim.html#empfp">empfp</a></span> <span class="id">tpc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">spc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> (<span class="id"><a href="ETrace.html#evt">ETrace.evt</a></span> <span class="id"><a href="TSOGlobUSim.html#v">v</a></span>) <span class="id"><a href="TSOGlobUSim.html#empfp">empfp</a></span> <span class="id">spc</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id">spc</span>' <span class="id">tpc</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_final">match_final</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#final_state">final_state</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#final_state">GlobDefs.final_state</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="match_abort">match_abort</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">spc</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#abort">TSOGlobSem.abort</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">spc</span>' <span class="id">fpS</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#fpS">fpS</a></span> <span class="id">spc</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics.html#abort">GlobSemantics.abort</a></span> <span class="id">spc</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;}.<br/>
+<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="TSOGlobUSim">TSOGlobUSim</a></span> {<span class="id">NL</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nat">nat</a></span>} {<span class="id">L</span>: @<span class="id"><a href="GAST.html#langs">langs</a></span> <span class="id"><a href="TSOGlobUSim.html#NL">NL</a></span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">pSC</span>: <span class="id"><a href="GAST.html#prog">prog</a></span> <span class="id"><a href="TSOGlobUSim.html#L">L</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">pTSO</span>: <span class="id"><a href="TSOGlobSem.html#tsoprog">tsoprog</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sgm</span> <span class="id">sge</span> <span class="id">spc</span> <span class="id">t</span> <span class="id">tgm</span> <span class="id">tge</span> <span class="id">tpc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_sc_initRel">tso_sc_initRel</a></span> <span class="id"><a href="TSOGlobUSim.html#sge">sge</a></span> <span class="id"><a href="TSOGlobUSim.html#tge">tge</a></span> <span class="id"><a href="TSOGlobUSim.html#sgm">sgm</a></span> <span class="id"><a href="TSOGlobUSim.html#tgm">tgm</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="TSOGlobUSim.html#pSC">pSC</a></span> <span class="id"><a href="TSOGlobUSim.html#sgm">sgm</a></span> <span class="id"><a href="TSOGlobUSim.html#sge">sge</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;~ <span class="id"><a href="DRF.html#star_race_config">DRF.star_race_config</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#safe_state">safe_state</a></span> <span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics.html#abort">abort</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_initconfig">tso_initconfig</a></span> <span class="id"><a href="TSOGlobUSim.html#pTSO">pTSO</a></span> <span class="id"><a href="TSOGlobUSim.html#tgm">tgm</a></span> <span class="id"><a href="TSOGlobUSim.html#tge">tge</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> <span class="id"><a href="TSOGlobUSim.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">match_state</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#TSOGConfigUSim">TSOGConfigUSim</a></span> <span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span>.<br/>
+<br/>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tau_star_non_evt_star_app">tau_star_non_evt_star_app</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">state</span> <span class="id">step</span> (<span class="id">pc</span>: <span class="id"><a href="TSOGlobUSim.html#state">state</a></span>) <span class="id">fp</span> <span class="id">pc</span>' <span class="id">fp</span>' <span class="id">pc</span>'',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="TSOGlobUSim.html#step">step</a></span> <span class="id"><a href="TSOGlobUSim.html#pc">pc</a></span> <span class="id"><a href="TSOGlobUSim.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="TSOGlobUSim.html#step">step</a></span> <span class="id">pc</span>' <span class="id">fp</span>' <span class="id">pc</span>'' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="TSOGlobUSim.html#step">step</a></span> <span class="id"><a href="TSOGlobUSim.html#pc">pc</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="TSOGlobUSim.html#fp">fp</a></span> <span class="id">fp</span>') <span class="id">pc</span>''.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9219')">Proof.</div>
+<div class="proofscript" id="proof9219">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1. <span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.emp_union_fp">FP.emp_union_fp</a></span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">IHtau_star</span> <span class="kwd">in</span> <span class="id">H1</span>. <span class="tactic">rewrite</span> &lt;- <span class="id"><a href="Footprint.html#FP.fp_union_assoc">FP.fp_union_assoc</a></span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tau_star_star_step">tau_star_star_step</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">state</span> <span class="id">step</span> (<span class="id">pc</span>: <span class="id"><a href="TSOGlobUSim.html#state">state</a></span>) <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="TSOGlobUSim.html#step">step</a></span> <span class="id"><a href="TSOGlobUSim.html#pc">pc</a></span> <span class="id"><a href="TSOGlobUSim.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">ll</span>, <span class="id"><a href="ETrace.html#star">star</a></span> <span class="id"><a href="TSOGlobUSim.html#step">step</a></span> <span class="id"><a href="TSOGlobUSim.html#pc">pc</a></span> <span class="id"><a href="TSOGlobUSim.html#ll">ll</a></span> <span class="id"><a href="TSOGlobUSim.html#fp">fp</a></span> <span class="id">pc</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9220')">Proof.</div>
+<div class="proofscript" id="proof9220">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1. <span class="id">eexists</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">IHtau_star</span>. <span class="id">eexists</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="non_evt_star_star_step">non_evt_star_star_step</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">state</span> <span class="id">step</span> (<span class="id">pc</span>: <span class="id"><a href="TSOGlobUSim.html#state">state</a></span>) <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="TSOGlobUSim.html#step">step</a></span> <span class="id"><a href="TSOGlobUSim.html#pc">pc</a></span> <span class="id"><a href="TSOGlobUSim.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">ll</span>, <span class="id"><a href="ETrace.html#star">star</a></span> <span class="id"><a href="TSOGlobUSim.html#step">step</a></span> <span class="id"><a href="TSOGlobUSim.html#pc">pc</a></span> <span class="id"><a href="TSOGlobUSim.html#ll">ll</a></span> <span class="id"><a href="TSOGlobUSim.html#fp">fp</a></span> <span class="id">pc</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9221')">Proof.</div>
+<div class="proofscript" id="proof9221">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1. <span class="id">eexists</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">IHnon_evt_star</span>. <span class="id">eexists</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">IHnon_evt_star</span>. <span class="id">eexists</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="star_star_app">star_star_app</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">state</span> <span class="id">step</span> (<span class="id">pc</span>: <span class="id"><a href="TSOGlobUSim.html#state">state</a></span>) <span class="id">l1</span> <span class="id">fp</span> <span class="id">pc</span>' <span class="id">l2</span> <span class="id">fp</span>' <span class="id">pc</span>'',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#star">star</a></span> <span class="id"><a href="TSOGlobUSim.html#step">step</a></span> <span class="id"><a href="TSOGlobUSim.html#pc">pc</a></span> <span class="id"><a href="TSOGlobUSim.html#l1">l1</a></span> <span class="id"><a href="TSOGlobUSim.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#star">star</a></span> <span class="id"><a href="TSOGlobUSim.html#step">step</a></span> <span class="id">pc</span>' <span class="id"><a href="TSOGlobUSim.html#l2">l2</a></span> <span class="id">fp</span>' <span class="id">pc</span>'' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#star">star</a></span> <span class="id"><a href="TSOGlobUSim.html#step">step</a></span> <span class="id"><a href="TSOGlobUSim.html#pc">pc</a></span> (<span class="id"><a href="TSOGlobUSim.html#l1">l1</a></span> ++ <span class="id"><a href="TSOGlobUSim.html#l2">l2</a></span>) (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="TSOGlobUSim.html#fp">fp</a></span> <span class="id">fp</span>') <span class="id">pc</span>''.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9222')">Proof.</div>
+<div class="proofscript" id="proof9222">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.emp_union_fp">FP.emp_union_fp</a></span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">IHstar</span> <span class="kwd">in</span> <span class="id">H1</span>. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> &lt;- <span class="id"><a href="Footprint.html#FP.fp_union_assoc">FP.fp_union_assoc</a></span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="non_evt_star_sim">non_evt_star_sim</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">SGE</span> <span class="id">TGE</span> (<span class="id">spc</span>: @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="TSOGlobUSim.html#SGE">SGE</a></span>) (<span class="id">tpc</span>: @<span class="id"><a href="TSOGlobSem.html#TSOProgConfig">TSOProgConfig</a></span> <span class="id"><a href="TSOGlobUSim.html#TGE">TGE</a></span>) <span class="id">match_state</span> <span class="id">fp</span> <span class="id">tpc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="TSOGlobSem.html#tso_etrstep">tso_etrstep</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> <span class="id"><a href="TSOGlobUSim.html#fp">fp</a></span> <span class="id">tpc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#TSOGConfigUSim">TSOGConfigUSim</a></span> <span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#tpc">tpc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;~ <span class="id"><a href="DRF.html#star_race_config">DRF.star_race_config</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> -&gt;    <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#safe_state">safe_state</a></span> <span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics.html#abort">abort</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">fpS</span> <span class="id">spc</span>', <span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="TSOGlobUSim.html#spc">spc</a></span> <span class="id"><a href="TSOGlobUSim.html#fpS">fpS</a></span> <span class="id">spc</span>' /\ <span class="id"><a href="TSOGlobUSim.html#match_state">match_state</a></span> <span class="id">spc</span>' <span class="id">tpc</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9223')">Proof.</div>
+<div class="proofscript" id="proof9223">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> 1. <span class="id">revert</span> <span class="id">spc</span>. <span class="tactic">induction</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;{ <span class="id">econstructor</span>. <span class="id">econstructor</span>. <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="id">econstructor</span>. }<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H</span>; <span class="tactic">destruct</span> <span class="id">l</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#match_taustep">match_taustep</a></span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="tactic">eauto</span>. <span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> (<span class="id">spc</span>' &amp; <span class="id">fpS</span> &amp; <span class="id">Hstar</span> &amp; [<span class="id">MS</span>|<span class="id">Habort</span>]); [|<span class="id">exfalso</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHnon_evt_star</span> <span class="kwd">in</span> <span class="id">MS</span>; <span class="tactic">eauto</span>. <span class="tactic">destruct</span> <span class="id">MS</span> <span class="kwd">as</span> (<span class="id">fpS</span>' &amp; <span class="id">spc</span>'' &amp; <span class="id">Hstar</span>' &amp; <span class="id">MS</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="TSOGlobUSim.html#tau_star_non_evt_star_app">tau_star_non_evt_star_app</a></span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> 2 <span class="id">eexists</span>. <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intro</span>. <span class="tactic">apply</span> <span class="id">H3</span>. <span class="tactic">unfold</span> <span class="id"><a href="DRF.html#star_race_config">DRF.star_race_config</a></span> <span class="kwd">in</span> *. <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#tau_star_star_step">tau_star_star_step</a></span> <span class="kwd">in</span> <span class="id">Hstar</span>. <span class="tactic">destruct</span> <span class="id">Hstar</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">l</span> [<span class="id">fp</span> [<span class="id">pc</span>' [<span class="id">Hstar</span> <span class="id">Hrace</span>]]]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> 3 <span class="id">eexists</span>. <span class="tactic">split</span>. <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#star_star_app">star_star_app</a></span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="ETrace.html#safe_state">safe_state</a></span>. <span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#tau_star_star_step">tau_star_star_step</a></span> <span class="kwd">in</span> <span class="id">Hstar</span>. <span class="tactic">destruct</span> <span class="id">Hstar</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H4</span>. <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#star_star_app">star_star_app</a></span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#tau_star_star_step">tau_star_star_step</a></span> <span class="kwd">in</span> <span class="id">Hstar</span>. <span class="tactic">destruct</span> <span class="id">Hstar</span>. <span class="tactic">eapply</span> <span class="id">H4</span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">assert</span> (<span class="id">fp1</span> = <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>) <span class="tactic">by</span> (<span class="id">inv</span> <span class="id">H7</span>; <span class="tactic">auto</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">fp1</span>. <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#match_unbufferstep">match_unbufferstep</a></span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">assert</span> (<span class="id">fp1</span> = <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>) <span class="tactic">by</span> (<span class="id">inv</span> <span class="id">H7</span>; <span class="tactic">auto</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">fp1</span>. <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#match_swstep">match_swstep</a></span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="tactic">eauto</span>. <span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> (<span class="id">spc</span>' &amp; <span class="id">Hsw</span> &amp; <span class="id">MS</span>').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">IHnon_evt_star</span> <span class="kwd">in</span> <span class="id">MS</span>'; <span class="tactic">eauto</span>. <span class="tactic">destruct</span> <span class="id">MS</span>' <span class="kwd">as</span> (<span class="id">fpS</span>' &amp; <span class="id">spc</span>'' &amp; <span class="id">Hstar</span>' &amp; <span class="id">MS</span>').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> 2 <span class="id">eexists</span>. <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="DRF.html#star_race_config">DRF.star_race_config</a></span> <span class="kwd">in</span> *. <span class="tactic">intro</span>. <span class="tactic">apply</span> <span class="id">H3</span>. <span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">l</span> [<span class="id">fp</span> [<span class="id">pc</span>' [<span class="id">Hstar</span> <span class="id">Hrace</span>]]]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> 3 <span class="id">eexists</span>. <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id"><a href="ETrace.html#star_step">star_step</a></span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="ETrace.html#safe_state">safe_state</a></span>. <span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">H4</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;}<br/>
+Qed.</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="tso_globusim_refinement">tso_globusim_refinement</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> (<span class="id">pSC</span>: @<span class="id"><a href="GAST.html#prog">prog</a></span> <span class="id"><a href="TSOGlobUSim.html#NL">NL</a></span> <span class="id"><a href="TSOGlobUSim.html#L">L</a></span>) <span class="id">pTSO</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobUSim.html#TSOGlobUSim">TSOGlobUSim</a></span> <span class="id"><a href="TSOGlobUSim.html#pSC">pSC</a></span> <span class="id"><a href="TSOGlobUSim.html#pTSO">pTSO</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_refine_sc">tso_refine_sc</a></span> <span class="id"><a href="TSOGlobUSim.html#pSC">pSC</a></span> <span class="id"><a href="TSOGlobUSim.html#pTSO">pTSO</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof9224')">Proof.</div>
+<div class="proofscript" id="proof9224">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">pSC</span> <span class="id">pTSO</span> <span class="id">HSim</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">sgm</span> <span class="id">sge</span> <span class="id">spc</span> <span class="id">t</span> <span class="id">tgm</span> <span class="id">tge</span> <span class="id">tpc</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Hinitrel</span> <span class="id">Hinitsc</span> <span class="id">Hdrf</span> <span class="id">Hsafe</span> <span class="id">Hinittso</span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">HSim</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">Hinitrel</span> <span class="id">Hinitsc</span> <span class="id">Hdrf</span> <span class="id">Hsafe</span> <span class="id">Hinittso</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">HSim</span> <span class="kwd">as</span> [<span class="id">match_state</span> [<span class="id">HSim</span> <span class="id">MS</span>]].<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">Hinitrel</span> <span class="id">Hinitsc</span> <span class="id">Hinittso</span> <span class="id">sgm</span> <span class="id">tgm</span> <span class="id">t</span>. <br/>
+&nbsp;&nbsp;<span class="id">revert</span> <span class="id">tpc</span> <span class="id">spc</span> <span class="id">Hdrf</span> <span class="id">Hsafe</span> <span class="id">MS</span> . <span class="id">cofix</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">B</span>; <span class="tactic">intros</span>; <span class="tactic">try</span> (<span class="id">inv</span> <span class="id">H0</span>; <span class="tactic">fail</span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">clear</span> <span class="id">tso_globusim_refinement</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="TSOGlobUSim.html#non_evt_star_sim">non_evt_star_sim</a></span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> (<span class="id">fpS</span> &amp; <span class="id">spc</span>' &amp; <span class="id">Hstar</span> &amp; <span class="id">MS</span>').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#match_final">match_final</a></span> <span class="kwd">in</span> <span class="id">MS</span>'; <span class="tactic">eauto</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{ <span class="tactic">clear</span> <span class="id">tso_globusim_refinement</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="TSOGlobUSim.html#non_evt_star_sim">non_evt_star_sim</a></span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> (<span class="id">fpS</span> &amp; <span class="id">spc</span>' &amp; <span class="id">Hstar</span> &amp; <span class="id">MS</span>').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#match_abort">match_abort</a></span> <span class="kwd">in</span> <span class="id">MS</span>'; <span class="tactic">eauto</span>. <span class="tactic">destruct</span> <span class="id">MS</span>' <span class="kwd">as</span> (<span class="id">spc</span>'' &amp; <span class="id">fpS</span>' &amp; <span class="id">Hstar</span>' &amp; <span class="id">Habort</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#non_evt_star_star_step">non_evt_star_star_step</a></span> <span class="kwd">in</span> <span class="id">Hstar</span>. <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#tau_star_star_step">tau_star_star_step</a></span> <span class="kwd">in</span> <span class="id">Hstar</span>'.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Hstar</span>, <span class="id">Hstar</span>'. <span class="id">exploit</span> <span class="id"><a href="TSOGlobUSim.html#star_star_app">star_star_app</a></span>. <span class="tactic">exact</span> <span class="id">H1</span>. <span class="tactic">exact</span> <span class="id">H3</span>. <span class="tactic">intro</span> <span class="id">Hstar</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exfalso</span>. <span class="tactic">eapply</span> <span class="id">Hsafe</span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id"><a href="ETrace.html#Etr">Etr</a></span> <span class="id"><a href="TSOGlobSem.html#tso_etrstep">tso_etrstep</a></span> <span class="id"><a href="TSOGlobSem.html#abort">TSOGlobSem.abort</a></span> <span class="id"><a href="TSOGlobSem.html#final_state">final_state</a></span> <span class="id">tpc</span> (<span class="id"><a href="ETrace.html#Behav_cons">Behav_cons</a></span> <span class="id">v</span> <span class="id">B</span>)) <span class="tactic">by</span> (<span class="id">inv</span> <span class="id">H</span>; <span class="tactic">auto</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">exists</span> <span class="id">fp</span> <span class="id">state</span>' <span class="id">state</span>'',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="TSOGlobSem.html#tso_etrstep">tso_etrstep</a></span> <span class="id">tpc</span> <span class="id"><a href="TSOGlobUSim.html#fp">fp</a></span> <span class="id">state</span>' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="TSOGlobSem.html#tso_etrstep">tso_etrstep</a></span> <span class="id">state</span>' (<span class="id"><a href="ETrace.html#evt">ETrace.evt</a></span> <span class="id">v</span>) <span class="id"><a href="TSOGlobUSim.html#empfp">empfp</a></span> <span class="id">state</span>'' /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#Etr">Etr</a></span> <span class="id"><a href="TSOGlobSem.html#tso_etrstep">tso_etrstep</a></span> <span class="id"><a href="TSOGlobSem.html#abort">TSOGlobSem.abort</a></span> <span class="id"><a href="TSOGlobSem.html#final_state">final_state</a></span> <span class="id">state</span>'' <span class="id">B</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">as</span> (<span class="id">fp</span> &amp; <span class="id">state</span>' &amp; <span class="id">state</span>'' &amp; ? &amp; ? &amp; ?).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">inversion</span> <span class="id">H1</span>. <span class="tactic">subst</span>. <span class="tactic">do</span> 3 <span class="id">eexists</span>. <span class="tactic">split</span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">exists</span> <span class="id">fpS</span> <span class="id">spc</span>', <span class="id"><a href="ETrace.html#non_evt_star">non_evt_star</a></span> <span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id">spc</span> <span class="id"><a href="TSOGlobUSim.html#fpS">fpS</a></span> <span class="id">spc</span>' /\ <span class="id">match_state</span> <span class="id">spc</span>' <span class="id">state</span>') <span class="kwd">as</span> (<span class="id">fpS</span> &amp; <span class="id">spc</span>' &amp; <span class="id">Hstar</span> &amp; <span class="id">MS</span>').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id">exploit</span> <span class="id"><a href="TSOGlobUSim.html#non_evt_star_sim">non_evt_star_sim</a></span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id"><a href="TSOGlobSem.html#tso_globstep">tso_globstep</a></span> <span class="id">state</span>' (<span class="id"><a href="TSOGlobSem.html#evt">evt</a></span> <span class="id">v</span>) <span class="id"><a href="TSOGlobUSim.html#empfp">empfp</a></span> <span class="id">state</span>'') <span class="kwd">as</span> <span class="id">Hevt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id">inv</span> <span class="id">H2</span>. <span class="tactic">destruct</span> <span class="id">l</span>; <span class="id">inv</span> <span class="id">H4</span>. <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#match_eventstep">match_eventstep</a></span> <span class="kwd">in</span> <span class="id">MS</span>'; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">MS</span>' <span class="kwd">as</span> (<span class="id">spc</span>'' &amp; <span class="id">Hevt</span>' &amp; <span class="id">MS</span>'').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id"><a href="ETrace.html#Etr_cons">Etr_cons</a></span> <span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">fpS</span> <span class="id">spc</span>' <span class="id">_</span> <span class="id">spc</span>''). <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">tso_globusim_refinement</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="DRF.html#star_race_config">DRF.star_race_config</a></span> <span class="kwd">in</span> *. <span class="tactic">intros</span> (<span class="id">l</span> &amp; <span class="id">fp</span>' &amp; <span class="id">pc</span>' &amp; <span class="id">Hstar</span>' &amp; <span class="id">Hrace</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Hdrf</span>. <span class="tactic">apply</span> <span class="id"><a href="TSOGlobUSim.html#non_evt_star_star_step">non_evt_star_star_step</a></span> <span class="kwd">in</span> <span class="id">Hstar</span>. <span class="tactic">destruct</span> <span class="id">Hstar</span> <span class="kwd">as</span> [<span class="id">l</span>' <span class="id">Hstar</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> 3 <span class="id">eexists</span>. <span class="tactic">split</span>. <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#star_star_app">star_star_app</a></span>. <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id"><a href="ETrace.html#star_step">star_step</a></span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="ETrace.html#safe_state">safe_state</a></span>. <span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#non_evt_star_star_step">non_evt_star_star_step</a></span> <span class="kwd">in</span> <span class="id">Hstar</span>. <span class="tactic">destruct</span> <span class="id">Hstar</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Hsafe</span>. <span class="tactic">eapply</span> <span class="id"><a href="TSOGlobUSim.html#star_star_app">star_star_app</a></span>. <span class="tactic">exact</span> <span class="id">H5</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>. }<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

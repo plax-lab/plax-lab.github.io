@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module ValueAOp</title>
+<meta name="description" content="Documentation of Coq module ValueAOp" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module ValueAOp</h1>
+<div class="coq">
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span> <span class="id">Compopts</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span> <span class="id">Integers</span> <span class="id">Floats</span> <span class="id">Values</span> <span class="id">Memory</span> <span class="id">Globalenvs</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Op</span> <span class="id">RTL</span> <span class="id">ValueDomain</span>.<br/>
+<br/>
+<div class="doc">Value analysis for x86_64 operators </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">eval_static_condition</span> (<span class="id">cond</span>: <span class="id">condition</span>) (<span class="id">vl</span>: <span class="id">list</span> <span class="id">aval</span>): <span class="id">abool</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">cond</span>, <span class="id">vl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Ccomp</span> <span class="id">c</span>, <span class="id">v1</span> :: <span class="id">v2</span> :: <span class="id">nil</span> =&gt; <span class="id">cmp_bool</span> <span class="id">c</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Ccompu</span> <span class="id">c</span>, <span class="id">v1</span> :: <span class="id">v2</span> :: <span class="id">nil</span> =&gt; <span class="id">cmpu_bool</span> <span class="id">c</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Ccompimm</span> <span class="id">c</span> <span class="id">n</span>, <span class="id">v1</span> :: <span class="id">nil</span> =&gt; <span class="id">cmp_bool</span> <span class="id">c</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ccompuimm</span> <span class="id">c</span> <span class="id">n</span>, <span class="id">v1</span> :: <span class="id">nil</span> =&gt; <span class="id">cmpu_bool</span> <span class="id">c</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ccompl</span> <span class="id">c</span>, <span class="id">v1</span> :: <span class="id">v2</span> :: <span class="id">nil</span> =&gt; <span class="id">cmpl_bool</span> <span class="id">c</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Ccomplu</span> <span class="id">c</span>, <span class="id">v1</span> :: <span class="id">v2</span> :: <span class="id">nil</span> =&gt; <span class="id">cmplu_bool</span> <span class="id">c</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Ccomplimm</span> <span class="id">c</span> <span class="id">n</span>, <span class="id">v1</span> :: <span class="id">nil</span> =&gt; <span class="id">cmpl_bool</span> <span class="id">c</span> <span class="id">v1</span> (<span class="id">L</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ccompluimm</span> <span class="id">c</span> <span class="id">n</span>, <span class="id">v1</span> :: <span class="id">nil</span> =&gt; <span class="id">cmplu_bool</span> <span class="id">c</span> <span class="id">v1</span> (<span class="id">L</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ccompf</span> <span class="id">c</span>, <span class="id">v1</span> :: <span class="id">v2</span> :: <span class="id">nil</span> =&gt; <span class="id">cmpf_bool</span> <span class="id">c</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Cnotcompf</span> <span class="id">c</span>, <span class="id">v1</span> :: <span class="id">v2</span> :: <span class="id">nil</span> =&gt; <span class="id">cnot</span> (<span class="id">cmpf_bool</span> <span class="id">c</span> <span class="id">v1</span> <span class="id">v2</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ccompfs</span> <span class="id">c</span>, <span class="id">v1</span> :: <span class="id">v2</span> :: <span class="id">nil</span> =&gt; <span class="id">cmpfs_bool</span> <span class="id">c</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Cnotcompfs</span> <span class="id">c</span>, <span class="id">v1</span> :: <span class="id">v2</span> :: <span class="id">nil</span> =&gt; <span class="id">cnot</span> (<span class="id">cmpfs_bool</span> <span class="id">c</span> <span class="id">v1</span> <span class="id">v2</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Cmaskzero</span> <span class="id">n</span>, <span class="id">v1</span> :: <span class="id">nil</span> =&gt; <span class="id">maskzero</span> <span class="id">v1</span> <span class="id">n</span><br/>
+&nbsp;&nbsp;| <span class="id">Cmasknotzero</span> <span class="id">n</span>, <span class="id">v1</span> :: <span class="id">nil</span> =&gt; <span class="id">cnot</span> (<span class="id">maskzero</span> <span class="id">v1</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id">Bnone</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">eval_static_addressing_32</span> (<span class="id">addr</span>: <span class="id">addressing</span>) (<span class="id">vl</span>: <span class="id">list</span> <span class="id">aval</span>): <span class="id">aval</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">addr</span>, <span class="id">vl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Aindexed</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">add</span> <span class="id">v1</span> (<span class="id">I</span> (<span class="id">Int.repr</span> <span class="id">n</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Aindexed2</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">add</span> (<span class="id">add</span> <span class="id">v1</span> <span class="id">v2</span>) (<span class="id">I</span> (<span class="id">Int.repr</span> <span class="id">n</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Ascaled</span> <span class="id">sc</span> <span class="id">ofs</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">add</span> (<span class="id">mul</span> <span class="id">v1</span> (<span class="id">I</span> (<span class="id">Int.repr</span> <span class="id">sc</span>))) (<span class="id">I</span> (<span class="id">Int.repr</span> <span class="id">ofs</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Aindexed2scaled</span> <span class="id">sc</span> <span class="id">ofs</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">add</span> <span class="id">v1</span> (<span class="id">add</span> (<span class="id">mul</span> <span class="id">v2</span> (<span class="id">I</span> (<span class="id">Int.repr</span> <span class="id">sc</span>))) (<span class="id">I</span> (<span class="id">Int.repr</span> <span class="id">ofs</span>)))<br/>
+&nbsp;&nbsp;| <span class="id">Aglobal</span> <span class="id">s</span> <span class="id">ofs</span>, <span class="id">nil</span> =&gt; <span class="id">Ptr</span> (<span class="id">Gl</span> <span class="id">s</span> <span class="id">ofs</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Abased</span> <span class="id">s</span> <span class="id">ofs</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">add</span> (<span class="id">Ptr</span> (<span class="id">Gl</span> <span class="id">s</span> <span class="id">ofs</span>)) <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Abasedscaled</span> <span class="id">sc</span> <span class="id">s</span> <span class="id">ofs</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">add</span> (<span class="id">Ptr</span> (<span class="id">Gl</span> <span class="id">s</span> <span class="id">ofs</span>)) (<span class="id">mul</span> <span class="id">v1</span> (<span class="id">I</span> (<span class="id">Int.repr</span> <span class="id">sc</span>)))<br/>
+&nbsp;&nbsp;| <span class="id">Ainstack</span> <span class="id">ofs</span>, <span class="id">nil</span> =&gt; <span class="id">Ptr</span>(<span class="id">Stk</span> <span class="id">ofs</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id">Vbot</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">eval_static_addressing_64</span> (<span class="id">addr</span>: <span class="id">addressing</span>) (<span class="id">vl</span>: <span class="id">list</span> <span class="id">aval</span>): <span class="id">aval</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">addr</span>, <span class="id">vl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Aindexed</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">addl</span> <span class="id">v1</span> (<span class="id">L</span> (<span class="id">Int64.repr</span> <span class="id">n</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Aindexed2</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">addl</span> (<span class="id">addl</span> <span class="id">v1</span> <span class="id">v2</span>) (<span class="id">L</span> (<span class="id">Int64.repr</span> <span class="id">n</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Ascaled</span> <span class="id">sc</span> <span class="id">ofs</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">addl</span> (<span class="id">mull</span> <span class="id">v1</span> (<span class="id">L</span> (<span class="id">Int64.repr</span> <span class="id">sc</span>))) (<span class="id">L</span> (<span class="id">Int64.repr</span> <span class="id">ofs</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Aindexed2scaled</span> <span class="id">sc</span> <span class="id">ofs</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">addl</span> <span class="id">v1</span> (<span class="id">addl</span> (<span class="id">mull</span> <span class="id">v2</span> (<span class="id">L</span> (<span class="id">Int64.repr</span> <span class="id">sc</span>))) (<span class="id">L</span> (<span class="id">Int64.repr</span> <span class="id">ofs</span>)))<br/>
+&nbsp;&nbsp;| <span class="id">Aglobal</span> <span class="id">s</span> <span class="id">ofs</span>, <span class="id">nil</span> =&gt; <span class="id">Ptr</span> (<span class="id">Gl</span> <span class="id">s</span> <span class="id">ofs</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Abased</span> <span class="id">s</span> <span class="id">ofs</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">addl</span> (<span class="id">Ptr</span> (<span class="id">Gl</span> <span class="id">s</span> <span class="id">ofs</span>)) <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Abasedscaled</span> <span class="id">sc</span> <span class="id">s</span> <span class="id">ofs</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">addl</span> (<span class="id">Ptr</span> (<span class="id">Gl</span> <span class="id">s</span> <span class="id">ofs</span>)) (<span class="id">mull</span> <span class="id">v1</span> (<span class="id">L</span> (<span class="id">Int64.repr</span> <span class="id">sc</span>)))<br/>
+&nbsp;&nbsp;| <span class="id">Ainstack</span> <span class="id">ofs</span>, <span class="id">nil</span> =&gt; <span class="id">Ptr</span>(<span class="id">Stk</span> <span class="id">ofs</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id">Vbot</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">eval_static_addressing</span> (<span class="id">addr</span>: <span class="id">addressing</span>) (<span class="id">vl</span>: <span class="id">list</span> <span class="id">aval</span>): <span class="id">aval</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Archi.ptr64</span><br/>
+&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">eval_static_addressing_64</span> <span class="id">addr</span> <span class="id">vl</span><br/>
+&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">eval_static_addressing_32</span> <span class="id">addr</span> <span class="id">vl</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">eval_static_operation</span> (<span class="id">op</span>: <span class="id">operation</span>) (<span class="id">vl</span>: <span class="id">list</span> <span class="id">aval</span>): <span class="id">aval</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">op</span>, <span class="id">vl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Omove</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ointconst</span> <span class="id">n</span>, <span class="id">nil</span> =&gt; <span class="id">I</span> <span class="id">n</span><br/>
+&nbsp;&nbsp;| <span class="id">Olongconst</span> <span class="id">n</span>, <span class="id">nil</span> =&gt; <span class="id">L</span> <span class="id">n</span><br/>
+&nbsp;&nbsp;| <span class="id">Ofloatconst</span> <span class="id">n</span>, <span class="id">nil</span> =&gt; <span class="kwd">if</span> <span class="id">propagate_float_constants</span> <span class="id">tt</span> <span class="kwd">then</span> <span class="id">F</span> <span class="id">n</span> <span class="kwd">else</span> <span class="id">ntop</span><br/>
+&nbsp;&nbsp;| <span class="id">Osingleconst</span> <span class="id">n</span>, <span class="id">nil</span> =&gt; <span class="kwd">if</span> <span class="id">propagate_float_constants</span> <span class="id">tt</span> <span class="kwd">then</span> <span class="id">FS</span> <span class="id">n</span> <span class="kwd">else</span> <span class="id">ntop</span><br/>
+&nbsp;&nbsp;| <span class="id">Oindirectsymbol</span> <span class="id">id</span>, <span class="id">nil</span> =&gt; <span class="id">Ifptr</span> (<span class="id">Gl</span> <span class="id">id</span> <span class="id">Ptrofs.zero</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ocast8signed</span>, <span class="id">v1</span> :: <span class="id">nil</span> =&gt; <span class="id">sign_ext</span> 8 <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocast8unsigned</span>, <span class="id">v1</span> :: <span class="id">nil</span> =&gt; <span class="id">zero_ext</span> 8 <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocast16signed</span>, <span class="id">v1</span> :: <span class="id">nil</span> =&gt; <span class="id">sign_ext</span> 16 <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocast16unsigned</span>, <span class="id">v1</span> :: <span class="id">nil</span> =&gt; <span class="id">zero_ext</span> 16 <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Oneg</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">neg</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Osub</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">sub</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omul</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">mul</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omulimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">mul</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Omulhs</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">mulhs</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omulhu</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">mulhu</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Odiv</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">divs</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Odivu</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">divu</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omod</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">mods</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omodu</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">modu</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oand</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">and</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oandimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">and</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oor</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">or</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oorimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">or</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oxor</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">xor</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oxorimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">xor</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Onot</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">notint</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Oshl</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">shl</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oshlimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">shl</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshr</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">shr</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oshrimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">shr</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrximm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">shrx</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshru</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">shru</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oshruimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">shru</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ororimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">ror</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshldimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">or</span> (<span class="id">shl</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)) (<span class="id">shru</span> <span class="id">v2</span> (<span class="id">I</span> (<span class="id">Int.sub</span> <span class="id">Int.iwordsize</span> <span class="id">n</span>)))<br/>
+&nbsp;&nbsp;| <span class="id">Olea</span> <span class="id">addr</span>, <span class="id">_</span> =&gt; <span class="id">eval_static_addressing_32</span> <span class="id">addr</span> <span class="id">vl</span><br/>
+&nbsp;&nbsp;| <span class="id">Omakelong</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">longofwords</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Olowlong</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">loword</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ohighlong</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">hiword</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocast32signed</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">longofint</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocast32unsigned</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">longofintu</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Onegl</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">negl</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Oaddlimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">addl</span> <span class="id">v1</span> (<span class="id">L</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Osubl</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">subl</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omull</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">mull</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omullimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">mull</span> <span class="id">v1</span> (<span class="id">L</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Omullhs</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">mullhs</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omullhu</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">mullhu</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Odivl</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">divls</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Odivlu</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">divlu</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omodl</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">modls</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omodlu</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">modlu</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oandl</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">andl</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oandlimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">andl</span> <span class="id">v1</span> (<span class="id">L</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oorl</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">orl</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oorlimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">orl</span> <span class="id">v1</span> (<span class="id">L</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oxorl</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">xorl</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oxorlimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">xorl</span> <span class="id">v1</span> (<span class="id">L</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Onotl</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">notl</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Oshll</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">shll</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oshllimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">shll</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrl</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">shrl</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oshrlimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">shrl</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrxlimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">shrxl</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oshrlu</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">shrlu</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Oshrluimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">shrlu</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ororlimm</span> <span class="id">n</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">rorl</span> <span class="id">v1</span> (<span class="id">I</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Oleal</span> <span class="id">addr</span>, <span class="id">_</span> =&gt; <span class="id">eval_static_addressing_64</span> <span class="id">addr</span> <span class="id">vl</span><br/>
+&nbsp;&nbsp;| <span class="id">Onegf</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">negf</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Oabsf</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">absf</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Oaddf</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">addf</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Osubf</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">subf</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omulf</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">mulf</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Odivf</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">divf</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Onegfs</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">negfs</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Oabsfs</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">absfs</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Oaddfs</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">addfs</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Osubfs</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">subfs</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Omulfs</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">mulfs</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Odivfs</span>, <span class="id">v1</span>::<span class="id">v2</span>::<span class="id">nil</span> =&gt; <span class="id">divfs</span> <span class="id">v1</span> <span class="id">v2</span><br/>
+&nbsp;&nbsp;| <span class="id">Osingleoffloat</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">singleoffloat</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ofloatofsingle</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">floatofsingle</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ointoffloat</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">intoffloat</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ofloatofint</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">floatofint</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ointofsingle</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">intofsingle</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Osingleofint</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">singleofint</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Olongoffloat</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">longoffloat</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ofloatoflong</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">floatoflong</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Olongofsingle</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">longofsingle</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Osingleoflong</span>, <span class="id">v1</span>::<span class="id">nil</span> =&gt; <span class="id">singleoflong</span> <span class="id">v1</span><br/>
+&nbsp;&nbsp;| <span class="id">Ocmp</span> <span class="id">c</span>, <span class="id">_</span> =&gt; <span class="id">of_optbool</span> (<span class="id">eval_static_condition</span> <span class="id">c</span> <span class="id">vl</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id">Vbot</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id">SOUNDNESS</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">bc</span>: <span class="id">block_classification</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">ge</span>: <span class="id">genv</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id">GENV</span>: <span class="id">genv_match</span> <span class="id">bc</span> <span class="id">ge</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">sp</span>: <span class="id">block</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id">STACK</span>: <span class="id">bc</span> <span class="id">sp</span> = <span class="id">BCstack</span>.<br/>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">eval_static_condition_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">cond</span> <span class="id">vargs</span> <span class="id">m</span> <span class="id">aargs</span>,<br/>
+&nbsp;&nbsp;<span class="id">list_forall2</span> (<span class="id">vmatch</span> <span class="id">bc</span>) <span class="id">vargs</span> <span class="id">aargs</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">cmatch</span> (<span class="id">eval_condition</span> <span class="id">cond</span> <span class="id">vargs</span> <span class="id">m</span>) (<span class="id">eval_static_condition</span> <span class="id">cond</span> <span class="id">aargs</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3006')">Proof.</div>
+<div class="proofscript" id="proof3006">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">aargs</span>; <span class="tactic">intros</span> <span class="id">VM</span>. <span class="id">inv</span> <span class="id">VM</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">cond</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">va</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">cond</span>; <span class="tactic">simpl</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">va</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">cond</span>; <span class="tactic">simpl</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">va</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">cond</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">va</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">symbol_address_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">id</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> (<span class="id">Genv.symbol_address</span> <span class="id">ge</span> <span class="id">id</span> <span class="id">ofs</span>) (<span class="id">Ptr</span> (<span class="id">Gl</span> <span class="id">id</span> <span class="id">ofs</span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3007')">Proof.</div>
+<div class="proofscript" id="proof3007">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">apply</span> <span class="id">symbol_address_sound</span>; <span class="tactic">apply</span> <span class="id">GENV</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">symbol_address_sound_2</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">id</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> (<span class="id">Genv.symbol_address</span> <span class="id">ge</span> <span class="id">id</span> <span class="id">ofs</span>) (<span class="id">Ifptr</span> (<span class="id">Gl</span> <span class="id">id</span> <span class="id">ofs</span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3008')">Proof.</div>
+<div class="proofscript" id="proof3008">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id">Genv.symbol_address</span>. <span class="tactic">destruct</span> (<span class="id">Genv.find_symbol</span> <span class="id">ge</span> <span class="id">id</span>) <span class="kwd">as</span> [<span class="id">b</span>|] <span class="id">eqn</span>:<span class="id">F</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="id">constructor</span>. <span class="tactic">apply</span> <span class="id">GENV</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Hint</span> <span class="kwd">Resolve</span> <span class="id">symbol_address_sound</span> <span class="id">symbol_address_sound_2</span>: <span class="id">va</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">InvHyps</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| [<span class="id">H</span>: <span class="id">None</span> = <span class="id">Some</span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <span class="tactic">discriminate</span><br/>
+&nbsp;&nbsp;| [<span class="id">H</span>: <span class="id">Some</span> <span class="id">_</span> = <span class="id">Some</span> <span class="id">_</span> |- <span class="id">_</span>] =&gt; <span class="id">inv</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;| [<span class="id">H1</span>: <span class="kwd">match</span> ?<span class="id">vl</span> <span class="kwd">with</span> <span class="id">nil</span> =&gt; <span class="id">_</span> | <span class="id">_</span> :: <span class="id">_</span> =&gt; <span class="id">_</span> <span class="kwd">end</span> = <span class="id">Some</span> <span class="id">_</span> ,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H2</span>: <span class="id">list_forall2</span> <span class="id">_</span> ?<span class="id">vl</span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <span class="id">inv</span> <span class="id">H2</span>; <span class="id">InvHyps</span><br/>
+&nbsp;&nbsp;| [<span class="id">H</span>: (<span class="kwd">if</span> <span class="id">Archi.ptr64</span> <span class="kwd">then</span> <span class="id">_</span> <span class="kwd">else</span> <span class="id">_</span>) = <span class="id">Some</span> <span class="id">_</span> |- <span class="id">_</span>] =&gt; <span class="tactic">destruct</span> <span class="id">Archi.ptr64</span> <span class="id">eqn</span>:?; <span class="id">InvHyps</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">eval_static_addressing_32_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">vargs</span> <span class="id">vres</span> <span class="id">aargs</span>,<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing32</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span> <span class="id">vargs</span> = <span class="id">Some</span> <span class="id">vres</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">list_forall2</span> (<span class="id">vmatch</span> <span class="id">bc</span>) <span class="id">vargs</span> <span class="id">aargs</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> <span class="id">vres</span> (<span class="id">eval_static_addressing_32</span> <span class="id">addr</span> <span class="id">aargs</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3009')">Proof.</div>
+<div class="proofscript" id="proof3009">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">eval_addressing32</span>, <span class="id">eval_static_addressing_32</span>; <span class="tactic">intros</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">addr</span>; <span class="id">InvHyps</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">va</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Ptrofs.add_zero_l</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">va</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">eval_static_addressing_64_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">vargs</span> <span class="id">vres</span> <span class="id">aargs</span>,<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing64</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span> <span class="id">vargs</span> = <span class="id">Some</span> <span class="id">vres</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">list_forall2</span> (<span class="id">vmatch</span> <span class="id">bc</span>) <span class="id">vargs</span> <span class="id">aargs</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> <span class="id">vres</span> (<span class="id">eval_static_addressing_64</span> <span class="id">addr</span> <span class="id">aargs</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3010')">Proof.</div>
+<div class="proofscript" id="proof3010">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">eval_addressing64</span>, <span class="id">eval_static_addressing_64</span>; <span class="tactic">intros</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">addr</span>; <span class="id">InvHyps</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">va</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Ptrofs.add_zero_l</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">va</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">eval_static_addressing_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">vargs</span> <span class="id">vres</span> <span class="id">aargs</span>,<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span> <span class="id">vargs</span> = <span class="id">Some</span> <span class="id">vres</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">list_forall2</span> (<span class="id">vmatch</span> <span class="id">bc</span>) <span class="id">vargs</span> <span class="id">aargs</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> <span class="id">vres</span> (<span class="id">eval_static_addressing</span> <span class="id">addr</span> <span class="id">aargs</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3011')">Proof.</div>
+<div class="proofscript" id="proof3011">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">eval_addressing</span>, <span class="id">eval_static_addressing</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Archi.ptr64</span>; <span class="tactic">eauto</span> <span class="kwd">using</span> <span class="id">eval_static_addressing_32_sound</span>, <span class="id">eval_static_addressing_64_sound</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">eval_static_operation_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">op</span> <span class="id">vargs</span> <span class="id">m</span> <span class="id">vres</span> <span class="id">aargs</span>,<br/>
+&nbsp;&nbsp;<span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">vargs</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">vres</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">list_forall2</span> (<span class="id">vmatch</span> <span class="id">bc</span>) <span class="id">vargs</span> <span class="id">aargs</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> <span class="id">vres</span> (<span class="id">eval_static_operation</span> <span class="id">op</span> <span class="id">aargs</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3012')">Proof.</div>
+<div class="proofscript" id="proof3012">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">eval_operation</span>, <span class="id">eval_static_operation</span>; <span class="tactic">intros</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">op</span>; <span class="id">InvHyps</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">va</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">propagate_float_constants</span> <span class="id">tt</span>); <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">propagate_float_constants</span> <span class="id">tt</span>); <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">eval_static_addressing_32_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">eval_static_addressing_64_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">eval_condition</span> <span class="id">eqn</span>:<span class="id">R</span>; <span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">replace</span> (<span class="id">Val.of_bool</span> <span class="id">b</span>) <span class="kwd">with</span> (<span class="id">Val.of_optbool</span> (<span class="id">Some</span> <span class="id">b</span>)) <span class="tactic">by</span> <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">of_optbool_sound</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">R</span>. <span class="tactic">eapply</span> <span class="id">eval_static_condition_sound</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">SOUNDNESS</span>.<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

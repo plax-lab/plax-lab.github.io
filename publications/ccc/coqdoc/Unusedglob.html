@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Unusedglob</title>
+<meta name="description" content="Documentation of Coq module Unusedglob" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Unusedglob</h1>
+<div class="coq">
+<br/>
+<div class="doc">Elimination of unreferenced static definitions </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">FSets</span> <span class="id">Coqlib</span> <span class="id">Maps</span> <span class="id">Ordered</span> <span class="id">Iteration</span> <span class="id">Errors</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span> <span class="id">Linking</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Op</span> <span class="id">Registers</span> <span class="id">RTL</span>.<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">string_scope</span>.<br/>
+<br/>
+<h1> Determination of global identifiers that are referenced </h1>
+<br/>
+<div class="doc">The working set </div>
+<br/>
+<span class="kwd">Module</span> <span class="id">IS</span> := <span class="id">FSetAVL.Make</span>(<span class="id">OrderedPositive</span>).<br/>
+<br/>
+<span class="kwd">Record</span> <span class="id">workset</span> := <span class="id">mk_workset</span> {<br/>
+&nbsp;&nbsp;<span class="id">w_seen</span> :&gt; <span class="id">IS.t</span>;<br/>
+&nbsp;&nbsp;<span class="id">w_todo</span>: <span class="id">list</span> <span class="id">ident</span><br/>
+}.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_workset</span> (<span class="id">id</span>: <span class="id">ident</span>) (<span class="id">w</span>: <span class="id">workset</span>) : <span class="id">workset</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">IS.mem</span> <span class="id">id</span> <span class="id">w</span>.(<span class="id">w_seen</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">w</span><br/>
+&nbsp;&nbsp;<span class="kwd">else</span> {| <span class="id">w_seen</span> := <span class="id">IS.add</span> <span class="id">id</span> <span class="id">w</span>.(<span class="id">w_seen</span>); <span class="id">w_todo</span> := <span class="id">id</span> :: <span class="id">w</span>.(<span class="id">w_todo</span>) |}.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">addlist_workset</span> (<span class="id">l</span>: <span class="id">list</span> <span class="id">ident</span>) (<span class="id">w</span>: <span class="id">workset</span>) : <span class="id">workset</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">l</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">nil</span> =&gt; <span class="id">w</span><br/>
+&nbsp;&nbsp;| <span class="id">id</span> :: <span class="id">l</span>' =&gt; <span class="id">addlist_workset</span> <span class="id">l</span>' (<span class="id">add_workset</span> <span class="id">id</span> <span class="id">w</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Global symbols referenced in a function or variable definition </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">ref_instruction</span> (<span class="id">i</span>: <span class="id">instruction</span>) : <span class="id">list</span> <span class="id">ident</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">i</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Inop</span> <span class="id">_</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Iop</span> <span class="id">op</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">globals_operation</span> <span class="id">op</span><br/>
+&nbsp;&nbsp;| <span class="id">Iload</span> <span class="id">_</span> <span class="id">addr</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">globals_addressing</span> <span class="id">addr</span><br/>
+&nbsp;&nbsp;| <span class="id">Istore</span> <span class="id">_</span> <span class="id">addr</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">globals_addressing</span> <span class="id">addr</span><br/>
+&nbsp;&nbsp;| <span class="id">Icall</span> <span class="id">_</span> (<span class="id">inl</span> <span class="id">r</span>) <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Icall</span> <span class="id">_</span> (<span class="id">inr</span> <span class="id">id</span>) <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">id</span> :: <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Itailcall</span> <span class="id">_</span> (<span class="id">inl</span> <span class="id">r</span>) <span class="id">_</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Itailcall</span> <span class="id">_</span> (<span class="id">inr</span> <span class="id">id</span>) <span class="id">_</span> =&gt; <span class="id">id</span> :: <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Ibuiltin</span> <span class="id">_</span> <span class="id">args</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">globals_of_builtin_args</span> <span class="id">args</span><br/>
+&nbsp;&nbsp;| <span class="id">Icond</span> <span class="id">cond</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Ijumptable</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Ireturn</span> <span class="id">_</span> =&gt; <span class="id">nil</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_ref_instruction</span> (<span class="id">w</span>: <span class="id">workset</span>) (<span class="id">pc</span>: <span class="id">node</span>) (<span class="id">i</span>: <span class="id">instruction</span>) : <span class="id">workset</span> :=<br/>
+&nbsp;&nbsp;<span class="id">addlist_workset</span> (<span class="id">ref_instruction</span> <span class="id">i</span>) <span class="id">w</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_ref_function</span> (<span class="id">f</span>: <span class="id">function</span>) (<span class="id">w</span>: <span class="id">workset</span>): <span class="id">workset</span> :=<br/>
+&nbsp;&nbsp;<span class="id">PTree.fold</span> <span class="id">add_ref_instruction</span> <span class="id">f</span>.(<span class="id">fn_code</span>) <span class="id">w</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_ref_init_data</span> (<span class="id">w</span>: <span class="id">workset</span>) (<span class="id">i</span>: <span class="id">init_data</span>) : <span class="id">workset</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">i</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Init_addrof</span> <span class="id">id</span> <span class="id">_</span> =&gt; <span class="id">add_workset</span> <span class="id">id</span> <span class="id">w</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">w</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_ref_globvar</span> (<span class="id">gv</span>: <span class="id">globvar</span> <span class="id">unit</span>) (<span class="id">w</span>: <span class="id">workset</span>): <span class="id">workset</span> :=<br/>
+&nbsp;&nbsp;<span class="id">List.fold_left</span> <span class="id">add_ref_init_data</span> <span class="id">gv</span>.(<span class="id">gvar_init</span>) <span class="id">w</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">prog_map</span> : <span class="kwd">Type</span> := <span class="id">PTree.t</span> (<span class="id">globdef</span> <span class="id">fundef</span> <span class="id">unit</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_ref_definition</span> (<span class="id">pm</span>: <span class="id">prog_map</span>) (<span class="id">id</span>: <span class="id">ident</span>) (<span class="id">w</span>: <span class="id">workset</span>): <span class="id">workset</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">pm</span>!<span class="id">id</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">w</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> (<span class="id">Gfun</span> (<span class="id">Internal</span> <span class="id">f</span>)) =&gt; <span class="id">add_ref_function</span> <span class="id">f</span> <span class="id">w</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> (<span class="id">Gfun</span> (<span class="id">External</span> <span class="id">ef</span>)) =&gt; <span class="id">w</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> (<span class="id">Gvar</span> <span class="id">gv</span>) =&gt; <span class="id">add_ref_globvar</span> <span class="id">gv</span> <span class="id">w</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">The initial workset is composed of all public definitions of the compilation unit,
+    plus the "main" entry point. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">initial_workset</span> (<span class="id">p</span>: <span class="id">program</span>): <span class="id">workset</span> :=<br/>
+&nbsp;&nbsp;<span class="id">add_workset</span> <span class="id">p</span>.(<span class="id">prog_main</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">List.fold_left</span> (<span class="kwd">fun</span> <span class="id">w</span> <span class="id">id</span> =&gt; <span class="id">add_workset</span> <span class="id">id</span> <span class="id">w</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">p</span>.(<span class="id">prog_public</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{| <span class="id">w_seen</span> := <span class="id">IS.empty</span>; <span class="id">w_todo</span> := <span class="id">nil</span> |}).<br/>
+<br/>
+<div class="doc">Traversal of the dependency graph. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">iter_step</span> (<span class="id">pm</span>: <span class="id">prog_map</span>) (<span class="id">w</span>: <span class="id">workset</span>) : <span class="id">IS.t</span> + <span class="id">workset</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">w</span>.(<span class="id">w_todo</span>) <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inl</span> <span class="id">_</span> <span class="id">w</span>.(<span class="id">w_seen</span>)<br/>
+&nbsp;&nbsp;| <span class="id">id</span> :: <span class="id">rem</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inr</span> <span class="id">_</span> (<span class="id">add_ref_definition</span> <span class="id">pm</span> <span class="id">id</span> {| <span class="id">w_seen</span> := <span class="id">w</span>.(<span class="id">w_seen</span>); <span class="id">w_todo</span> := <span class="id">rem</span> |})<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">used_globals</span> (<span class="id">p</span>: <span class="id">program</span>) (<span class="id">pm</span>: <span class="id">prog_map</span>) : <span class="id">option</span> <span class="id">IS.t</span> :=<br/>
+&nbsp;&nbsp;<span class="id">PrimIter.iterate</span> <span class="id">_</span> <span class="id">_</span> (<span class="id">iter_step</span> <span class="id">pm</span>) (<span class="id">initial_workset</span> <span class="id">p</span>).<br/>
+<br/>
+<h1> Elimination of unreferenced global definitions </h1>
+<br/>
+<div class="doc">We also eliminate multiple definitions of the same global name, keeping ony
+  the last definition (in program definition order). </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">filter_globdefs</span> (<span class="id">used</span>: <span class="id">IS.t</span>) (<span class="id">accu</span> <span class="id">defs</span>: <span class="id">list</span> (<span class="id">ident</span> * <span class="id">globdef</span> <span class="id">fundef</span> <span class="id">unit</span>)) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">defs</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">nil</span> =&gt; <span class="id">accu</span><br/>
+&nbsp;&nbsp;| (<span class="id">id</span>, <span class="id">gd</span>) :: <span class="id">defs</span>' =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">IS.mem</span> <span class="id">id</span> <span class="id">used</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">filter_globdefs</span> (<span class="id">IS.remove</span> <span class="id">id</span> <span class="id">used</span>) ((<span class="id">id</span>, <span class="id">gd</span>) :: <span class="id">accu</span>) <span class="id">defs</span>'<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">filter_globdefs</span> <span class="id">used</span> <span class="id">accu</span> <span class="id">defs</span>'<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">To ensure compatibility with linking, we must ensure that all the
+  global names referenced are defined in the compilation unit, with
+  the possible exception of the <span class="bracket"><span class="id">prog_main</span></span> name. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">global_defined</span> (<span class="id">p</span>: <span class="id">program</span>) (<span class="id">pm</span>: <span class="id">prog_map</span>) (<span class="id">id</span>: <span class="id">ident</span>) : <span class="id">bool</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">pm</span>!<span class="id">id</span> <span class="kwd">with</span> <span class="id">Some</span> <span class="id">_</span> =&gt; <span class="id">true</span> | <span class="id">None</span> =&gt; <span class="id">ident_eq</span> <span class="id">id</span> (<span class="id">prog_main</span> <span class="id">p</span>) <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transform_program</span> (<span class="id">p</span>: <span class="id">program</span>) : <span class="id">res</span> <span class="id">program</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">pm</span> := <span class="id">prog_defmap</span> <span class="id">p</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">used_globals</span> <span class="id">p</span> <span class="id">pm</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">Error</span> (<span class="id">msg</span> "<span class="id">Unusedglob</span>: <span class="id">analysis</span> <span class="id">failed</span>")<br/>
+&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">used</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">IS.for_all</span> (<span class="id">global_defined</span> <span class="id">p</span> <span class="id">pm</span>) <span class="id">used</span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> {| <span class="id">prog_defs</span> := <span class="id">filter_globdefs</span> <span class="id">used</span> <span class="id">nil</span> (<span class="id">List.rev</span> <span class="id">p</span>.(<span class="id">prog_defs</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">prog_public</span> := <span class="id">p</span>.(<span class="id">prog_public</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">prog_main</span> := <span class="id">p</span>.(<span class="id">prog_main</span>) |}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Error</span> (<span class="id">msg</span> "<span class="id">Unusedglob</span>: <span class="id">reference</span> <span class="id">to</span> <span class="id">undefined</span> <span class="id">global</span>")<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module InjRels</title>
+<meta name="description" content="Documentation of Coq module InjRels" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module InjRels</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Injections.html">Injections</a></span> <span class="id"><a href="LDSimDefs.html">LDSimDefs</a></span>.<br/>
+<br/>
+<div class="doc">f' won't inject anything more than f injects to f's range </div>
+<span class="kwd">Definition</span> <span class="id"><a name="sep_inject">sep_inject</a></span> (<span class="id">f</span> <span class="id">f</span>': <span class="id"><a href="Values.html#meminj">meminj</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">b</span>' <span class="id">b_img</span> <span class="id">ofs1</span> <span class="id">ofs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InjRels.html#f">f</a></span> <span class="id"><a href="InjRels.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="InjRels.html#b_img">b_img</a></span>, <span class="id"><a href="InjRels.html#ofs1">ofs1</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">f</span>' <span class="id">b</span>' = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="InjRels.html#b_img">b_img</a></span>, <span class="id"><a href="InjRels.html#ofs2">ofs2</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InjRels.html#f">f</a></span> <span class="id">b</span>' = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="InjRels.html#b_img">b_img</a></span>, <span class="id"><a href="InjRels.html#ofs2">ofs2</a></span>).<br/>
+<br/>
+<div class="doc">TODO: Should be a generic predicate </div>
+<span class="kwd">Record</span> <span class="id"><a name="proper_mu">proper_mu</a></span> {<span class="id">F1</span> <span class="id">V1</span> <span class="id">F2</span> <span class="id">V2</span>: <span class="kwd">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">ge1</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="InjRels.html#F1">F1</a></span> <span class="id"><a href="InjRels.html#V1">V1</a></span>) (<span class="id">ge2</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="InjRels.html#F2">F2</a></span> <span class="id"><a href="InjRels.html#V2">V2</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">j</span>: <span class="id"><a href="Values.html#meminj">meminj</a></span>) (<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;{ <span class="id"><a name="proper_mu_inject">proper_mu_inject</a></span>: <span class="id"><a href="Blockset.html#Bset.inject">Bset.inject</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="InjRels.html#mu">mu</a></span>) (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="InjRels.html#mu">mu</a></span>) (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="InjRels.html#mu">mu</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="proper_mu_ge_init_inj">proper_mu_ge_init_inj</a></span>: <span class="id"><a href="LDSimDefs.html#ge_init_inj">LDSimDefs.ge_init_inj</a></span> <span class="id"><a href="InjRels.html#mu">mu</a></span> <span class="id"><a href="InjRels.html#ge1">ge1</a></span> <span class="id"><a href="InjRels.html#ge2">ge2</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="proper_mu_inject_incr">proper_mu_inject_incr</a></span>: <span class="id"><a href="Values.html#inject_incr">inject_incr</a></span> (<span class="id"><a href="Blockset.html#Bset.inj_to_meminj">Bset.inj_to_meminj</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="InjRels.html#mu">mu</a></span>)) <span class="id"><a href="InjRels.html#j">j</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="proper_mu_sep_inject">proper_mu_sep_inject</a></span>: <span class="id"><a href="InjRels.html#sep_inject">sep_inject</a></span> (<span class="id"><a href="Blockset.html#Bset.inj_to_meminj">Bset.inj_to_meminj</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="InjRels.html#mu">mu</a></span>)) <span class="id"><a href="InjRels.html#j">j</a></span>;<br/>
+&nbsp;&nbsp;}.<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module NPEquiv</title>
+<meta name="description" content="Documentation of Coq module NPEquiv" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module NPEquiv</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span> <span class="id"><a href="GAST.html">GAST</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="ETrace.html">ETrace</a></span> <span class="id"><a href="GlobSemantics.html">GlobSemantics</a></span> <span class="id"><a href="NPSemantics.html">NPSemantics</a></span> <span class="id"><a href="TypedSemantics.html">TypedSemantics</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="DRF.html">DRF</a></span> <span class="id"><a href="USimDRF.html">USimDRF</a></span> <span class="id"><a href="NPDRF.html">NPDRF</a></span> .<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="FPLemmas.html">FPLemmas</a></span> <span class="id"><a href="PRaceLemmas.html">PRaceLemmas</a></span> <span class="id"><a href="Init.html">Init</a></span> <span class="id"><a href="SmileReorder.html">SmileReorder</a></span> <span class="id"><a href="ConflictReorder.html">ConflictReorder</a></span> <span class="id"><a href="Init.html">Init</a></span> <span class="id"><a href="DRFLemmas.html">DRFLemmas</a></span> <span class="id"><a href="RefineEquiv.html">RefineEquiv</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical.html">Classical</a></span>.<br/>
+<br/>
+<h1> Equivalence on safety and DRF definitions between preemptive and non-preemptive semantics </h1>
+<br/>
+<div class="doc">This file consists of results on np-semantics:
+    - <span class="bracket"><span class="id">Safe</span>(<span class="id">S</span>)</span> &lt;=&gt; <span class="bracket"><span class="id">NPSafe</span>(<span class="id">S</span>)</span>
+    - <span class="bracket"><span class="id">Safe</span>(<span class="id">S</span>)</span> /\ <span class="bracket"><span class="id">WD_langs</span>(<span class="id">S</span>)</span> =&gt; (<span class="bracket"><span class="id">NPDRF</span>(<span class="id">S</span>)</span> &lt;=&gt; <span class="bracket"><span class="id">DRF</span>(<span class="id">S</span>)</span>) </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="drf_drfpc">drf_drfpc</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">p</span> <span class="id">gm</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="NPEquiv.html#NL">NL</a></span> <span class="id"><a href="NPEquiv.html#L">L</a></span> <span class="id"><a href="NPEquiv.html#p">p</a></span> <span class="id"><a href="NPEquiv.html#gm">gm</a></span> <span class="id"><a href="NPEquiv.html#ge">ge</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span> <span class="id"><a href="NPEquiv.html#t">t</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="DRF.html#drf">drf</a></span> <span class="id"><a href="NPEquiv.html#p">p</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="DRFLemmas.html#drfpc">drfpc</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8235')">Proof.</div>
+<div class="proofscript" id="proof8235">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="DRF.html#drf">drf</a></span>,<span class="id"><a href="DRFLemmas.html#drfpc">drfpc</a></span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span>. <span class="id">contradict</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="DRF.html#race_prog">race_prog</a></span>.<br/>
+&nbsp;&nbsp;<span class="id">eexists</span>;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "{-| <span class="id">PC</span> , <span class="id">T</span> }" := ({|<span class="id"><a href="GlobDefs.html#Build_ProgConfig">thread_pool</a></span> := <span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id">PC</span>; <span class="id">cur_tid</span> := <span class="id">T</span>;<span class="id">gm</span> := <span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id">PC</span>; <span class="id">atom_bit</span> := <span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">PC</span> |}) (<span class="tactic">at</span> <span class="id">level</span> 70,<span class="id">right</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="DRF_NP_Refine_Config">DRF_NP_Refine_Config</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">mu</span> <span class="id">su</span> <span class="id">tu</span> <span class="id">e</span> <span class="id">sgm</span> <span class="id">sge</span> <span class="id">spc</span> <span class="id">st</span> <span class="id">tgm</span> <span class="id">tge</span> <span class="id">tpc</span> <span class="id">tt</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GAST.html#wd_langs">wd_langs</a></span> <span class="id"><a href="NPEquiv.html#NL">NL</a></span> <span class="id"><a href="NPEquiv.html#L">L</a></span> <span class="id"><a href="NPEquiv.html#su">su</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GAST.html#wd_langs">wd_langs</a></span> <span class="id"><a href="NPEquiv.html#NL">NL</a></span> <span class="id"><a href="NPEquiv.html#L">L</a></span> <span class="id"><a href="NPEquiv.html#tu">tu</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">t</span> : <span class="id"><a href="GlobDefs.html#tid">tid</a></span>, <span class="id"><a href="DRFLemmas.html#pc_valid_tid">DRFLemmas.pc_valid_tid</a></span> <span class="id"><a href="NPEquiv.html#tpc">tpc</a></span> <span class="id"><a href="NPEquiv.html#t">t</a></span> -&gt; <span class="id"><a href="NPSemantics.html#np_safe_config">np_safe_config</a></span> ({-|<span class="id"><a href="NPEquiv.html#tpc">tpc</a></span>, <span class="id"><a href="NPEquiv.html#t">t</a></span>})) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#InitRel">InitRel</a></span> <span class="id"><a href="NPEquiv.html#mu">mu</a></span> <span class="id"><a href="NPEquiv.html#sge">sge</a></span> <span class="id"><a href="NPEquiv.html#tge">tge</a></span> <span class="id"><a href="NPEquiv.html#sgm">sgm</a></span> <span class="id"><a href="NPEquiv.html#tgm">tgm</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> (<span class="id"><a href="NPEquiv.html#su">su</a></span>,<span class="id"><a href="NPEquiv.html#e">e</a></span>) <span class="id"><a href="NPEquiv.html#sgm">sgm</a></span> <span class="id"><a href="NPEquiv.html#sge">sge</a></span> <span class="id"><a href="NPEquiv.html#spc">spc</a></span> <span class="id"><a href="NPEquiv.html#st">st</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> (<span class="id"><a href="NPEquiv.html#tu">tu</a></span>,<span class="id"><a href="NPEquiv.html#e">e</a></span>) <span class="id"><a href="NPEquiv.html#tgm">tgm</a></span> <span class="id"><a href="NPEquiv.html#tge">tge</a></span> <span class="id"><a href="NPEquiv.html#tpc">tpc</a></span> <span class="id"><a href="NPEquiv.html#tt">tt</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="DRF.html#drf">drf</a></span> (<span class="id"><a href="NPEquiv.html#su">su</a></span>,<span class="id"><a href="NPEquiv.html#e">e</a></span>)-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="DRFLemmas.html#drfpc">drfpc</a></span> <span class="id"><a href="NPEquiv.html#tpc">tpc</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_prog_refine">np_prog_refine</a></span> (<span class="id"><a href="NPEquiv.html#su">su</a></span>,<span class="id"><a href="NPEquiv.html#e">e</a></span>)(<span class="id"><a href="NPEquiv.html#tu">tu</a></span>,<span class="id"><a href="NPEquiv.html#e">e</a></span>)-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics.html#config_refine">config_refine</a></span> <span class="id"><a href="NPEquiv.html#tpc">tpc</a></span> <span class="id"><a href="NPEquiv.html#spc">spc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8236')">Proof.</div>
+<div class="proofscript" id="proof8236">
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="RefineEquiv.html#DRF_NP_Refine_Config_Proof">DRF_NP_Refine_Config_Proof</a></span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Init.html#init_free">init_free</a></span>.<br/>
+Qed.</div>
+<br/>
+<h2> Equivalence between preemptive and non-preemptive safety definition </h2>
+<span class="kwd">Lemma</span> <span class="id"><a name="Safe_NPSafe">Safe_NPSafe</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">cus</span> <span class="id">e</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GAST.html#wd_langs">wd_langs</a></span> <span class="id"><a href="NPEquiv.html#NL">NL</a></span> <span class="id"><a href="NPEquiv.html#L">L</a></span> <span class="id"><a href="NPEquiv.html#cus">cus</a></span> -&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics.html#safe_prog">safe_prog</a></span> (<span class="id"><a href="NPEquiv.html#cus">cus</a></span>, <span class="id"><a href="NPEquiv.html#e">e</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_safe_prog">np_safe_prog</a></span> (<span class="id"><a href="NPEquiv.html#cus">cus</a></span>, <span class="id"><a href="NPEquiv.html#e">e</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8237')">Proof.</div>
+<div class="proofscript" id="proof8237">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H1</span> <span class="kwd">as</span> ?.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="DRFLemmas.html#Safe_eq">Safe_eq</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="ETrace.html#safe_state">safe_state</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id">t</span>=<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">s</span>). <span class="tactic">inversion</span> <span class="id">H1</span>;<span class="tactic">auto</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="RefineEquiv.html#star_abort_np_p">star_abort_np_p</a></span> <span class="kwd">in</span> <span class="id">H4</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">Focus</span> 2. <span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">Esimpl</span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="SmileReorder.html#np_star_glob_star">np_star_glob_star</a></span> <span class="kwd">in</span> <span class="id">H3</span> <span class="kwd">as</span> [].<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H2</span> <span class="kwd">in</span> <span class="id">H3</span>;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="NPSafe_Safe">NPSafe_Safe</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">cus</span> <span class="id">e</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GAST.html#wd_langs">wd_langs</a></span> <span class="id"><a href="NPEquiv.html#NL">NL</a></span> <span class="id"><a href="NPEquiv.html#L">L</a></span> <span class="id"><a href="NPEquiv.html#cus">cus</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPSemantics.html#np_safe_prog">np_safe_prog</a></span> (<span class="id"><a href="NPEquiv.html#cus">cus</a></span>, <span class="id"><a href="NPEquiv.html#e">e</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#npdrf">npdrf</a></span> (<span class="id"><a href="NPEquiv.html#cus">cus</a></span>, <span class="id"><a href="NPEquiv.html#e">e</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics.html#safe_prog">safe_prog</a></span> (<span class="id"><a href="NPEquiv.html#cus">cus</a></span>, <span class="id"><a href="NPEquiv.html#e">e</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8238')">Proof.</div>
+<div class="proofscript" id="proof8238">
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">NPSafe_Safe</span>';<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="NPDRF_config">NPDRF_config</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">p</span> <span class="id">gm</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="NPDRF.html#npdrf">npdrf</a></span> <span class="id"><a href="NPEquiv.html#p">p</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="NPEquiv.html#NL">NL</a></span> <span class="id"><a href="NPEquiv.html#L">L</a></span> <span class="id"><a href="NPEquiv.html#p">p</a></span> <span class="id"><a href="NPEquiv.html#gm">gm</a></span> <span class="id"><a href="NPEquiv.html#ge">ge</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span> <span class="id"><a href="NPEquiv.html#t">t</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span> <span class="id"><a href="NPEquiv.html#t">t</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="DRFLemmas.html#npdrfpc">npdrfpc</a></span> ({-|<span class="id"><a href="NPEquiv.html#pc">pc</a></span>,<span class="id"><a href="NPEquiv.html#t">t</a></span>})).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8239')">Proof.</div>
+<div class="proofscript" id="proof8239">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id">t</span>=<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">pc</span>). <span class="tactic">inversion</span> <span class="id">H0</span>;<span class="tactic">auto</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Init.html#init_free">init_free</a></span> <span class="kwd">in</span> <span class="id">H0</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="NPDRF.html#npdrf">npdrf</a></span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">unfold</span> <span class="id"><a href="DRFLemmas.html#npdrfpc">npdrfpc</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#not_or_and">not_or_and</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span>.<br/>
+&nbsp;&nbsp;<span class="id">contradict</span> <span class="id">H</span>. <span class="tactic">destruct</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span> 2;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<h2> Equivalence between DRF definitions between preemptive and non-preemptive program configurations </h2>
+<span class="kwd">Lemma</span> <span class="id"><a name="NPDRF_DRF_Config">NPDRF_DRF_Config</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">p</span> <span class="id">gm</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GAST.html#wd_langs">wd_langs</a></span> <span class="id"><a href="NPEquiv.html#NL">NL</a></span> <span class="id"><a href="NPEquiv.html#L">L</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id"><a href="NPEquiv.html#p">p</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="NPEquiv.html#p">p</a></span> <span class="id"><a href="NPEquiv.html#gm">gm</a></span> <span class="id"><a href="NPEquiv.html#ge">ge</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span> <span class="id"><a href="NPEquiv.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">t</span>, <span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span> <span class="id"><a href="NPEquiv.html#t">t</a></span>-&gt; <span class="id"><a href="NPSemantics.html#np_safe_config">np_safe_config</a></span> ({-|<span class="id"><a href="NPEquiv.html#pc">pc</a></span>,<span class="id"><a href="NPEquiv.html#t">t</a></span>})) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">t</span>, <span class="id"><a href="GSimDefs.html#pc_valid_tid">GSimDefs.pc_valid_tid</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span> <span class="id"><a href="NPEquiv.html#t">t</a></span> -&gt; <span class="id"><a href="DRFLemmas.html#npdrfpc">npdrfpc</a></span> ({-|<span class="id"><a href="NPEquiv.html#pc">pc</a></span>,<span class="id"><a href="NPEquiv.html#t">t</a></span>})) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="DRFLemmas.html#drfpc">drfpc</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8240')">Proof.</div>
+<div class="proofscript" id="proof8240">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">assert</span>(<span class="id">t</span>=<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">pc</span>). <span class="tactic">inversion</span> <span class="id">H0</span>;<span class="tactic">auto</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Init.html#init_property_1_alt">init_property_1_alt</a></span> <span class="kwd">in</span> <span class="id">H0</span> <span class="kwd">as</span> ?.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H1</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">pc</span>) <span class="id">H3</span>) <span class="kwd">as</span> ?.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="DRFLemmas.html#npdrfpc">npdrfpc</a></span> <span class="kwd">in</span> <span class="id">H2</span>. <span class="tactic">unfold</span> <span class="id"><a href="DRFLemmas.html#drfpc">drfpc</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intro</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="SmileReorder.html#invpc">invpc</a></span> <span class="id">ge</span> <span class="id">pc</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>;<span class="tactic">subst</span>. <span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.init_inv">ThreadPool.init_inv</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="GlobDefs.html#atom_bit">atom_bit</a></span> <span class="id">pc</span> = <span class="id"><a href="GlobDefs.html#O">O</a></span>).<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>;<span class="tactic">subst</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GlobDefs.html#init_config_GE_wd">init_config_GE_wd</a></span> <span class="kwd">in</span> <span class="id">H0</span> <span class="kwd">as</span> ?.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (@<span class="id"><a href="SmileReorder.html#lang_wd_mod_wd">lang_wd_mod_wd</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span> <span class="id">H0</span>) <span class="kwd">as</span> ?.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="DRFLemmas.html#p_star_race_np_star_race">p_star_race_np_star_race</a></span> <span class="kwd">in</span> <span class="id">H5</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H2</span> <span class="kwd">in</span> <span class="id">H3</span>;<span class="tactic">eauto</span>. <span class="tactic">destruct</span> <span class="id">H3</span>;<span class="tactic">auto</span>.  <span class="tactic">rewrite</span> <span class="id"><a href="SmileReorder.html#pc_cur_tid">pc_cur_tid</a></span> <span class="kwd">in</span> <span class="id">H3</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">Hsimpl</span>. <span class="tactic">apply</span> <span class="id"><a href="DRFLemmas.html#swstar_l">swstar_l</a></span> <span class="kwd">in</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H5</span>. <span class="tactic">subst</span>. <span class="tactic">eapply</span> <span class="id">H2</span> <span class="kwd">in</span> <span class="id">H3</span> <span class="kwd">as</span> [];<span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id"><a href="SmileReorder.html#pc_cur_tid">pc_cur_tid</a></span> <span class="kwd">in</span> <span class="id">H5</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H5</span>. <span class="tactic">assert</span>(<span class="id"><a href="Init.html#pc_valid_tid">Init.pc_valid_tid</a></span> <span class="id">pc</span> (<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">x</span>)). <span class="tactic">inversion</span> <span class="id">H5</span>;<span class="tactic">subst</span>;<span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H2</span> <span class="kwd">in</span> <span class="id">H12</span> <span class="kwd">as</span> []. <span class="tactic">assert</span>(({-|<span class="id">pc</span>,<span class="id"><a href="GlobDefs.html#cur_tid">cur_tid</a></span> <span class="id">x</span>}) = <span class="id">x</span>). <span class="tactic">inversion</span> <span class="id">H5</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H14</span> <span class="kwd">in</span> <span class="id">H13</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id"><a href="DRFLemmas.html#Safe_eq">Safe_eq</a></span>;<span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id"><a href="SmileReorder.html#pc_cur_tid">pc_cur_tid</a></span> <span class="kwd">in</span> <span class="id">H4</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H10</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="DRFLemmas.html#Safe_eq">Safe_eq</a></span>;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="DRF_NPDRF_Config">DRF_NPDRF_Config</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> <span class="id">p</span> <span class="id">gm</span> <span class="id">ge</span> <span class="id">pc</span> <span class="id">t</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GAST.html#wd_langs">wd_langs</a></span> <span class="id"><a href="NPEquiv.html#NL">NL</a></span> <span class="id"><a href="NPEquiv.html#L">L</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id"><a href="NPEquiv.html#p">p</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#init_config">init_config</a></span> <span class="id"><a href="NPEquiv.html#p">p</a></span> <span class="id"><a href="NPEquiv.html#gm">gm</a></span> <span class="id"><a href="NPEquiv.html#ge">ge</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span> <span class="id"><a href="NPEquiv.html#t">t</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="DRFLemmas.html#drfpc">drfpc</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="DRFLemmas.html#npdrfpc">npdrfpc</a></span> <span class="id"><a href="NPEquiv.html#pc">pc</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof8241')">Proof.</div>
+<div class="proofscript" id="proof8241">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="DRFLemmas.html#drfpc">drfpc</a></span>,<span class="id"><a href="DRFLemmas.html#npdrfpc">npdrfpc</a></span>.<br/>
+&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> <span class="id"><a href="SmileReorder.html#NPRace_Race_Config">NPRace_Race_Config</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Logic.Classical_Prop.html#not_or_and">not_or_and</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

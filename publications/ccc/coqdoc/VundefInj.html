@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module VundefInj</title>
+<meta name="description" content="Documentation of Coq module VundefInj" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module VundefInj</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Memory.html">Memory</a></span>.<br/>
+<br/>
+<div class="doc">injection from Vundef to pointer values are undesirable for footprint preservation,
+    because <span class="bracket"><span class="id">cmpu</span></span> on pointer values generates cmp footprint, while <span class="bracket"><span class="id">cmpu</span></span> on Vundefs 
+    has no footprint. </div>
+<br/>
+<div class="doc">specific requirements on Vundef injected values </div>
+<span class="kwd">Definition</span> <span class="id"><a name="not_ptr">not_ptr</a></span> (<span class="id">v</span>: <span class="id"><a href="Values.html#val">val</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="local_ptr">local_ptr</a></span> (<span class="kwd">Local</span>: <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="kwd">Prop</span>) (<span class="id">v</span>: <span class="id"><a href="Values.html#val">val</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">b</span> <span class="id">_</span> =&gt; <span class="kwd">Local</span> <span class="id">b</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="not_ptr_implies_local">not_ptr_implies_local</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">v</span> <span class="kwd">Local</span>, <span class="id"><a href="VundefInj.html#not_ptr">not_ptr</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span> -&gt; <span class="id"><a href="VundefInj.html#local_ptr">local_ptr</a></span> <span class="kwd">Local</span> <span class="id"><a href="VundefInj.html#v">v</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6743')">Proof.</div>
+<div class="proofscript" id="proof6743">
+ <span class="tactic">destruct</span> <span class="id">v</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>; <span class="tactic">tauto</span>. Qed.</div>
+<br/>
+<br/>
+<br/>
+<div class="doc">restricting <span class="bracket"><span class="id">Val.inject</span></span> </div>
+<span class="kwd">Definition</span> <span class="id"><a name="val_inj_undef_spec">val_inj_undef_spec</a></span> (<span class="id">v</span> <span class="id">v</span>': <span class="id"><a href="Values.html#val">val</a></span>) (<span class="id">spec</span>: <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Values.html#Vundef">Vundef</a></span> =&gt; <span class="id"><a href="VundefInj.html#spec">spec</a></span> <span class="id">v</span>'<br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">val_inj_undef_spec</span>' (<span class="id">v</span> <span class="id">v</span>': <span class="id"><a href="Values.html#val">val</a></span>) (<span class="id">spec</span>: <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#v">v</a></span> = <span class="id"><a href="Values.html#Vundef">Vundef</a></span> -&gt; <span class="id"><a href="VundefInj.html#spec">spec</a></span> <span class="id">v</span>'.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="val_inj_undef_spec_eq">val_inj_undef_spec_eq</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">v</span> <span class="id">v</span>' <span class="id">spec</span>, <span class="id"><a href="VundefInj.html#val_inj_undef_spec">val_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="id">v</span>' <span class="id"><a href="VundefInj.html#spec">spec</a></span> &lt;-&gt; <span class="id">val_inj_undef_spec</span>' <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="id">v</span>' <span class="id"><a href="VundefInj.html#spec">spec</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6744')">Proof.</div>
+<div class="proofscript" id="proof6744">
+ <span class="tactic">destruct</span> <span class="id">v</span>; <span class="tactic">simpl</span>; <span class="id">cbv</span>; <span class="tactic">intros</span>; <span class="tactic">firstorder</span>; <span class="tactic">discriminate</span>. Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="val_inj_undef_spec_implies">val_inj_undef_spec_implies</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">v</span> <span class="id">v</span>' (<span class="id">spec1</span> <span class="id">spec2</span>: <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="VundefInj.html#spec1">spec1</a></span> <span class="id">v</span>' -&gt; <span class="id"><a href="VundefInj.html#spec2">spec2</a></span> <span class="id">v</span>') -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#val_inj_undef_spec">val_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="id">v</span>' <span class="id"><a href="VundefInj.html#spec1">spec1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#val_inj_undef_spec">val_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="id">v</span>' <span class="id"><a href="VundefInj.html#spec2">spec2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6745')">Proof.</div>
+<div class="proofscript" id="proof6745">
+ <span class="tactic">unfold</span> <span class="id"><a href="VundefInj.html#val_inj_undef_spec">val_inj_undef_spec</a></span>; <span class="tactic">intros</span>; <span class="tactic">destruct</span> <span class="id">v</span>; <span class="tactic">auto</span>. Qed.</div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="vl_inj_undef_spec">vl_inj_undef_spec</a></span> : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#val">val</a></span> -&gt; (<span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span>) -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="inject_undef_nil">inject_undef_nil</a></span>: <span class="kwd">forall</span> <span class="id">spec</span>, <span class="id"><a href="VundefInj.html#vl_inj_undef_spec">vl_inj_undef_spec</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="VundefInj.html#spec">spec</a></span><br/>
+| <span class="id"><a name="inject_undef_cons">inject_undef_cons</a></span>: <span class="kwd">forall</span> <span class="id">v</span> <span class="id">v</span>' <span class="id">spec</span> <span class="id">vl</span> <span class="id">vl</span>', <span class="id"><a href="VundefInj.html#val_inj_undef_spec">val_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="id">v</span>' <span class="id"><a href="VundefInj.html#spec">spec</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#vl_inj_undef_spec">vl_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#vl">vl</a></span> <span class="id">vl</span>' <span class="id"><a href="VundefInj.html#spec">spec</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#vl_inj_undef_spec">vl_inj_undef_spec</a></span> (<span class="id"><a href="VundefInj.html#v">v</a></span>::<span class="id"><a href="VundefInj.html#vl">vl</a></span>) (<span class="id">v</span>'::<span class="id">vl</span>') <span class="id"><a href="VundefInj.html#spec">spec</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="vl_inj_undef_spec_implies">vl_inj_undef_spec_implies</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">spec1</span> <span class="id">spec2</span>: <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">v</span>, <span class="id"><a href="VundefInj.html#spec1">spec1</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span> -&gt; <span class="id"><a href="VundefInj.html#spec2">spec2</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">vl</span> <span class="id">vl</span>', <span class="id"><a href="VundefInj.html#vl_inj_undef_spec">vl_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#vl">vl</a></span> <span class="id">vl</span>' <span class="id"><a href="VundefInj.html#spec1">spec1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#vl_inj_undef_spec">vl_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#vl">vl</a></span> <span class="id">vl</span>' <span class="id"><a href="VundefInj.html#spec2">spec2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6746')">Proof.</div>
+<div class="proofscript" id="proof6746">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">vl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="id">constructor</span>; <span class="tactic">auto</span>. <span class="tactic">eapply</span> <span class="id"><a href="VundefInj.html#val_inj_undef_spec_implies">val_inj_undef_spec_implies</a></span>; <span class="tactic">try</span> <span class="id">eassumption</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="val_inj_undef_not_ptr">val_inj_undef_not_ptr</a></span> (<span class="id">v</span> <span class="id">v</span>': <span class="id"><a href="Values.html#val">val</a></span>) := <span class="id"><a href="VundefInj.html#val_inj_undef_spec">val_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="id">v</span>' <span class="id"><a href="VundefInj.html#not_ptr">not_ptr</a></span>.<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="val_inj_undef_local_ptr">val_inj_undef_local_ptr</a></span> (<span class="kwd">Local</span>: <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="kwd">Prop</span>) (<span class="id">v</span> <span class="id">v</span>': <span class="id"><a href="Values.html#val">val</a></span>) := <span class="id"><a href="VundefInj.html#val_inj_undef_spec">val_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="id">v</span>' (<span class="id"><a href="VundefInj.html#local_ptr">local_ptr</a></span> <span class="kwd">Local</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="vl_inj_undef_not_ptr">vl_inj_undef_not_ptr</a></span> (<span class="id">vl</span> <span class="id">vl</span>': <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#val">val</a></span>) := <span class="id"><a href="VundefInj.html#vl_inj_undef_spec">vl_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#vl">vl</a></span> <span class="id">vl</span>' <span class="id"><a href="VundefInj.html#not_ptr">not_ptr</a></span>.<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="vl_inj_undef_local_ptr">vl_inj_undef_local_ptr</a></span> (<span class="kwd">Local</span>: <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="kwd">Prop</span>) (<span class="id">vl</span> <span class="id">vl</span>': <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#val">val</a></span>) := <span class="id"><a href="VundefInj.html#vl_inj_undef_spec">vl_inj_undef_spec</a></span> <span class="id"><a href="VundefInj.html#vl">vl</a></span> <span class="id">vl</span>' (<span class="id"><a href="VundefInj.html#local_ptr">local_ptr</a></span> <span class="kwd">Local</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Vundef_inj_not_ptr_implies_local">Vundef_inj_not_ptr_implies_local</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="kwd">Local</span> <span class="id">v</span> <span class="id">v</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#val_inj_undef_not_ptr">val_inj_undef_not_ptr</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="id">v</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#val_inj_undef_local_ptr">val_inj_undef_local_ptr</a></span> <span class="kwd">Local</span> <span class="id"><a href="VundefInj.html#v">v</a></span> <span class="id">v</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6747')">Proof.</div>
+<div class="proofscript" id="proof6747">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="VundefInj.html#val_inj_undef_not_ptr">val_inj_undef_not_ptr</a></span>, <span class="id"><a href="VundefInj.html#val_inj_undef_local_ptr">val_inj_undef_local_ptr</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="VundefInj.html#val_inj_undef_spec_implies">val_inj_undef_spec_implies</a></span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id"><a href="VundefInj.html#not_ptr_implies_local">not_ptr_implies_local</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Vundef_inj_list_not_ptr_implies_local">Vundef_inj_list_not_ptr_implies_local</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="kwd">Local</span> <span class="id">vl</span> <span class="id">vl</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#vl_inj_undef_not_ptr">vl_inj_undef_not_ptr</a></span> <span class="id"><a href="VundefInj.html#vl">vl</a></span> <span class="id">vl</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#vl_inj_undef_local_ptr">vl_inj_undef_local_ptr</a></span> <span class="kwd">Local</span> <span class="id"><a href="VundefInj.html#vl">vl</a></span> <span class="id">vl</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6748')">Proof.</div>
+<div class="proofscript" id="proof6748">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="VundefInj.html#vl_inj_undef_not_ptr">vl_inj_undef_not_ptr</a></span>, <span class="id"><a href="VundefInj.html#vl_inj_undef_local_ptr">vl_inj_undef_local_ptr</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="VundefInj.html#vl_inj_undef_spec_implies">vl_inj_undef_spec_implies</a></span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span>; <span class="tactic">apply</span> <span class="id"><a href="VundefInj.html#not_ptr_implies_local">not_ptr_implies_local</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<br/>
+<div class="doc">restricting <span class="bracket"><span class="id">memval_inject</span></span> </div>
+<span class="kwd">Definition</span> <span class="id"><a name="memval_inject_undef_spec">memval_inject_undef_spec</a></span> (<span class="id">mv</span> <span class="id">mv</span>': <span class="id"><a href="Memdata.html#memval">memval</a></span>) (<span class="id">spec</span>: <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="VundefInj.html#mv">mv</a></span>, <span class="id">mv</span>' <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memdata.html#Undef">Undef</a></span>, <span class="id"><a href="Memdata.html#Fragment">Fragment</a></span> <span class="id">v</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id"><a href="VundefInj.html#spec">spec</a></span> <span class="id">v</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Memdata.html#Fragment">Fragment</a></span> <span class="id"><a href="Values.html#Vundef">Vundef</a></span> <span class="id">_</span> <span class="id">_</span>, <span class="id"><a href="Memdata.html#Fragment">Fragment</a></span> <span class="id">v</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id"><a href="VundefInj.html#spec">spec</a></span> <span class="id">v</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="memval_inject_undef_spec_implies">memval_inject_undef_spec_implies</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">spec1</span> <span class="id">spec2</span>: <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">v</span>, <span class="id"><a href="VundefInj.html#spec1">spec1</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span> -&gt; <span class="id"><a href="VundefInj.html#spec2">spec2</a></span> <span class="id"><a href="VundefInj.html#v">v</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mv</span> <span class="id">mv</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#memval_inject_undef_spec">memval_inject_undef_spec</a></span> <span class="id"><a href="VundefInj.html#mv">mv</a></span> <span class="id">mv</span>' <span class="id"><a href="VundefInj.html#spec1">spec1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#memval_inject_undef_spec">memval_inject_undef_spec</a></span> <span class="id"><a href="VundefInj.html#mv">mv</a></span> <span class="id">mv</span>' <span class="id"><a href="VundefInj.html#spec2">spec2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6749')">Proof.</div>
+<div class="proofscript" id="proof6749">
+ <span class="tactic">unfold</span> <span class="id"><a href="VundefInj.html#memval_inject_undef_spec">memval_inject_undef_spec</a></span>; <span class="tactic">destruct</span> <span class="id">mv</span>; <span class="tactic">auto</span>; <span class="tactic">destruct</span> <span class="id">mv</span>'; <span class="tactic">auto</span>; <span class="tactic">destruct</span> <span class="id">v</span>; <span class="tactic">auto</span>. Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="memval_inject_undef_not_ptr">memval_inject_undef_not_ptr</a></span> (<span class="id">mv</span> <span class="id">mv</span>': <span class="id"><a href="Memdata.html#memval">memval</a></span>) : <span class="kwd">Prop</span> := <span class="id"><a href="VundefInj.html#memval_inject_undef_spec">memval_inject_undef_spec</a></span> <span class="id"><a href="VundefInj.html#mv">mv</a></span> <span class="id">mv</span>' (<span class="id"><a href="VundefInj.html#not_ptr">not_ptr</a></span>).<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="memval_inject_undef_local">memval_inject_undef_local</a></span> (<span class="kwd">Local</span>: <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="kwd">Prop</span>) (<span class="id">mv</span> <span class="id">mv</span>': <span class="id"><a href="Memdata.html#memval">memval</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#memval_inject_undef_spec">memval_inject_undef_spec</a></span> <span class="id"><a href="VundefInj.html#mv">mv</a></span> <span class="id">mv</span>' (<span class="id"><a href="VundefInj.html#local_ptr">local_ptr</a></span> <span class="kwd">Local</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Undef_inj_not_ptr_implies_local">Undef_inj_not_ptr_implies_local</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mv</span> <span class="id">mv</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#memval_inject_undef_not_ptr">memval_inject_undef_not_ptr</a></span> <span class="id"><a href="VundefInj.html#mv">mv</a></span> <span class="id">mv</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="kwd">Local</span>, <span class="id"><a href="VundefInj.html#memval_inject_undef_local">memval_inject_undef_local</a></span> <span class="kwd">Local</span> <span class="id"><a href="VundefInj.html#mv">mv</a></span> <span class="id">mv</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6750')">Proof.</div>
+<div class="proofscript" id="proof6750">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="VundefInj.html#memval_inject_undef_not_ptr">memval_inject_undef_not_ptr</a></span>, <span class="id"><a href="VundefInj.html#memval_inject_undef_local">memval_inject_undef_local</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="VundefInj.html#memval_inject_undef_spec_implies">memval_inject_undef_spec_implies</a></span>. <span class="tactic">intros</span>; <span class="tactic">eapply</span> <span class="id"><a href="VundefInj.html#not_ptr_implies_local">not_ptr_implies_local</a></span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">TODO: properties about memval_inject? </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="memval_inject_undef_not_ptr_bytes">memval_inject_undef_not_ptr_bytes</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="VundefInj.html#memval_inject_undef_not_ptr">memval_inject_undef_not_ptr</a></span> (<span class="id"><a href="Memdata.html#Byte">Byte</a></span> <span class="id"><a href="VundefInj.html#n">n</a></span>) (<span class="id"><a href="Memdata.html#Byte">Byte</a></span> <span class="id"><a href="VundefInj.html#n">n</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6751')">Proof.</div>
+<div class="proofscript" id="proof6751">
+ <span class="id">cbn</span>; <span class="tactic">auto</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="memval_inject_undef_not_ptr_frag">memval_inject_undef_not_ptr_frag</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">v1</span> <span class="id">v2</span> <span class="id">q</span> <span class="id">n</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#val_inj_undef_not_ptr">val_inj_undef_not_ptr</a></span> <span class="id"><a href="VundefInj.html#v1">v1</a></span> <span class="id"><a href="VundefInj.html#v2">v2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#memval_inject_undef_not_ptr">memval_inject_undef_not_ptr</a></span> (<span class="id"><a href="Memdata.html#Fragment">Fragment</a></span> <span class="id"><a href="VundefInj.html#v1">v1</a></span> <span class="id"><a href="VundefInj.html#q">q</a></span> <span class="id"><a href="VundefInj.html#n">n</a></span>) (<span class="id"><a href="Memdata.html#Fragment">Fragment</a></span> <span class="id"><a href="VundefInj.html#v2">v2</a></span> <span class="id"><a href="VundefInj.html#q">q</a></span> <span class="id"><a href="VundefInj.html#n">n</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6752')">Proof.</div>
+<div class="proofscript" id="proof6752">
+ <span class="id">cbn</span>; <span class="tactic">auto</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="memval_inject_undef_local_ptr_frag">memval_inject_undef_local_ptr_frag</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="kwd">Local</span> <span class="id">v1</span> <span class="id">v2</span> <span class="id">q</span> <span class="id">n</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#val_inj_undef_local_ptr">val_inj_undef_local_ptr</a></span> <span class="kwd">Local</span> <span class="id"><a href="VundefInj.html#v1">v1</a></span> <span class="id"><a href="VundefInj.html#v2">v2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="VundefInj.html#memval_inject_undef_local">memval_inject_undef_local</a></span> <span class="kwd">Local</span> (<span class="id"><a href="Memdata.html#Fragment">Fragment</a></span> <span class="id"><a href="VundefInj.html#v1">v1</a></span> <span class="id"><a href="VundefInj.html#q">q</a></span> <span class="id"><a href="VundefInj.html#n">n</a></span>) (<span class="id"><a href="Memdata.html#Fragment">Fragment</a></span> <span class="id"><a href="VundefInj.html#v2">v2</a></span> <span class="id"><a href="VundefInj.html#q">q</a></span> <span class="id"><a href="VundefInj.html#n">n</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6753')">Proof.</div>
+<div class="proofscript" id="proof6753">
+ <span class="id">cbn</span>; <span class="tactic">auto</span>. Qed.</div>
+<br/>
+<br/>
+<br/>
+&nbsp;&nbsp;<br/>
+<div class="doc">restricting <span class="bracket"><span class="id">Mem.mem_inj</span></span> </div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module MemClosures</title>
+<meta name="description" content="Documentation of Coq module MemClosures" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module MemClosures</h1>
+<div class="coq">
+&nbsp;&nbsp;&nbsp;<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Maps.html">Maps</a></span> <span class="id"><a href="Integers.html">Integers</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Memdata.html">Memdata</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Memperm.html">Memperm</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span>.<br/>
+<br/>
+<br/>
+<span class="kwd">Import</span> <span class="id">GMem</span>.<br/>
+<br/>
+<br/>
+<h1> Memory Closures </h1>
+<br/>
+<div class="doc">This file defines closures on memory </div>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "<span class="id">a</span> # <span class="id">b</span>" := (<span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id">b</span> <span class="id">a</span>) (<span class="tactic">at</span> <span class="id">level</span> 1).<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">reach</span>' (<span class="id">gm</span>: <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) (<span class="id">B</span>: <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> (<span class="id"><a href="Values.html#block">block</a></span> * <span class="id"><a href="Integers.html#ptrofs">ptrofs</a></span>) -&gt; <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="reach_nil">reach_nil</a></span>: <span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="id">B</span> <span class="id"><a href="MemClosures.html#b">b</a></span> -&gt; <span class="id">reach</span>' <span class="id">gm</span> <span class="id">B</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span><br/>
+| <span class="id"><a name="reach_cons">reach_cons</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">L</span> <span class="id">b</span>' <span class="id">z</span> <span class="id">ofs</span> <span class="id">q</span> <span class="id">n</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reach</span>' <span class="id">gm</span> <span class="id">B</span> <span class="id"><a href="MemClosures.html#L">L</a></span> <span class="id">b</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id">gm</span> <span class="id">b</span>' <span class="id"><a href="MemClosures.html#z">z</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="Memperm.html#Readable">Readable</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="MemClosures.html#z">z</a></span> (<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span> <span class="id">gm</span>)!!<span class="id">b</span>' = <span class="id"><a href="Memdata.html#Fragment">Fragment</a></span> (<span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> <span class="id"><a href="MemClosures.html#ofs">ofs</a></span>) <span class="id"><a href="MemClosures.html#q">q</a></span> <span class="id"><a href="MemClosures.html#n">n</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reach</span>' <span class="id">gm</span> <span class="id">B</span> ((<span class="id">b</span>',<span class="id"><a href="MemClosures.html#ofs">ofs</a></span>)::<span class="id"><a href="MemClosures.html#L">L</a></span>) <span class="id"><a href="MemClosures.html#b">b</a></span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="reachable">reachable</a></span> : <span class="id"><a href="GMemory.html#gmem">gmem</a></span> -&gt; <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span> -&gt; <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="Reachable">Reachable</a></span> : <span class="kwd">forall</span> <span class="id">gm</span> <span class="id">bs</span> <span class="id">b</span> <span class="id">L</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reach</span>' <span class="id"><a href="MemClosures.html#gm">gm</a></span> <span class="id"><a href="MemClosures.html#bs">bs</a></span> <span class="id"><a href="MemClosures.html#L">L</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> -&gt; <span class="id"><a href="MemClosures.html#reachable">reachable</a></span> <span class="id"><a href="MemClosures.html#gm">gm</a></span> <span class="id"><a href="MemClosures.html#bs">bs</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span>.<br/>
+<br/>
+<div class="doc">MODIFICATION:
+    strengthen <span class="bracket"><span class="id">reach_closed</span></span>, requiring memory contains no Vundef / Undef values within block set of interest </div>
+<span class="kwd">Record</span> <span class="id"><a name="reach_closed">reach_closed</a></span> (<span class="id">gm</span>: <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) (<span class="id">B</span>: <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="reachable_closure">reachable_closure</a></span>: <span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="MemClosures.html#reachable">reachable</a></span> <span class="id"><a href="MemClosures.html#gm">gm</a></span> <span class="id"><a href="MemClosures.html#B">B</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> -&gt; <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="id"><a href="MemClosures.html#B">B</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="no_undef">no_undef</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">z</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="id"><a href="MemClosures.html#B">B</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="MemClosures.html#gm">gm</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> <span class="id"><a href="MemClosures.html#z">z</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="Memperm.html#Readable">Readable</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="MemClosures.html#z">z</a></span> (<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span> <span class="id"><a href="MemClosures.html#gm">gm</a></span>) !! <span class="id"><a href="MemClosures.html#b">b</a></span> = <span class="id"><a href="Memdata.html#Undef">Undef</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="no_vundef">no_vundef</a></span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">z</span> <span class="id">q</span> <span class="id">n</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="id"><a href="MemClosures.html#B">B</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="MemClosures.html#gm">gm</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> <span class="id"><a href="MemClosures.html#z">z</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="Memperm.html#Readable">Readable</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(~ <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="MemClosures.html#z">z</a></span> (<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span> <span class="id"><a href="MemClosures.html#gm">gm</a></span>) !! <span class="id"><a href="MemClosures.html#b">b</a></span> = <span class="id"><a href="Memdata.html#Fragment">Fragment</a></span> <span class="id"><a href="Values.html#Vundef">Vundef</a></span> <span class="id"><a href="MemClosures.html#q">q</a></span> <span class="id"><a href="MemClosures.html#n">n</a></span>);<br/>
+&nbsp;&nbsp;}.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">bset_eq_reach</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">bs1</span> <span class="id">bs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="MemClosures.html#bs1">bs1</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="MemClosures.html#bs2">bs2</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m</span> <span class="id">L</span> <span class="id">b</span>, <span class="id">reach</span>' <span class="id"><a href="MemClosures.html#m">m</a></span> <span class="id"><a href="MemClosures.html#bs1">bs1</a></span> <span class="id"><a href="MemClosures.html#L">L</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> &lt;-&gt; <span class="id">reach</span>' <span class="id"><a href="MemClosures.html#m">m</a></span> <span class="id"><a href="MemClosures.html#bs2">bs2</a></span> <span class="id"><a href="MemClosures.html#L">L</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5914')">Proof.</div>
+<div class="proofscript" id="proof5914">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">bs1</span> <span class="id">bs2</span> <span class="id">EQ</span> <span class="id">m</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">L</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">split</span>; <span class="tactic">intro</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">unfold</span> <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="kwd">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">EQ</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">split</span>; <span class="tactic">intros</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">IHL</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">IHL</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="bset_eq_reachable">bset_eq_reachable</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">bs1</span> <span class="id">bs2</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="MemClosures.html#bs1">bs1</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="MemClosures.html#bs2">bs2</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="MemClosures.html#reachable">reachable</a></span> <span class="id"><a href="MemClosures.html#m">m</a></span> <span class="id"><a href="MemClosures.html#bs1">bs1</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="MemClosures.html#reachable">reachable</a></span> <span class="id"><a href="MemClosures.html#m">m</a></span> <span class="id"><a href="MemClosures.html#bs2">bs2</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5915')">Proof.</div>
+<div class="proofscript" id="proof5915">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">inversion</span> <span class="id">H0</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">bset_eq_reach</span>' <span class="kwd">in</span> <span class="id">H1</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="tactic">inversion</span> <span class="id">H0</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">bset_eq_reach</span>' <span class="kwd">in</span> <span class="id">H1</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">firstorder</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="bset_eq_reach_closed">bset_eq_reach_closed</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">bs1</span> <span class="id">bs2</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="MemClosures.html#bs1">bs1</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="MemClosures.html#bs2">bs2</a></span> <span class="id"><a href="MemClosures.html#b">b</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemClosures.html#reach_closed">reach_closed</a></span> <span class="id"><a href="MemClosures.html#m">m</a></span> <span class="id"><a href="MemClosures.html#bs1">bs1</a></span> &lt;-&gt; <span class="id"><a href="MemClosures.html#reach_closed">reach_closed</a></span> <span class="id"><a href="MemClosures.html#m">m</a></span> <span class="id"><a href="MemClosures.html#bs2">bs2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5916')">Proof.</div>
+<div class="proofscript" id="proof5916">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">intros</span>.  <br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="id">constructor</span>; <span class="tactic">unfold</span> <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id"><a href="MemClosures.html#bset_eq_reachable">bset_eq_reachable</a></span> <span class="kwd">in</span> <span class="id">H1</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">eapply</span> <span class="id"><a href="MemClosures.html#reachable_closure">reachable_closure</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id"><a href="MemClosures.html#bset_eq_reachable">bset_eq_reachable</a></span> <span class="kwd">in</span> <span class="id">H1</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">eapply</span> <span class="id"><a href="MemClosures.html#reachable_closure">reachable_closure</a></span>; <span class="tactic">eauto</span>. <span class="tactic">intro</span>. <span class="tactic">split</span>; <span class="tactic">apply</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

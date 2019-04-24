@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module DetLemma</title>
+<meta name="description" content="Documentation of Coq module DetLemma" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module DetLemma</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="FMemory.html">FMemory</a></span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span>.<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="step_det_loc1_loc2">step_det_loc1_loc2</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#lang_det">lang_det</a></span> <span class="id"><a href="DetLemma.html#L">L</a></span>-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#corestep_locality_1">corestep_locality_1</a></span> (<span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="DetLemma.html#L">L</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#corestep_locality_2">corestep_locality_2</a></span> (<span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="DetLemma.html#L">L</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6737')">Proof.</div>
+<div class="proofscript" id="proof6737">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="InteractionSemantics.html#lang_det">lang_det</a></span>,<span class="id"><a href="InteractionSemantics.html#step_det">step_det</a></span>,<span class="id"><a href="InteractionSemantics.html#corestep_locality_1">corestep_locality_1</a></span>,<span class="id"><a href="InteractionSemantics.html#corestep_locality_2">corestep_locality_2</a></span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H_step</span> <span class="kwd">as</span> (<span class="id">fp1</span>&amp;<span class="id">q1</span>&amp;<span class="id">m1</span>&amp;<span class="id">stepa</span>).<br/>
+<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H1</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">stepa</span>) <span class="kwd">as</span> ?.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InteractionSemantics.html#LPre_subset">LPre_subset</a></span> <span class="kwd">in</span> <span class="id">H2</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H5</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H6</span> <span class="kwd">as</span> [?[]].<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H6</span> <span class="kwd">as</span> [?[]];<span class="tactic">try</span> <span class="tactic">apply</span> <span class="id">H3</span>;<span class="tactic">subst</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H3</span>;<span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id"><a href="InteractionSemantics.html#LPre_comm">LPre_comm</a></span>;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="GMem_eq_unchanged_on">GMem_eq_unchanged_on</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m</span> <span class="id">m</span>' <span class="id">locs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.eq">GMem.eq</a></span> <span class="id"><a href="DetLemma.html#m">m</a></span> <span class="id">m</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.unchanged_on">GMem.unchanged_on</a></span> <span class="id"><a href="DetLemma.html#locs">locs</a></span> <span class="id"><a href="DetLemma.html#m">m</a></span> <span class="id">m</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6738')">Proof.</div>
+<div class="proofscript" id="proof6738">
+&nbsp;&nbsp;<span class="tactic">destruct</span> 1.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>;<span class="tactic">intros</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.perm">GMem.perm</a></span>. <span class="tactic">unfold</span> <span class="id">Memperm.perm_order</span>'.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_access</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GMemory.html#GMem.eq_access_eq_perm">GMem.eq_access_eq_perm</a></span> <span class="kwd">in</span> <span class="id">eq_access</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">eq_access</span>. <span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">eq_contents</span>;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="GMem_eq_unchanged_content">GMem_eq_unchanged_content</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m</span> <span class="id">m</span>' <span class="id">locs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">GMem.eq</span>' <span class="id"><a href="DetLemma.html#m">m</a></span> <span class="id">m</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#unchanged_content">unchanged_content</a></span> <span class="id"><a href="DetLemma.html#locs">locs</a></span> <span class="id"><a href="DetLemma.html#m">m</a></span> <span class="id">m</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6739')">Proof.</div>
+<div class="proofscript" id="proof6739">
+&nbsp;&nbsp;<span class="tactic">destruct</span> 1.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>;<span class="tactic">intros</span>;<span class="tactic">apply</span> <span class="id">eq_validblocks</span>';<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.eq_perm">GMem.eq_perm</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.perm">GMem.perm</a></span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_access</span>' <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GMemory.html#GMem.eq_access_eq_perm">GMem.eq_access_eq_perm</a></span> <span class="kwd">in</span> <span class="id">eq_access</span>'.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">eq_access</span>'. <span class="tactic">split</span>;<span class="tactic">auto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id">eq_contents</span>'. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.perm">GMem.perm</a></span> <span class="kwd">in</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="GMem_eq_MemPre">GMem_eq_MemPre</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m</span> <span class="id">m</span>' <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">GMem.eq</span>' <span class="id"><a href="DetLemma.html#m">m</a></span> <span class="id">m</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#MemPre">MemPre</a></span> <span class="id"><a href="DetLemma.html#m">m</a></span> <span class="id">m</span>' <span class="id"><a href="DetLemma.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6740')">Proof.</div>
+<div class="proofscript" id="proof6740">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="InteractionSemantics.html#unchanged_validity">unchanged_validity</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">intro</span>;<span class="tactic">apply</span> <span class="id">eq_validblocks</span>';<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.eq_perm">GMem.eq_perm</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_access</span>' <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GMemory.html#GMem.eq_access_eq_perm">GMem.eq_access_eq_perm</a></span> <span class="kwd">in</span> <span class="id">eq_access</span>'.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.perm">GMem.perm</a></span>. <span class="tactic">rewrite</span> <span class="id">eq_access</span>'. <span class="tactic">split</span>;<span class="tactic">intro</span>;<span class="tactic">auto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id">eq_contents</span>';<span class="tactic">auto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="InteractionSemantics.html#unchanged_validity">unchanged_validity</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">intro</span>;<span class="tactic">apply</span> <span class="id">eq_validblocks</span>';<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.eq_perm">GMem.eq_perm</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_access</span>' <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GMemory.html#GMem.eq_access_eq_perm">GMem.eq_access_eq_perm</a></span> <span class="kwd">in</span> <span class="id">eq_access</span>'.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.perm">GMem.perm</a></span>. <span class="tactic">rewrite</span> <span class="id">eq_access</span>'. <span class="tactic">split</span>;<span class="tactic">intro</span>;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_access</span>' <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GMemory.html#GMem.eq_access_eq_perm">GMem.eq_access_eq_perm</a></span> <span class="kwd">in</span> <span class="id">eq_access</span>'.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.perm">GMem.perm</a></span>. <span class="tactic">rewrite</span> <span class="id">eq_access</span>'. <span class="tactic">split</span>;<span class="tactic">intro</span>;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="GMem_eq_Fleq">GMem_eq_Fleq</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m</span> <span class="id">m</span>' <span class="id">fl</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">GMem.eq</span>' <span class="id"><a href="DetLemma.html#m">m</a></span> <span class="id">m</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#FreelistEq">FreelistEq</a></span> <span class="id"><a href="DetLemma.html#m">m</a></span> <span class="id">m</span>' <span class="id"><a href="DetLemma.html#fl">fl</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6741')">Proof.</div>
+<div class="proofscript" id="proof6741">
+&nbsp;&nbsp;<span class="tactic">destruct</span> 1;<span class="id">constructor</span>;<span class="tactic">intro</span>;<span class="tactic">apply</span> <span class="id">eq_validblocks</span>';<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<span class="kwd">Definition</span>  <span class="id"><a name="step_mem_injc">step_mem_injc</a></span> (<span class="id">L</span>:<span class="id"><a href="InteractionSemantics.html#Language">Language</a></span>):<span class="kwd">Prop</span>:=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ge</span> <span class="id">fl</span> <span class="id">q</span> <span class="id">m1</span> <span class="id">fp</span> <span class="id">q</span>' <span class="id">m1</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="DetLemma.html#L">L</a></span> <span class="id"><a href="DetLemma.html#ge">ge</a></span> <span class="id"><a href="DetLemma.html#fl">fl</a></span> <span class="id"><a href="DetLemma.html#q">q</a></span> <span class="id"><a href="DetLemma.html#m1">m1</a></span> <span class="id"><a href="DetLemma.html#fp">fp</a></span> <span class="id">q</span>' <span class="id">m1</span>'-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">fm</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="FMemory.html#embed">embed</a></span> <span class="id"><a href="DetLemma.html#m1">m1</a></span> <span class="id"><a href="DetLemma.html#fl">fl</a></span> <span class="id"><a href="DetLemma.html#fm">fm</a></span>.<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="eff_loc1_memeqcorestep">eff_loc1_memeqcorestep</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L</span> (<span class="id">step_mem_inj</span>:<span class="id"><a href="DetLemma.html#step_mem_injc">step_mem_injc</a></span> <span class="id"><a href="DetLemma.html#L">L</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#corestep_local_eff">corestep_local_eff</a></span> (<span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="DetLemma.html#L">L</a></span>)-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#corestep_locality_1">corestep_locality_1</a></span> (<span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="DetLemma.html#L">L</a></span>)-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#eq_mem_eq_corestep">eq_mem_eq_corestep</a></span> (<span class="id"><a href="InteractionSemantics.html#step">InteractionSemantics.step</a></span> <span class="id"><a href="DetLemma.html#L">L</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6742')">Proof.</div>
+<div class="proofscript" id="proof6742">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="InteractionSemantics.html#corestep_local_eff">corestep_local_eff</a></span>,<span class="id"><a href="InteractionSemantics.html#corestep_locality_1">corestep_locality_1</a></span>,<span class="id"><a href="InteractionSemantics.html#eq_mem_eq_corestep">eq_mem_eq_corestep</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">step_mem_inj</span> <span class="kwd">in</span> <span class="id">H2</span> <span class="kwd">as</span> <span class="id">H3</span>;<span class="tactic">destruct</span> <span class="id">H3</span> <span class="kwd">as</span> [<span class="id">fm1</span> <span class="id">H3</span>]. <br/>
+&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> <span class="id"><a href="DetLemma.html#GMem_eq_Fleq">GMem_eq_Fleq</a></span> <span class="id">m1</span> <span class="id">m2</span> <span class="id">fl</span> .<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H3</span>;<span class="tactic">clear</span> <span class="id">H3</span>;<span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span>(<span class="id"><a href="InteractionSemantics.html#LPre">LPre</a></span> (<span class="id"><a href="FMemory.html#strip">strip</a></span> <span class="id">fm1</span>) <span class="id">m2</span> <span class="id">fp</span> (<span class="id"><a href="FMemory.html#Mem.freelist">Mem.freelist</a></span> <span class="id">fm1</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>;<span class="tactic">auto</span>. <span class="tactic">eapply</span> <span class="id"><a href="DetLemma.html#GMem_eq_MemPre">GMem_eq_MemPre</a></span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H3</span> <span class="kwd">as</span> ?;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H5</span> <span class="kwd">as</span> [?[]].<br/>
+&nbsp;&nbsp;<span class="id">eexists</span>;<span class="tactic">split</span>;<span class="tactic">eauto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H5</span> <span class="kwd">as</span> [[? <span class="id">_</span> <span class="id">_</span> <span class="id">_</span>] <span class="id">_</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H2</span> <span class="kwd">as</span> [[? <span class="id">_</span> <span class="id">_</span> <span class="id">_</span>] <span class="id">_</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H6</span> <span class="kwd">as</span> [? <span class="id">_</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="InteractionSemantics.html#MemPost">MemPost</a></span> <span class="kwd">in</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InteractionSemantics.html#unchanged_content_memeq">unchanged_content_memeq</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InteractionSemantics.html#unchanged_content_trans">unchanged_content_trans</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="InteractionSemantics.html#unchanged_content_comm">unchanged_content_comm</a></span> <span class="kwd">in</span> <span class="id">MemContentPreserve0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InteractionSemantics.html#unchanged_content_trans">unchanged_content_trans</a></span>;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="DetLemma.html#GMem_eq_unchanged_content">GMem_eq_unchanged_content</a></span>;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

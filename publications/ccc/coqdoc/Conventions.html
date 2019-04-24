@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Conventions</title>
+<meta name="description" content="Documentation of Coq module Conventions" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Conventions</h1>
+<div class="coq">
+<br/>
+<div class="doc">Function calling conventions and other conventions regarding the use of
+    machine registers and stack slots. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AST.html">AST</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Locations.html">Locations</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Export</span> <span class="id"><a href="Conventions1.html">Conventions1</a></span>.<br/>
+<br/>
+<div class="doc">The processor-dependent and EABI-dependent definitions are in
+    <span class="bracket"><span class="id">arch</span>/<span class="id">abi</span>/<span class="id">Conventions1.v</span></span>.  This file adds various processor-independent
+    definitions and lemmas. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="loc_arguments_acceptable_2">loc_arguments_acceptable_2</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">l</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id"><a href="Conventions.html#l">l</a></span> (<span class="id"><a href="AST.html#regs_of_rpairs">regs_of_rpairs</a></span> (<span class="id"><a href="Conventions1.html#loc_arguments">loc_arguments</a></span> <span class="id"><a href="Conventions.html#s">s</a></span>)) -&gt; <span class="id"><a href="Conventions1.html#loc_argument_acceptable">loc_argument_acceptable</a></span> <span class="id"><a href="Conventions.html#l">l</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3443')">Proof.</div>
+<div class="proofscript" id="proof3443">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">l</span>. <span class="tactic">generalize</span> (<span class="id"><a href="Conventions1.html#loc_arguments_acceptable">loc_arguments_acceptable</a></span> <span class="id">s</span>). <span class="tactic">generalize</span> (<span class="id"><a href="Conventions1.html#loc_arguments">loc_arguments</a></span> <span class="id">s</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">l0</span> <span class="kwd">as</span> [ | <span class="id">p</span> <span class="id">pl</span>]; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+- <span class="id">contradiction</span>.<br/>
+- <span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#in_app_iff">in_app_iff</a></span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">destruct</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="tactic">destruct</span> <span class="id">p</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">intuition</span> <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHpl</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<h2> Location of function parameters </h2>
+<br/>
+<div class="doc">A function finds the values of its parameter in the same locations
+  where its caller stored them, except that the stack-allocated arguments,
+  viewed as <span class="bracket"><span class="id">Outgoing</span></span> slots by the caller, are accessed via <span class="bracket"><span class="id">Incoming</span></span>
+  slots (at the same offsets and types) in the callee. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="parameter_of_argument">parameter_of_argument</a></span> (<span class="id">l</span>: <span class="id"><a href="Locations.html#loc">loc</a></span>) : <span class="id"><a href="Locations.html#loc">loc</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="Conventions.html#l">l</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Locations.html#S">S</a></span> <span class="id"><a href="Locations.html#Outgoing">Outgoing</a></span> <span class="id">n</span> <span class="id">ty</span> =&gt; <span class="id"><a href="Locations.html#S">S</a></span> <span class="id"><a href="Locations.html#Incoming">Incoming</a></span> <span class="id">n</span> <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id"><a href="Conventions.html#l">l</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="loc_parameters">loc_parameters</a></span> (<span class="id">s</span>: <span class="id"><a href="AST.html#signature">signature</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> (<span class="id"><a href="AST.html#rpair">rpair</a></span> <span class="id"><a href="Locations.html#loc">loc</a></span>) :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#map">List.map</a></span> (<span class="id"><a href="AST.html#map_rpair">map_rpair</a></span> <span class="id"><a href="Conventions.html#parameter_of_argument">parameter_of_argument</a></span>) (<span class="id"><a href="Conventions1.html#loc_arguments">loc_arguments</a></span> <span class="id"><a href="Conventions.html#s">s</a></span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="incoming_slot_in_parameters">incoming_slot_in_parameters</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ofs</span> <span class="id">ty</span> <span class="id">sg</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id"><a href="Locations.html#S">S</a></span> <span class="id"><a href="Locations.html#Incoming">Incoming</a></span> <span class="id"><a href="Conventions.html#ofs">ofs</a></span> <span class="id"><a href="Conventions.html#ty">ty</a></span>) (<span class="id"><a href="AST.html#regs_of_rpairs">regs_of_rpairs</a></span> (<span class="id"><a href="Conventions.html#loc_parameters">loc_parameters</a></span> <span class="id"><a href="Conventions.html#sg">sg</a></span>)) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id"><a href="Locations.html#S">S</a></span> <span class="id"><a href="Locations.html#Outgoing">Outgoing</a></span> <span class="id"><a href="Conventions.html#ofs">ofs</a></span> <span class="id"><a href="Conventions.html#ty">ty</a></span>) (<span class="id"><a href="AST.html#regs_of_rpairs">regs_of_rpairs</a></span> (<span class="id"><a href="Conventions1.html#loc_arguments">loc_arguments</a></span> <span class="id"><a href="Conventions.html#sg">sg</a></span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3444')">Proof.</div>
+<div class="proofscript" id="proof3444">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">replace</span> (<span class="id"><a href="AST.html#regs_of_rpairs">regs_of_rpairs</a></span> (<span class="id"><a href="Conventions.html#loc_parameters">loc_parameters</a></span> <span class="id">sg</span>)) <span class="kwd">with</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#map">List.map</a></span> <span class="id"><a href="Conventions.html#parameter_of_argument">parameter_of_argument</a></span> (<span class="id"><a href="AST.html#regs_of_rpairs">regs_of_rpairs</a></span> (<span class="id"><a href="Conventions1.html#loc_arguments">loc_arguments</a></span> <span class="id">sg</span>))) <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">change</span> (<span class="id"><a href="Locations.html#S">S</a></span> <span class="id"><a href="Locations.html#Incoming">Incoming</a></span> <span class="id">ofs</span> <span class="id">ty</span>) <span class="kwd">with</span> (<span class="id"><a href="Conventions.html#parameter_of_argument">parameter_of_argument</a></span> (<span class="id"><a href="Locations.html#S">S</a></span> <span class="id"><a href="Locations.html#Outgoing">Outgoing</a></span> <span class="id">ofs</span> <span class="id">ty</span>)) <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="Coqlib.html#list_in_map_inv">list_in_map_inv</a></span>. <span class="id">eexact</span> <span class="id">H</span>. <span class="tactic">intros</span> [<span class="id">x</span> [<span class="id">A</span> <span class="id">B</span>]]. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">A</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id"><a href="Conventions.html#loc_arguments_acceptable_2">loc_arguments_acceptable_2</a></span>; <span class="tactic">eauto</span>. <span class="tactic">unfold</span> <span class="id"><a href="Conventions1.html#loc_argument_acceptable">loc_argument_acceptable</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">x</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">A</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">sl</span>; <span class="tactic">try</span> <span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">A</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Conventions.html#loc_parameters">loc_parameters</a></span>. <span class="tactic">generalize</span> (<span class="id"><a href="Conventions1.html#loc_arguments">loc_arguments</a></span> <span class="id">sg</span>). <span class="tactic">induction</span> <span class="id">l</span> <span class="kwd">as</span> [ | <span class="id">p</span> <span class="id">l</span>]; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#map_app">map_app</a></span>. <span class="tactic">f_equal</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> <span class="id">p</span>; <span class="tactic">auto</span>. <br/>
+Qed.</div>
+<br/>
+<h1> Tail calls </h1>
+<br/>
+<div class="doc">A tail-call is possible for a signature if the corresponding
+    arguments are all passed in registers. </div>
+<br/>
+<div class="doc">A tail-call is possible for a signature if the corresponding
+    arguments are all passed in registers. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="tailcall_possible">tailcall_possible</a></span> (<span class="id">s</span>: <span class="id"><a href="AST.html#signature">signature</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">l</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id"><a href="Conventions.html#l">l</a></span> (<span class="id"><a href="AST.html#regs_of_rpairs">regs_of_rpairs</a></span> (<span class="id"><a href="Conventions1.html#loc_arguments">loc_arguments</a></span> <span class="id"><a href="Conventions.html#s">s</a></span>)) -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="Conventions.html#l">l</a></span> <span class="kwd">with</span> <span class="id"><a href="Locations.html#R">R</a></span> <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span> | <span class="id"><a href="Locations.html#S">S</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span> <span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Decide whether a tailcall is possible. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="tailcall_is_possible">tailcall_is_possible</a></span> (<span class="id">sg</span>: <span class="id"><a href="AST.html#signature">signature</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#bool">bool</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#forallb">List.forallb</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">fun</span> <span class="id">l</span> =&gt; <span class="kwd">match</span> <span class="id"><a href="Conventions.html#l">l</a></span> <span class="kwd">with</span> <span class="id"><a href="Locations.html#R">R</a></span> <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> | <span class="id"><a href="Locations.html#S">S</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="kwd">end</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="AST.html#regs_of_rpairs">regs_of_rpairs</a></span> (<span class="id"><a href="Conventions1.html#loc_arguments">loc_arguments</a></span> <span class="id"><a href="Conventions.html#sg">sg</a></span>)).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="tailcall_is_possible_correct">tailcall_is_possible_correct</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span>, <span class="id"><a href="Conventions.html#tailcall_is_possible">tailcall_is_possible</a></span> <span class="id"><a href="Conventions.html#s">s</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> -&gt; <span class="id"><a href="Conventions.html#tailcall_possible">tailcall_possible</a></span> <span class="id"><a href="Conventions.html#s">s</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3445')">Proof.</div>
+<div class="proofscript" id="proof3445">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Conventions.html#tailcall_is_possible">tailcall_is_possible</a></span>; <span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#forallb_forall">forallb_forall</a></span> <span class="kwd">in</span> <span class="id">H</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">destruct</span> <span class="id">l</span>; [<span class="tactic">auto</span>|<span class="tactic">discriminate</span>]. <br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="zero_size_arguments_tailcall_possible">zero_size_arguments_tailcall_possible</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sg</span>, <span class="id"><a href="Conventions1.html#size_arguments">size_arguments</a></span> <span class="id"><a href="Conventions.html#sg">sg</a></span> = 0 -&gt; <span class="id"><a href="Conventions.html#tailcall_possible">tailcall_possible</a></span> <span class="id"><a href="Conventions.html#sg">sg</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3446')">Proof.</div>
+<div class="proofscript" id="proof3446">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="id">exploit</span> <span class="id"><a href="Conventions.html#loc_arguments_acceptable_2">loc_arguments_acceptable_2</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Conventions1.html#loc_argument_acceptable">loc_argument_acceptable</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">l</span>; <span class="tactic">intros</span>. <span class="tactic">auto</span>. <span class="tactic">destruct</span> <span class="id">sl</span>; <span class="tactic">try</span> <span class="id">contradiction</span>. <span class="tactic">destruct</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id"><a href="Conventions1.html#loc_arguments_bounded">loc_arguments_bounded</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H0</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id"><a href="Locations.html#typesize_pos">typesize_pos</a></span> <span class="id">ty</span>). <span class="tactic">omega</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

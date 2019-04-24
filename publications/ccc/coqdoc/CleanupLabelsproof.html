@@ -1,0 +1,361 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module CleanupLabelsproof</title>
+<meta name="description" content="Documentation of Coq module CleanupLabelsproof" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module CleanupLabelsproof</h1>
+<div class="coq">
+<br/>
+<div class="doc">Correctness proof for clean-up of labels </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">FSets</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span> <span class="id">Ordered</span> <span class="id">Integers</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span> <span class="id">Linking</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Values</span> <span class="id">Memory</span> <span class="id">Events</span> <span class="id">Globalenvs</span> <span class="id">Smallstep</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Op</span> <span class="id">Locations</span> <span class="id">Linear</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">CleanupLabels</span>.<br/>
+<br/>
+<span class="kwd">Module</span> <span class="id">LabelsetFacts</span> := <span class="id">FSetFacts.Facts</span>(<span class="id">Labelset</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">match_prog</span> (<span class="id">p</span> <span class="id">tp</span>: <span class="id">Linear.program</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">match_program</span> (<span class="kwd">fun</span> <span class="id">ctx</span> <span class="id">f</span> <span class="id">tf</span> =&gt; <span class="id">tf</span> = <span class="id">transf_fundef</span> <span class="id">f</span>) <span class="id">eq</span> <span class="id">p</span> <span class="id">tp</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">transf_program_match</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p</span>, <span class="id">match_prog</span> <span class="id">p</span> (<span class="id">transf_program</span> <span class="id">p</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3619')">Proof.</div>
+<div class="proofscript" id="proof3619">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">match_transform_program</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Section</span> <span class="id">CLEANUP</span>.<br/>
+<br/>
+<span class="kwd">Variables</span> <span class="id">prog</span> <span class="id">tprog</span>: <span class="id">program</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id">TRANSL</span>: <span class="id">match_prog</span> <span class="id">prog</span> <span class="id">tprog</span>.<br/>
+<span class="kwd">Let</span> <span class="id">ge</span> := <span class="id">Genv.globalenv</span> <span class="id">prog</span>.<br/>
+<span class="kwd">Let</span> <span class="id">tge</span> := <span class="id">Genv.globalenv</span> <span class="id">tprog</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">symbols_preserved</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">id</span>,<br/>
+&nbsp;&nbsp;<span class="id">Genv.find_symbol</span> <span class="id">tge</span> <span class="id">id</span> = <span class="id">Genv.find_symbol</span> <span class="id">ge</span> <span class="id">id</span>.<br/>
+<span class="kwd">Proof</span> (<span class="id">Genv.find_symbol_transf</span> <span class="id">TRANSL</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">senv_preserved</span>:<br/>
+&nbsp;&nbsp;<span class="id">Senv.equiv</span> <span class="id">ge</span> <span class="id">tge</span>.<br/>
+<span class="kwd">Proof</span> (<span class="id">Genv.senv_transf</span> <span class="id">TRANSL</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">functions_translated</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">v</span> <span class="id">f</span>,<br/>
+&nbsp;&nbsp;<span class="id">Genv.find_funct</span> <span class="id">ge</span> <span class="id">v</span> = <span class="id">Some</span> <span class="id">f</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">Genv.find_funct</span> <span class="id">tge</span> <span class="id">v</span> = <span class="id">Some</span> (<span class="id">transf_fundef</span> <span class="id">f</span>).<br/>
+<span class="kwd">Proof</span> (<span class="id">Genv.find_funct_transf</span> <span class="id">TRANSL</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">function_ptr_translated</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">v</span> <span class="id">f</span>,<br/>
+&nbsp;&nbsp;<span class="id">Genv.find_funct_ptr</span> <span class="id">ge</span> <span class="id">v</span> = <span class="id">Some</span> <span class="id">f</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">Genv.find_funct_ptr</span> <span class="id">tge</span> <span class="id">v</span> = <span class="id">Some</span> (<span class="id">transf_fundef</span> <span class="id">f</span>).<br/>
+<span class="kwd">Proof</span> (<span class="id">Genv.find_funct_ptr_transf</span> <span class="id">TRANSL</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">sig_function_translated</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span>,<br/>
+&nbsp;&nbsp;<span class="id">funsig</span> (<span class="id">transf_fundef</span> <span class="id">f</span>) = <span class="id">funsig</span> <span class="id">f</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3620')">Proof.</div>
+<div class="proofscript" id="proof3620">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">f</span>; <span class="tactic">reflexivity</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">find_function_translated</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ros</span> <span class="id">ls</span> <span class="id">f</span>,<br/>
+&nbsp;&nbsp;<span class="id">find_function</span> <span class="id">ge</span> <span class="id">ros</span> <span class="id">ls</span> = <span class="id">Some</span> <span class="id">f</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">find_function</span> <span class="id">tge</span> <span class="id">ros</span> <span class="id">ls</span> = <span class="id">Some</span> (<span class="id">transf_fundef</span> <span class="id">f</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3621')">Proof.</div>
+<div class="proofscript" id="proof3621">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">find_function</span>; <span class="tactic">intros</span>; <span class="tactic">destruct</span> <span class="id">ros</span>; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">functions_translated</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">symbols_preserved</span>. <span class="tactic">destruct</span> (<span class="id">Genv.find_symbol</span> <span class="id">ge</span> <span class="id">i</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">function_ptr_translated</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Correctness of <span class="bracket"><span class="id">labels_branched_to</span></span>. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">instr_branches_to</span> (<span class="id">i</span>: <span class="id">instruction</span>) (<span class="id">lbl</span>: <span class="id">label</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">i</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Lgoto</span> <span class="id">lbl</span>' =&gt; <span class="id">lbl</span> = <span class="id">lbl</span>'<br/>
+&nbsp;&nbsp;| <span class="id">Lcond</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">lbl</span>' =&gt; <span class="id">lbl</span> = <span class="id">lbl</span>'<br/>
+&nbsp;&nbsp;| <span class="id">Ljumptable</span> <span class="id">arg</span> <span class="id">tbl</span> =&gt; <span class="id">In</span> <span class="id">lbl</span> <span class="id">tbl</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">False</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Remark</span> <span class="id">add_label_branched_to_incr</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ls</span> <span class="id">i</span>, <span class="id">Labelset.Subset</span> <span class="id">ls</span> (<span class="id">add_label_branched_to</span> <span class="id">ls</span> <span class="id">i</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3622')">Proof.</div>
+<div class="proofscript" id="proof3622">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>; <span class="tactic">destruct</span> <span class="id">i</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Labelset.add_2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Labelset.add_2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">revert</span> <span class="id">H</span>; <span class="tactic">induction</span> <span class="id">l</span>; <span class="tactic">simpl</span>. <span class="tactic">auto</span>. <span class="tactic">intros</span>; <span class="tactic">apply</span> <span class="id">Labelset.add_2</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Remark</span> <span class="id">add_label_branched_to_contains</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ls</span> <span class="id">i</span> <span class="id">lbl</span>,<br/>
+&nbsp;&nbsp;<span class="id">instr_branches_to</span> <span class="id">i</span> <span class="id">lbl</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">Labelset.In</span> <span class="id">lbl</span> (<span class="id">add_label_branched_to</span> <span class="id">ls</span> <span class="id">i</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3623')">Proof.</div>
+<div class="proofscript" id="proof3623">
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">i</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>; <span class="tactic">try</span> <span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Labelset.add_1</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Labelset.add_1</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">revert</span> <span class="id">H</span>. <span class="tactic">induction</span> <span class="id">l</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id">Labelset.add_1</span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id">Labelset.add_2</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">labels_branched_to_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">i</span> <span class="id">lbl</span>,<br/>
+&nbsp;&nbsp;<span class="id">In</span> <span class="id">i</span> <span class="id">c</span> -&gt; <span class="id">instr_branches_to</span> <span class="id">i</span> <span class="id">lbl</span> -&gt; <span class="id">Labelset.In</span> <span class="id">lbl</span> (<span class="id">labels_branched_to</span> <span class="id">c</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3624')">Proof.</div>
+<div class="proofscript" id="proof3624">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="kwd">forall</span> <span class="id">c</span>' <span class="id">bto</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Labelset.Subset</span> <span class="id">bto</span> (<span class="id">fold_left</span> <span class="id">add_label_branched_to</span> <span class="id">c</span>' <span class="id">bto</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>'; <span class="tactic">intros</span>; <span class="tactic">simpl</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHc</span>'. <span class="tactic">apply</span> <span class="id">add_label_branched_to_incr</span>; <span class="tactic">auto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="kwd">forall</span> <span class="id">c</span>' <span class="id">bto</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">In</span> <span class="id">i</span> <span class="id">c</span>' -&gt; <span class="id">Labelset.In</span> <span class="id">lbl</span> (<span class="id">fold_left</span> <span class="id">add_label_branched_to</span> <span class="id">c</span>' <span class="id">bto</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>'; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">a</span>. <span class="tactic">apply</span> <span class="id">H1</span>. <span class="tactic">apply</span> <span class="id">add_label_branched_to_contains</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHc</span>'; <span class="tactic">auto</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">labels_branched_to</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Commutation with <span class="bracket"><span class="id">find_label</span></span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">remove_unused_labels_cons</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">bto</span> <span class="id">i</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;<span class="id">remove_unused_labels</span> <span class="id">bto</span> (<span class="id">i</span> :: <span class="id">c</span>) =<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">i</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Llabel</span> <span class="id">lbl</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Labelset.mem</span> <span class="id">lbl</span> <span class="id">bto</span> <span class="kwd">then</span> <span class="id">i</span> :: <span class="id">remove_unused_labels</span> <span class="id">bto</span> <span class="id">c</span> <span class="kwd">else</span> <span class="id">remove_unused_labels</span> <span class="id">bto</span> <span class="id">c</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">i</span> :: <span class="id">remove_unused_labels</span> <span class="id">bto</span> <span class="id">c</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3625')">Proof.</div>
+<div class="proofscript" id="proof3625">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">remove_unused_labels</span>; <span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id">list_fold_right_eq</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">find_label_commut</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">lbl</span> <span class="id">bto</span>,<br/>
+&nbsp;&nbsp;<span class="id">Labelset.In</span> <span class="id">lbl</span> <span class="id">bto</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">c</span>',<br/>
+&nbsp;&nbsp;<span class="id">find_label</span> <span class="id">lbl</span> <span class="id">c</span> = <span class="id">Some</span> <span class="id">c</span>' -&gt;<br/>
+&nbsp;&nbsp;<span class="id">find_label</span> <span class="id">lbl</span> (<span class="id">remove_unused_labels</span> <span class="id">bto</span> <span class="id">c</span>) = <span class="id">Some</span> (<span class="id">remove_unused_labels</span> <span class="id">bto</span> <span class="id">c</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3626')">Proof.</div>
+<div class="proofscript" id="proof3626">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">remove_unused_labels_cons</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">is_label</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">destruct</span> <span class="id">a</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">peq</span> <span class="id">lbl</span> <span class="id">l</span>). <span class="tactic">subst</span> <span class="id">l</span>. <span class="id">inv</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Labelset.mem_1</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">peq_true</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Labelset.mem</span> <span class="id">l</span> <span class="id">bto</span>); <span class="tactic">auto</span>. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">peq_false</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Corollary</span> <span class="id">find_label_translated</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">i</span> <span class="id">c</span>' <span class="id">lbl</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;<span class="id">incl</span> (<span class="id">i</span> :: <span class="id">c</span>') (<span class="id">fn_code</span> <span class="id">f</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">find_label</span> <span class="id">lbl</span> (<span class="id">fn_code</span> <span class="id">f</span>) = <span class="id">Some</span> <span class="id">c</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">instr_branches_to</span> <span class="id">i</span> <span class="id">lbl</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">find_label</span> <span class="id">lbl</span> (<span class="id">fn_code</span> (<span class="id">transf_function</span> <span class="id">f</span>)) =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Some</span> (<span class="id">remove_unused_labels</span> (<span class="id">labels_branched_to</span> (<span class="id">fn_code</span> <span class="id">f</span>)) <span class="id">c</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3627')">Proof.</div>
+<div class="proofscript" id="proof3627">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id">transf_function</span>; <span class="tactic">unfold</span> <span class="id">cleanup_labels</span>; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">find_label_commut</span>. <span class="tactic">eapply</span> <span class="id">labels_branched_to_correct</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">find_label_incl</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">lbl</span> <span class="id">c</span> <span class="id">c</span>', <span class="id">find_label</span> <span class="id">lbl</span> <span class="id">c</span> = <span class="id">Some</span> <span class="id">c</span>' -&gt; <span class="id">incl</span> <span class="id">c</span>' <span class="id">c</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3628')">Proof.</div>
+<div class="proofscript" id="proof3628">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">c</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">is_label</span> <span class="id">lbl</span> <span class="id">a</span>). <span class="id">inv</span> <span class="id">H</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">coqlib</span>. <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Correctness of clean-up </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">match_stackframes</span>: <span class="id">stackframe</span> -&gt; <span class="id">stackframe</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">match_stackframe_intro</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">ls</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">incl</span> <span class="id">c</span> <span class="id">f</span>.(<span class="id">fn_code</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">match_stackframes</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Stackframe</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">ls</span> <span class="id">c</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Stackframe</span> (<span class="id">transf_function</span> <span class="id">f</span>) <span class="id">sp</span> <span class="id">ls</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">remove_unused_labels</span> (<span class="id">labels_branched_to</span> <span class="id">f</span>.(<span class="id">fn_code</span>)) <span class="id">c</span>)).<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">match_states</span>: <span class="id">state</span> -&gt; <span class="id">state</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">match_states_intro</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">c</span> <span class="id">ls</span> <span class="id">m</span> <span class="id">ts</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">STACKS</span>: <span class="id">list_forall2</span> <span class="id">match_stackframes</span> <span class="id">s</span> <span class="id">ts</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">INCL</span>: <span class="id">incl</span> <span class="id">c</span> <span class="id">f</span>.(<span class="id">fn_code</span>)),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">match_states</span> (<span class="id">State</span> <span class="id">s</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">c</span> <span class="id">ls</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">State</span> <span class="id">ts</span> (<span class="id">transf_function</span> <span class="id">f</span>) <span class="id">sp</span> (<span class="id">remove_unused_labels</span> (<span class="id">labels_branched_to</span> <span class="id">f</span>.(<span class="id">fn_code</span>)) <span class="id">c</span>) <span class="id">ls</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">match_states_call</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">ls</span> <span class="id">m</span> <span class="id">ts</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">list_forall2</span> <span class="id">match_stackframes</span> <span class="id">s</span> <span class="id">ts</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">match_states</span> (<span class="id">Callstate</span> <span class="id">s</span> <span class="id">f</span> <span class="id">ls</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Callstate</span> <span class="id">ts</span> (<span class="id">transf_fundef</span> <span class="id">f</span>) <span class="id">ls</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;| <span class="id">match_states_return</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">ls</span> <span class="id">m</span> <span class="id">ts</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">list_forall2</span> <span class="id">match_stackframes</span> <span class="id">s</span> <span class="id">ts</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">match_states</span> (<span class="id">Returnstate</span> <span class="id">s</span> <span class="id">ls</span> <span class="id">m</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Returnstate</span> <span class="id">ts</span> <span class="id">ls</span> <span class="id">m</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="kwd">measure</span> (<span class="id">st</span>: <span class="id">state</span>) : <span class="id">nat</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">st</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">State</span> <span class="id">s</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">c</span> <span class="id">ls</span> <span class="id">m</span> =&gt; <span class="id">List.length</span> <span class="id">c</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">O</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">match_parent_locset</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">ts</span>,<br/>
+&nbsp;&nbsp;<span class="id">list_forall2</span> <span class="id">match_stackframes</span> <span class="id">s</span> <span class="id">ts</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">parent_locset</span> <span class="id">ts</span> = <span class="id">parent_locset</span> <span class="id">s</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3629')">Proof.</div>
+<div class="proofscript" id="proof3629">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">simpl</span>. <span class="tactic">auto</span>. <span class="id">inv</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">transf_step_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span>, <span class="id">step</span> <span class="id">ge</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span>' (<span class="id">MS</span>: <span class="id">match_states</span> <span class="id">s1</span> <span class="id">s1</span>'),<br/>
+&nbsp;&nbsp;(<span class="id">exists</span> <span class="id">s2</span>', <span class="id">step</span> <span class="id">tge</span> <span class="id">s1</span>' <span class="id">t</span> <span class="id">s2</span>' /\ <span class="id">match_states</span> <span class="id">s2</span> <span class="id">s2</span>')<br/>
+&nbsp;&nbsp;\/ (<span class="kwd">measure</span> <span class="id">s2</span> &lt; <span class="kwd">measure</span> <span class="id">s1</span> /\ <span class="id">t</span> = <span class="id">E0</span> /\ <span class="id">match_states</span> <span class="id">s2</span> <span class="id">s1</span>')%<span class="id">nat</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3630')">Proof.</div>
+<div class="proofscript" id="proof3630">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>; <span class="id">inv</span> <span class="id">MS</span>; <span class="tactic">try</span> <span class="tactic">rewrite</span> <span class="id">remove_unused_labels_cons</span>.<br/>
+&nbsp;Lgetstack&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;Lsetstack&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;Lop&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="id">instantiate</span> (1 := <span class="id">v</span>). <span class="tactic">rewrite</span> &lt;- <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">eval_operation_preserved</span>. <span class="tactic">exact</span> <span class="id">symbols_preserved</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;Lload&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">eval_addressing</span> <span class="id">tge</span> <span class="id">sp</span> <span class="id">addr</span> (<span class="id">LTL.reglist</span> <span class="id">rs</span> <span class="id">args</span>) = <span class="id">Some</span> <span class="id">a</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H</span>. <span class="tactic">apply</span> <span class="id">eval_addressing_preserved</span>. <span class="tactic">exact</span> <span class="id">symbols_preserved</span>.<br/>
+&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;Lstore&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">eval_addressing</span> <span class="id">tge</span> <span class="id">sp</span> <span class="id">addr</span> (<span class="id">LTL.reglist</span> <span class="id">rs</span> <span class="id">args</span>) = <span class="id">Some</span> <span class="id">a</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H</span>. <span class="tactic">apply</span> <span class="id">eval_addressing_preserved</span>. <span class="tactic">exact</span> <span class="id">symbols_preserved</span>.<br/>
+&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;Lcall&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eapply</span> <span class="id">find_function_translated</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">symmetry</span>; <span class="tactic">apply</span> <span class="id">sig_function_translated</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="id">constructor</span>; <span class="tactic">auto</span>. <span class="id">constructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;Ltailcall&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="id">erewrite</span> <span class="id">match_parent_locset</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">find_function_translated</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">symmetry</span>; <span class="tactic">apply</span> <span class="id">sig_function_translated</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Lbuiltin&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">eval_builtin_args_preserved</span> <span class="kwd">with</span> (<span class="id">ge1</span> := <span class="id">ge</span>); <span class="tactic">eauto</span>. <span class="tactic">exact</span> <span class="id">symbols_preserved</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">external_call_symbols_preserved</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">senv_preserved</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;Llabel&nbsp;*)</span>&nbsp;&nbsp;<span class="id">case_eq</span> (<span class="id">Labelset.mem</span> <span class="id">lbl</span> (<span class="id">labels_branched_to</span> (<span class="id">fn_code</span> <span class="id">f</span>))); <span class="tactic">intros</span>.<br/>
+&nbsp;not&nbsp;eliminated&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;eliminated&nbsp;*)</span>&nbsp;&nbsp;<span class="id">right</span>. <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">omega</span>. <span class="tactic">split</span>. <span class="tactic">auto</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;Lgoto&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eapply</span> <span class="id">find_label_translated</span>; <span class="tactic">eauto</span>. <span class="tactic">red</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">find_label_incl</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Lcond&nbsp;taken&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">auto</span>. <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">find_label_translated</span>; <span class="tactic">eauto</span>. <span class="tactic">red</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">find_label_incl</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Lcond&nbsp;not&nbsp;taken&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">exec_Lcond_false</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;Ljumptable&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">find_label_translated</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">red</span>. <span class="tactic">eapply</span> <span class="id">list_nth_z_in</span>; <span class="tactic">eauto</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">find_label_incl</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Lreturn&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> &lt;- <span class="id">match_parent_locset</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;internal&nbsp;function&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">simpl</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;external&nbsp;function&nbsp;*)</span>&nbsp;&nbsp;<span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">external_call_symbols_preserved</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">senv_preserved</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">coqlib</span>.<br/>
+&nbsp;return&nbsp;*)</span>&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H3</span>. <span class="id">inv</span> <span class="id">H1</span>. <span class="id">left</span>; <span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">transf_initial_states</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">st1</span>, <span class="id">initial_state</span> <span class="id">prog</span> <span class="id">st1</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">st2</span>, <span class="id">initial_state</span> <span class="id">tprog</span> <span class="id">st2</span> /\ <span class="id">match_states</span> <span class="id">st1</span> <span class="id">st2</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3631')">Proof.</div>
+<div class="proofscript" id="proof3631">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">initial_state_intro</span> <span class="kwd">with</span> (<span class="id">f</span> := <span class="id">transf_fundef</span> <span class="id">f</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> (<span class="id">Genv.init_mem_transf</span> <span class="id">TRANSL</span>); <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> (<span class="id">match_program_main</span> <span class="id">TRANSL</span>), <span class="id">symbols_preserved</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">function_ptr_translated</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">sig_function_translated</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>. <span class="id">constructor</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">transf_final_states</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">st1</span> <span class="id">st2</span> <span class="id">r</span>,<br/>
+&nbsp;&nbsp;<span class="id">match_states</span> <span class="id">st1</span> <span class="id">st2</span> -&gt; <span class="id">final_state</span> <span class="id">st1</span> <span class="id">r</span> -&gt; <span class="id">final_state</span> <span class="id">st2</span> <span class="id">r</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3632')">Proof.</div>
+<div class="proofscript" id="proof3632">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H5</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">transf_program_correct</span>:<br/>
+&nbsp;&nbsp;<span class="id">forward_simulation</span> (<span class="id">Linear.semantics</span> <span class="id">prog</span>) (<span class="id">Linear.semantics</span> <span class="id">tprog</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3633')">Proof.</div>
+<div class="proofscript" id="proof3633">
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">forward_simulation_opt</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">senv_preserved</span>.<br/>
+&nbsp;&nbsp;<span class="id">eexact</span> <span class="id">transf_initial_states</span>.<br/>
+&nbsp;&nbsp;<span class="id">eexact</span> <span class="id">transf_final_states</span>.<br/>
+&nbsp;&nbsp;<span class="id">eexact</span> <span class="id">transf_step_correct</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">CLEANUP</span>.<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

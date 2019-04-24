@@ -1,0 +1,482 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Inlining</title>
+<meta name="description" content="Documentation of Coq module Inlining" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Inlining</h1>
+<div class="coq">
+<br/>
+<div class="doc">RTL function inlining </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span> <span class="id">Wfsimpl</span> <span class="id">Maps</span> <span class="id">Errors</span> <span class="id">Integers</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span> <span class="id">Linking</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Op</span> <span class="id">Registers</span> <span class="id">RTL</span>.<br/>
+<br/>
+<h2> Environment of inlinable functions </h2>
+<br/>
+<div class="doc">We maintain a mapping from function names to their definitions.
+  In this mapping, we only include internal functions that are eligible for
+  inlining, as determined by the external heuristic
+  <span class="bracket"><span class="id">should_inline</span></span>. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">funenv</span> : <span class="kwd">Type</span> := <span class="id">PTree.t</span> <span class="id">function</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">size_fenv</span> (<span class="id">fenv</span>: <span class="id">funenv</span>) := <span class="id">PTree_Properties.cardinal</span> <span class="id">fenv</span>.<br/>
+<br/>
+<span class="kwd">Parameter</span> <span class="id">should_inline</span>: <span class="id">ident</span> -&gt; <span class="id">function</span> -&gt; <span class="id">bool</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">add_globdef</span> (<span class="id">fenv</span>: <span class="id">funenv</span>) (<span class="id">idg</span>: <span class="id">ident</span> * <span class="id">globdef</span> <span class="id">fundef</span> <span class="id">unit</span>) : <span class="id">funenv</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">idg</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| (<span class="id">id</span>, <span class="id">Gfun</span> (<span class="id">Internal</span> <span class="id">f</span>)) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">should_inline</span> <span class="id">id</span> <span class="id">f</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">PTree.set</span> <span class="id">id</span> <span class="id">f</span> <span class="id">fenv</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">PTree.remove</span> <span class="id">id</span> <span class="id">fenv</span><br/>
+&nbsp;&nbsp;| (<span class="id">id</span>, <span class="id">_</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">PTree.remove</span> <span class="id">id</span> <span class="id">fenv</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">funenv_program</span> (<span class="id">p</span>: <span class="id">program</span>) : <span class="id">funenv</span> :=<br/>
+&nbsp;&nbsp;<span class="id">List.fold_left</span> <span class="id">add_globdef</span> <span class="id">p</span>.(<span class="id">prog_defs</span>) (<span class="id">PTree.empty</span> <span class="id">function</span>).<br/>
+<br/>
+<div class="doc">State monad </div>
+<br/>
+<div class="doc">To construct incrementally the CFG of a function after inlining,
+  we use a state monad similar to that used in module <span class="bracket"><span class="id">RTLgen</span></span>.
+  It records the current state of the CFG, plus counters to generate
+  fresh pseudo-registers and fresh CFG nodes.  It also records the
+  stack size needed for the inlined function. </div>
+<br/>
+<span class="kwd">Record</span> <span class="id">state</span> : <span class="kwd">Type</span> := <span class="id">mkstate</span> {<br/>
+&nbsp;&nbsp;<span class="id">st_nextreg</span>: <span class="id">positive</span>;                 <span class="docright">(* last used pseudo-register  *)</span><br/>
+&nbsp;&nbsp;<span class="id">st_nextnode</span>: <span class="id">positive</span>;                <span class="docright">(* last used CFG node  *)</span><br/>
+&nbsp;&nbsp;<span class="id">st_code</span>: <span class="id">code</span>;                        <span class="docright">(* current CFG   *)</span><br/>
+&nbsp;&nbsp;<span class="id">st_stksize</span>: <span class="id">Z</span>                         <span class="docright">(* current stack size  *)</span><br/>
+}.<br/>
+<br/>
+<div class="doc">Monotone evolution of the state. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">sincr</span> (<span class="id">s1</span> <span class="id">s2</span>: <span class="id">state</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id">Sincr</span> (<span class="id">NEXTREG</span>: <span class="id">Ple</span> <span class="id">s1</span>.(<span class="id">st_nextreg</span>) <span class="id">s2</span>.(<span class="id">st_nextreg</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">NEXTNODE</span>: <span class="id">Ple</span> <span class="id">s1</span>.(<span class="id">st_nextnode</span>) <span class="id">s2</span>.(<span class="id">st_nextnode</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">STKSIZE</span>: <span class="id">s1</span>.(<span class="id">st_stksize</span>) &lt;= <span class="id">s2</span>.(<span class="id">st_stksize</span>)).<br/>
+<br/>
+<span class="kwd">Remark</span> <span class="id">sincr_refl</span>: <span class="kwd">forall</span> <span class="id">s</span>, <span class="id">sincr</span> <span class="id">s</span> <span class="id">s</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2576')">Proof.</div>
+<div class="proofscript" id="proof2576">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">constructor</span>; <span class="id">xomega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">sincr_trans</span>: <span class="kwd">forall</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">s3</span>, <span class="id">sincr</span> <span class="id">s1</span> <span class="id">s2</span> -&gt; <span class="id">sincr</span> <span class="id">s2</span> <span class="id">s3</span> -&gt; <span class="id">sincr</span> <span class="id">s1</span> <span class="id">s3</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2577')">Proof.</div>
+<div class="proofscript" id="proof2577">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="id">constructor</span>; <span class="id">xomega</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Dependently-typed state monad, ensuring that the final state is
+  greater or equal (in the sense of predicate <span class="bracket"><span class="id">sincr</span></span> above) than
+  the initial state. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">res</span> {<span class="id">A</span>: <span class="kwd">Type</span>} {<span class="id">s</span>: <span class="id">state</span>}: <span class="kwd">Type</span> := <span class="id">R</span> (<span class="id">x</span>: <span class="id">A</span>) (<span class="id">s</span>': <span class="id">state</span>) (<span class="id">I</span>: <span class="id">sincr</span> <span class="id">s</span> <span class="id">s</span>').<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">mon</span> (<span class="id">A</span>: <span class="kwd">Type</span>) : <span class="kwd">Type</span> := <span class="kwd">forall</span> (<span class="id">s</span>: <span class="id">state</span>), @<span class="id">res</span> <span class="id">A</span> <span class="id">s</span>.<br/>
+<br/>
+<div class="doc">Operations on this monad. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">ret</span> {<span class="id">A</span>: <span class="kwd">Type</span>} (<span class="id">x</span>: <span class="id">A</span>): <span class="id">mon</span> <span class="id">A</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt; <span class="id">R</span> <span class="id">x</span> <span class="id">s</span> (<span class="id">sincr_refl</span> <span class="id">s</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">bind</span> {<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>} (<span class="id">x</span>: <span class="id">mon</span> <span class="id">A</span>) (<span class="id">f</span>: <span class="id">A</span> -&gt; <span class="id">mon</span> <span class="id">B</span>): <span class="id">mon</span> <span class="id">B</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s1</span> =&gt; <span class="kwd">match</span> <span class="id">x</span> <span class="id">s1</span> <span class="kwd">with</span> <span class="id">R</span> <span class="id">vx</span> <span class="id">s2</span> <span class="id">I1</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">f</span> <span class="id">vx</span> <span class="id">s2</span> <span class="kwd">with</span> <span class="id">R</span> <span class="id">vy</span> <span class="id">s3</span> <span class="id">I2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">R</span> <span class="id">vy</span> <span class="id">s3</span> (<span class="id">sincr_trans</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">s3</span> <span class="id">I1</span> <span class="id">I2</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Notation</span> "'<span class="tactic">do</span>' <span class="id">X</span> &lt;- <span class="id">A</span> ; <span class="id">B</span>" := (<span class="id">bind</span> <span class="id">A</span> (<span class="kwd">fun</span> <span class="id">X</span> =&gt; <span class="id">B</span>))<br/>
+&nbsp;&nbsp;&nbsp;(<span class="tactic">at</span> <span class="id">level</span> 200, <span class="id">X</span> <span class="id">ident</span>, <span class="id">A</span> <span class="tactic">at</span> <span class="id">level</span> 100, <span class="id">B</span> <span class="tactic">at</span> <span class="id">level</span> 200).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">initstate</span> :=<br/>
+&nbsp;&nbsp;<span class="id">mkstate</span> 1%<span class="id">positive</span> 1%<span class="id">positive</span> (<span class="id">PTree.empty</span> <span class="id">instruction</span>) 0.<br/>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id">set_instr</span> (<span class="id">pc</span>: <span class="id">node</span>) (<span class="id">i</span>: <span class="id">instruction</span>): <span class="id">mon</span> <span class="id">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">R</span> <span class="id">tt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">mkstate</span> <span class="id">s</span>.(<span class="id">st_nextreg</span>) <span class="id">s</span>.(<span class="id">st_nextnode</span>) (<span class="id">PTree.set</span> <span class="id">pc</span> <span class="id">i</span> <span class="id">s</span>.(<span class="id">st_code</span>)) <span class="id">s</span>.(<span class="id">st_stksize</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">_</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2578')">Next Obligation.</div>
+<div class="proofscript" id="proof2578">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">constructor</span>; <span class="tactic">simpl</span>; <span class="id">xomega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id">add_instr</span> (<span class="id">i</span>: <span class="id">instruction</span>): <span class="id">mon</span> <span class="id">node</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">pc</span> := <span class="id">s</span>.(<span class="id">st_nextnode</span>) <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">R</span> <span class="id">pc</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">mkstate</span> <span class="id">s</span>.(<span class="id">st_nextreg</span>) (<span class="id">Psucc</span> <span class="id">pc</span>) (<span class="id">PTree.set</span> <span class="id">pc</span> <span class="id">i</span> <span class="id">s</span>.(<span class="id">st_code</span>)) <span class="id">s</span>.(<span class="id">st_stksize</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">_</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2579')">Next Obligation.</div>
+<div class="proofscript" id="proof2579">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">constructor</span>; <span class="tactic">simpl</span>; <span class="id">xomega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id">reserve_nodes</span> (<span class="id">numnodes</span>: <span class="id">positive</span>): <span class="id">mon</span> <span class="id">positive</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">R</span> <span class="id">s</span>.(<span class="id">st_nextnode</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">mkstate</span> <span class="id">s</span>.(<span class="id">st_nextreg</span>) (<span class="id">Pplus</span> <span class="id">s</span>.(<span class="id">st_nextnode</span>) <span class="id">numnodes</span>) <span class="id">s</span>.(<span class="id">st_code</span>) <span class="id">s</span>.(<span class="id">st_stksize</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">_</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2580')">Next Obligation.</div>
+<div class="proofscript" id="proof2580">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">constructor</span>; <span class="tactic">simpl</span>; <span class="id">xomega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id">reserve_regs</span> (<span class="id">numregs</span>: <span class="id">positive</span>): <span class="id">mon</span> <span class="id">positive</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">R</span> <span class="id">s</span>.(<span class="id">st_nextreg</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">mkstate</span> (<span class="id">Pplus</span> <span class="id">s</span>.(<span class="id">st_nextreg</span>) <span class="id">numregs</span>) <span class="id">s</span>.(<span class="id">st_nextnode</span>) <span class="id">s</span>.(<span class="id">st_code</span>) <span class="id">s</span>.(<span class="id">st_stksize</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">_</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2581')">Next Obligation.</div>
+<div class="proofscript" id="proof2581">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">constructor</span>; <span class="tactic">simpl</span>; <span class="id">xomega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id">request_stack</span> (<span class="id">sz</span>: <span class="id">Z</span>): <span class="id">mon</span> <span class="id">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">R</span> <span class="id">tt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">mkstate</span> <span class="id">s</span>.(<span class="id">st_nextreg</span>) <span class="id">s</span>.(<span class="id">st_nextnode</span>) <span class="id">s</span>.(<span class="id">st_code</span>) (<span class="id">Zmax</span> <span class="id">s</span>.(<span class="id">st_stksize</span>) <span class="id">sz</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">_</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2582')">Next Obligation.</div>
+<div class="proofscript" id="proof2582">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="id">constructor</span>; <span class="tactic">simpl</span>; <span class="id">xomega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id">ptree_mfold</span> {<span class="id">A</span>: <span class="kwd">Type</span>} (<span class="id">f</span>: <span class="id">positive</span> -&gt; <span class="id">A</span> -&gt; <span class="id">mon</span> <span class="id">unit</span>) (<span class="id">t</span>: <span class="id">PTree.t</span> <span class="id">A</span>): <span class="id">mon</span> <span class="id">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">R</span> <span class="id">tt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">PTree.fold</span> (<span class="kwd">fun</span> <span class="id">s1</span> <span class="id">k</span> <span class="id">v</span> =&gt; <span class="kwd">match</span> <span class="id">f</span> <span class="id">k</span> <span class="id">v</span> <span class="id">s1</span> <span class="kwd">return</span> <span class="id">_</span> <span class="kwd">with</span> <span class="id">R</span> <span class="id">_</span> <span class="id">s2</span> <span class="id">_</span> =&gt; <span class="id">s2</span> <span class="kwd">end</span>) <span class="id">t</span> <span class="id">s</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">_</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2583')">Next Obligation.</div>
+<div class="proofscript" id="proof2583">
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">PTree_Properties.fold_rec</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">sincr_refl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id">f</span> <span class="id">k</span> <span class="id">v</span> <span class="id">a</span>). <span class="tactic">eapply</span> <span class="id">sincr_trans</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<h2> Inlining contexts </h2>
+<br/>
+<div class="doc">A context describes how to insert the CFG for a source function into
+  the CFG for the function after inlining:
+<ul>
+<li>
+ a source instruction at PC <span class="bracket"><span class="id">n</span></span> is relocated to PC <span class="bracket"><span class="id">n</span> + <span class="id">ctx</span>.(<span class="id">dpc</span>)</span>;
+</li>
+<li>
+ all pseudo-registers of this instruction are shifted by <span class="bracket"><span class="id">ctx</span>.(<span class="id">dreg</span>)</span>;
+</li>
+<li>
+ all stack references are shifted by <span class="bracket"><span class="id">ctx</span>.(<span class="id">dstk</span>)</span>;
+</li>
+<li>
+ "return" instructions are transformed into "return" or "move" instructions
+  as governed by <span class="bracket"><span class="id">ctx</span>.(<span class="id">retinfo</span>)</span>.
+</li>
+</ul>
+</div>
+<br/>
+<span class="kwd">Record</span> <span class="id">context</span>: <span class="kwd">Type</span> := <span class="id">mkcontext</span> {<br/>
+&nbsp;&nbsp;<span class="id">dpc</span>: <span class="id">positive</span>;                        <span class="docright">(* offset for PCs  *)</span><br/>
+&nbsp;&nbsp;<span class="id">dreg</span>: <span class="id">positive</span>;                       <span class="docright">(* offset for pseudo-regs  *)</span><br/>
+&nbsp;&nbsp;<span class="id">dstk</span>: <span class="id">Z</span>;                              <span class="docright">(* offset for stack references  *)</span><br/>
+&nbsp;&nbsp;<span class="id">mreg</span>: <span class="id">positive</span>;                       <span class="docright">(* max pseudo-reg number  *)</span><br/>
+&nbsp;&nbsp;<span class="id">mstk</span>: <span class="id">Z</span>;                              <span class="docright">(* original stack block size  *)</span><br/>
+&nbsp;&nbsp;<span class="id">retinfo</span>: <span class="id">option</span>(<span class="id">node</span> * <span class="id">reg</span>)           <span class="docright">(* where to branch on return  *)</span><br/>
+}.<br/>
+<br/>
+<div class="doc">The following functions "shift" (relocate) PCs, registers, operations, etc. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">shiftpos</span> (<span class="id">p</span> <span class="id">amount</span>: <span class="id">positive</span>) := <span class="id">Ppred</span> (<span class="id">Pplus</span> <span class="id">p</span> <span class="id">amount</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">spc</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">pc</span>: <span class="id">node</span>) := <span class="id">shiftpos</span> <span class="id">pc</span> <span class="id">ctx</span>.(<span class="id">dpc</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">sreg</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">r</span>: <span class="id">reg</span>) := <span class="id">shiftpos</span> <span class="id">r</span> <span class="id">ctx</span>.(<span class="id">dreg</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">sregs</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">rl</span>: <span class="id">list</span> <span class="id">reg</span>) := <span class="id">List.map</span> (<span class="id">sreg</span> <span class="id">ctx</span>) <span class="id">rl</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">sros</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">ros</span>: <span class="id">reg</span> + <span class="id">ident</span>) := <span class="id">sum_left_map</span> (<span class="id">sreg</span> <span class="id">ctx</span>) <span class="id">ros</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">sop</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">op</span>: <span class="id">operation</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">shift_stack_operation</span> <span class="id">ctx</span>.(<span class="id">dstk</span>) <span class="id">op</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">saddr</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">addr</span>: <span class="id">addressing</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">shift_stack_addressing</span> <span class="id">ctx</span>.(<span class="id">dstk</span>) <span class="id">addr</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">sbuiltinarg</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">a</span>: <span class="id">builtin_arg</span> <span class="id">reg</span>) : <span class="id">builtin_arg</span> <span class="id">reg</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">a</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">BA</span> <span class="id">x</span> =&gt; <span class="id">BA</span> (<span class="id">sreg</span> <span class="id">ctx</span> <span class="id">x</span>)<br/>
+&nbsp;&nbsp;| <span class="id">BA_loadstack</span> <span class="id">chunk</span> <span class="id">ofs</span> =&gt; <span class="id">BA_loadstack</span> <span class="id">chunk</span> (<span class="id">Ptrofs.add</span> <span class="id">ofs</span> (<span class="id">Ptrofs.repr</span> <span class="id">ctx</span>.(<span class="id">dstk</span>)))<br/>
+&nbsp;&nbsp;| <span class="id">BA_addrstack</span> <span class="id">ofs</span> =&gt; <span class="id">BA_addrstack</span> (<span class="id">Ptrofs.add</span> <span class="id">ofs</span> (<span class="id">Ptrofs.repr</span> <span class="id">ctx</span>.(<span class="id">dstk</span>)))<br/>
+&nbsp;&nbsp;| <span class="id">BA_splitlong</span> <span class="id">hi</span> <span class="id">lo</span> =&gt; <span class="id">BA_splitlong</span> (<span class="id">sbuiltinarg</span> <span class="id">ctx</span> <span class="id">hi</span>) (<span class="id">sbuiltinarg</span> <span class="id">ctx</span> <span class="id">lo</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">a</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">sbuiltinres</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">a</span>: <span class="id">builtin_res</span> <span class="id">reg</span>) : <span class="id">builtin_res</span> <span class="id">reg</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">a</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">BR</span> <span class="id">x</span> =&gt; <span class="id">BR</span> (<span class="id">sreg</span> <span class="id">ctx</span> <span class="id">x</span>)<br/>
+&nbsp;&nbsp;| <span class="id">_</span>    =&gt; <span class="id">BR_none</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">The initial context, used to copy the CFG of a toplevel function. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">initcontext</span> (<span class="id">dpc</span> <span class="id">dreg</span> <span class="id">nreg</span>: <span class="id">positive</span>) (<span class="id">sz</span>: <span class="id">Z</span>) :=<br/>
+&nbsp;&nbsp;{| <span class="id">dpc</span> := <span class="id">dpc</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">dreg</span> := <span class="id">dreg</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">dstk</span> := 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">mreg</span> := <span class="id">nreg</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">mstk</span> := <span class="id">Zmax</span> <span class="id">sz</span> 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">retinfo</span> := <span class="id">None</span> |}.<br/>
+<br/>
+<div class="doc">The context used to inline a call to another function. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">min_alignment</span> (<span class="id">sz</span>: <span class="id">Z</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">zle</span> <span class="id">sz</span> 1 <span class="kwd">then</span> 1<br/>
+&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">zle</span> <span class="id">sz</span> 2 <span class="kwd">then</span> 2<br/>
+&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">zle</span> <span class="id">sz</span> 4 <span class="kwd">then</span> 4 <span class="kwd">else</span> 8.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">callcontext</span> (<span class="id">ctx</span>: <span class="id">context</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">dpc</span> <span class="id">dreg</span> <span class="id">nreg</span>: <span class="id">positive</span>) (<span class="id">sz</span>: <span class="id">Z</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">retpc</span>: <span class="id">node</span>) (<span class="id">retreg</span>: <span class="id">reg</span>) :=<br/>
+&nbsp;&nbsp;{| <span class="id">dpc</span> := <span class="id">dpc</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">dreg</span> := <span class="id">dreg</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">dstk</span> := <span class="id">align</span> (<span class="id">ctx</span>.(<span class="id">dstk</span>) + <span class="id">ctx</span>.(<span class="id">mstk</span>)) (<span class="id">min_alignment</span> <span class="id">sz</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">mreg</span> := <span class="id">nreg</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">mstk</span> := <span class="id">Zmax</span> <span class="id">sz</span> 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">retinfo</span> := <span class="id">Some</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">retpc</span>, <span class="id">sreg</span> <span class="id">ctx</span> <span class="id">retreg</span>) |}.<br/>
+<br/>
+<div class="doc">The context used to inline a tail call to another function. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">tailcontext</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">dpc</span> <span class="id">dreg</span> <span class="id">nreg</span>: <span class="id">positive</span>) (<span class="id">sz</span>: <span class="id">Z</span>) :=<br/>
+&nbsp;&nbsp;{| <span class="id">dpc</span> := <span class="id">dpc</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">dreg</span> := <span class="id">dreg</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">dstk</span> := <span class="id">align</span> <span class="id">ctx</span>.(<span class="id">dstk</span>) (<span class="id">min_alignment</span> <span class="id">sz</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">mreg</span> := <span class="id">nreg</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">mstk</span> := <span class="id">Zmax</span> <span class="id">sz</span> 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">retinfo</span> := <span class="id">ctx</span>.(<span class="id">retinfo</span>) |}.<br/>
+<br/>
+<h2> Recursive expansion and copying of a CFG </h2>
+<br/>
+<div class="doc">Insert "move" instructions to copy the arguments of an inlined
+    function into its parameters. </div>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">add_moves</span> (<span class="id">srcs</span> <span class="id">dsts</span>: <span class="id">list</span> <span class="id">reg</span>) (<span class="id">succ</span>: <span class="id">node</span>): <span class="id">mon</span> <span class="id">node</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">srcs</span>, <span class="id">dsts</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">s1</span> :: <span class="id">sl</span>, <span class="id">d1</span> :: <span class="id">dl</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">n</span> &lt;- <span class="id">add_instr</span> (<span class="id">Iop</span> <span class="id">Omove</span> (<span class="id">s1</span> :: <span class="id">nil</span>) <span class="id">d1</span> <span class="id">succ</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">add_moves</span> <span class="id">sl</span> <span class="id">dl</span> <span class="id">n</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ret</span> <span class="id">succ</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">To prevent infinite inlining of a recursive function, when we
+  inline the body of a function <span class="bracket"><span class="id">f</span></span>, this function is removed from the
+  environment of inlinable functions and therefore becomes ineligible
+  for inlining.  This decreases the size (number of entries) of the
+  environment and guarantees termination.  Inlining is, therefore,
+  presented as a well-founded recursion over the size of the environment. </div>
+<br/>
+<span class="kwd">Section</span> <span class="id">EXPAND_CFG</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">fenv</span>: <span class="id">funenv</span>.<br/>
+<br/>
+<div class="doc">The <span class="bracket"><span class="id">rec</span></span> parameter is the recursor: <span class="bracket"><span class="id">rec</span> <span class="id">fenv</span>' <span class="id">P</span> <span class="id">ctx</span> <span class="id">f</span></span> copies
+  the body of function <span class="bracket"><span class="id">f</span></span>, with inline expansion within, as governed
+  by context <span class="bracket"><span class="id">ctx</span></span>.  It can only be called for function environments
+  <span class="bracket"><span class="id">fenv</span>'</span> strictly smaller than the current environment <span class="bracket"><span class="id">fenv</span></span>. </div>
+<br/>
+<span class="kwd">Variable</span> <span class="id">rec</span>: <span class="kwd">forall</span> <span class="id">fenv</span>', (<span class="id">size_fenv</span> <span class="id">fenv</span>' &lt; <span class="id">size_fenv</span> <span class="id">fenv</span>)%<span class="id">nat</span> -&gt; <span class="id">context</span> -&gt; <span class="id">function</span> -&gt; <span class="id">mon</span> <span class="id">unit</span>.<br/>
+<br/>
+<div class="doc">Given a register-or-symbol <span class="bracket"><span class="id">ros</span></span>, can we inline the corresponding call? </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">inline_decision</span> (<span class="id">ros</span>: <span class="id">reg</span> + <span class="id">ident</span>) : <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Cannot_inline</span><br/>
+&nbsp;&nbsp;| <span class="id">Can_inline</span> (<span class="id">id</span>: <span class="id">ident</span>) (<span class="id">f</span>: <span class="id">function</span>) (<span class="id">P</span>: <span class="id">ros</span> = <span class="id">inr</span> <span class="id">reg</span> <span class="id">id</span>) (<span class="id">Q</span>: <span class="id">fenv</span>!<span class="id">id</span> = <span class="id">Some</span> <span class="id">f</span>).<br/>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Definition</span> <span class="id">can_inline</span> (<span class="id">ros</span>: <span class="id">reg</span> + <span class="id">ident</span>): <span class="id">inline_decision</span> <span class="id">ros</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">ros</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">inl</span> <span class="id">r</span> =&gt; <span class="id">Cannot_inline</span> <span class="id">_</span><br/>
+&nbsp;&nbsp;| <span class="id">inr</span> <span class="id">id</span> =&gt; <span class="kwd">match</span> <span class="id">fenv</span>!<span class="id">id</span> <span class="kwd">with</span> <span class="id">Some</span> <span class="id">f</span> =&gt; <span class="id">Can_inline</span> <span class="id">_</span> <span class="id">id</span> <span class="id">f</span> <span class="id">_</span> <span class="id">_</span> | <span class="id">None</span> =&gt; <span class="id">Cannot_inline</span> <span class="id">_</span> <span class="kwd">end</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Inlining of a call to function <span class="bracket"><span class="id">f</span></span>.  An appropriate context is
+  created, then the CFG of <span class="bracket"><span class="id">f</span></span> is recursively copied, then moves
+  are inserted to copy the arguments of the call to the parameters of <span class="bracket"><span class="id">f</span></span>. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">inline_function</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">id</span>: <span class="id">ident</span>) (<span class="id">f</span>: <span class="id">function</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">P</span>: <span class="id">PTree.get</span> <span class="id">id</span> <span class="id">fenv</span> = <span class="id">Some</span> <span class="id">f</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">args</span>: <span class="id">list</span> <span class="id">reg</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">retpc</span>: <span class="id">node</span>) (<span class="id">retreg</span>: <span class="id">reg</span>) : <span class="id">mon</span> <span class="id">node</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">npc</span> := <span class="id">max_pc_function</span> <span class="id">f</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">nreg</span> := <span class="id">max_reg_function</span> <span class="id">f</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">dpc</span> &lt;- <span class="id">reserve_nodes</span> <span class="id">npc</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">dreg</span> &lt;- <span class="id">reserve_regs</span> <span class="id">nreg</span>;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">ctx</span>' := <span class="id">callcontext</span> <span class="id">ctx</span> <span class="id">dpc</span> <span class="id">dreg</span> <span class="id">nreg</span> <span class="id">f</span>.(<span class="id">fn_stacksize</span>) <span class="id">retpc</span> <span class="id">retreg</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">x</span> &lt;- <span class="id">rec</span> (<span class="id">PTree.remove</span> <span class="id">id</span> <span class="id">fenv</span>) (<span class="id">PTree_Properties.cardinal_remove</span> <span class="id">P</span>) <span class="id">ctx</span>' <span class="id">f</span>;<br/>
+&nbsp;&nbsp;<span class="id">add_moves</span> (<span class="id">sregs</span> <span class="id">ctx</span> <span class="id">args</span>) (<span class="id">sregs</span> <span class="id">ctx</span>' <span class="id">f</span>.(<span class="id">fn_params</span>)) (<span class="id">spc</span> <span class="id">ctx</span>' <span class="id">f</span>.(<span class="id">fn_entrypoint</span>)).<br/>
+<br/>
+<div class="doc">Inlining of a tail call to function <span class="bracket"><span class="id">f</span></span>.  Similar to <span class="bracket"><span class="id">inline_function</span></span>,
+  but the new context is different. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">inline_tail_function</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">id</span>: <span class="id">ident</span>) (<span class="id">f</span>: <span class="id">function</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">P</span>: <span class="id">PTree.get</span> <span class="id">id</span> <span class="id">fenv</span> = <span class="id">Some</span> <span class="id">f</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">args</span>: <span class="id">list</span> <span class="id">reg</span>): <span class="id">mon</span> <span class="id">node</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">npc</span> := <span class="id">max_pc_function</span> <span class="id">f</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">nreg</span> := <span class="id">max_reg_function</span> <span class="id">f</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">dpc</span> &lt;- <span class="id">reserve_nodes</span> <span class="id">npc</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">dreg</span> &lt;- <span class="id">reserve_regs</span> <span class="id">nreg</span>;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">ctx</span>' := <span class="id">tailcontext</span> <span class="id">ctx</span> <span class="id">dpc</span> <span class="id">dreg</span> <span class="id">nreg</span> <span class="id">f</span>.(<span class="id">fn_stacksize</span>) <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">x</span> &lt;- <span class="id">rec</span> (<span class="id">PTree.remove</span> <span class="id">id</span> <span class="id">fenv</span>) (<span class="id">PTree_Properties.cardinal_remove</span> <span class="id">P</span>) <span class="id">ctx</span>' <span class="id">f</span>;<br/>
+&nbsp;&nbsp;<span class="id">add_moves</span> (<span class="id">sregs</span> <span class="id">ctx</span> <span class="id">args</span>) (<span class="id">sregs</span> <span class="id">ctx</span>' <span class="id">f</span>.(<span class="id">fn_params</span>)) (<span class="id">spc</span> <span class="id">ctx</span>' <span class="id">f</span>.(<span class="id">fn_entrypoint</span>)).<br/>
+<br/>
+<div class="doc">The instruction generated for a <span class="bracket"><span class="id">Ireturn</span></span> instruction found in an
+  inlined function body. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">inline_return</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">or</span>: <span class="id">option</span> <span class="id">reg</span>) (<span class="id">retinfo</span>: <span class="id">node</span> * <span class="id">reg</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">retinfo</span>, <span class="id">or</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| (<span class="id">retpc</span>, <span class="id">retreg</span>), <span class="id">Some</span> <span class="id">r</span> =&gt; <span class="id">Iop</span> <span class="id">Omove</span> (<span class="id">sreg</span> <span class="id">ctx</span> <span class="id">r</span> :: <span class="id">nil</span>) <span class="id">retreg</span> <span class="id">retpc</span><br/>
+&nbsp;&nbsp;| (<span class="id">retpc</span>, <span class="id">retreg</span>), <span class="id">None</span>   =&gt; <span class="id">Inop</span> <span class="id">retpc</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Expansion and copying of an instruction.  For most instructions,
+  its registers and successor PC are shifted as per the context <span class="bracket"><span class="id">ctx</span></span>,
+  then the instruction is inserted in the final CFG at its final position
+  <span class="bracket"><span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span></span>.
+  <span class="bracket"><span class="id">Icall</span></span> instructions are either replaced by a "goto" to the expansion
+  of the called function, or shifted as described above.
+  <span class="bracket"><span class="id">Itailcall</span></span> instructions are similar, with one additional case.  If
+  the <span class="bracket"><span class="id">Itailcall</span></span> occurs in the body of an inlined function, and
+  cannot be inlined itself, it must be turned into an <span class="bracket"><span class="id">Icall</span></span>
+  instruction that branches to the return point of the inlined
+  function.
+  Finally, <span class="bracket"><span class="id">Ireturn</span></span> instructions within an inlined function are
+  turned into a "move" or "goto" that stores the result, if any,
+  into the destination register, then branches back to the successor
+  of the inlined call. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">expand_instr</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">pc</span>: <span class="id">node</span>) (<span class="id">i</span>: <span class="id">instruction</span>): <span class="id">mon</span> <span class="id">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">i</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Inop</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>) (<span class="id">Inop</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">s</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Iop</span> <span class="id">op</span> <span class="id">args</span> <span class="id">res</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Iop</span> (<span class="id">sop</span> <span class="id">ctx</span> <span class="id">op</span>) (<span class="id">sregs</span> <span class="id">ctx</span> <span class="id">args</span>) (<span class="id">sreg</span> <span class="id">ctx</span> <span class="id">res</span>) (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">s</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Iload</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">dst</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Iload</span> <span class="id">chunk</span> (<span class="id">saddr</span> <span class="id">ctx</span> <span class="id">addr</span>) (<span class="id">sregs</span> <span class="id">ctx</span> <span class="id">args</span>) (<span class="id">sreg</span> <span class="id">ctx</span> <span class="id">dst</span>) (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">s</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Istore</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">src</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Istore</span> <span class="id">chunk</span> (<span class="id">saddr</span> <span class="id">ctx</span> <span class="id">addr</span>) (<span class="id">sregs</span> <span class="id">ctx</span> <span class="id">args</span>) (<span class="id">sreg</span> <span class="id">ctx</span> <span class="id">src</span>) (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">s</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Icall</span> <span class="id">sg</span> <span class="id">ros</span> <span class="id">args</span> <span class="id">res</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">can_inline</span> <span class="id">ros</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Cannot_inline</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Icall</span> <span class="id">sg</span> (<span class="id">sros</span> <span class="id">ctx</span> <span class="id">ros</span>) (<span class="id">sregs</span> <span class="id">ctx</span> <span class="id">args</span>) (<span class="id">sreg</span> <span class="id">ctx</span> <span class="id">res</span>) (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">s</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Can_inline</span> <span class="id">id</span> <span class="id">f</span> <span class="id">P</span> <span class="id">Q</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">n</span> &lt;- <span class="id">inline_function</span> <span class="id">ctx</span> <span class="id">id</span> <span class="id">f</span> <span class="id">Q</span> <span class="id">args</span> <span class="id">s</span> <span class="id">res</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>) (<span class="id">Inop</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Itailcall</span> <span class="id">sg</span> <span class="id">ros</span> <span class="id">args</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">can_inline</span> <span class="id">ros</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Cannot_inline</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">ctx</span>.(<span class="id">retinfo</span>) <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Itailcall</span> <span class="id">sg</span> (<span class="id">sros</span> <span class="id">ctx</span> <span class="id">ros</span>) (<span class="id">sregs</span> <span class="id">ctx</span> <span class="id">args</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span>(<span class="id">rpc</span>, <span class="id">rreg</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Icall</span> <span class="id">sg</span> (<span class="id">sros</span> <span class="id">ctx</span> <span class="id">ros</span>) (<span class="id">sregs</span> <span class="id">ctx</span> <span class="id">args</span>) <span class="id">rreg</span> <span class="id">rpc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Can_inline</span> <span class="id">id</span> <span class="id">f</span> <span class="id">P</span> <span class="id">Q</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">n</span> &lt;- <span class="id">inline_tail_function</span> <span class="id">ctx</span> <span class="id">id</span> <span class="id">f</span> <span class="id">Q</span> <span class="id">args</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>) (<span class="id">Inop</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Ibuiltin</span> <span class="id">ef</span> <span class="id">args</span> <span class="id">res</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Ibuiltin</span> <span class="id">ef</span> (<span class="id">map</span> (<span class="id">sbuiltinarg</span> <span class="id">ctx</span>) <span class="id">args</span>) (<span class="id">sbuiltinres</span> <span class="id">ctx</span> <span class="id">res</span>) (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">s</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Icond</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">s1</span> <span class="id">s2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Icond</span> <span class="id">cond</span> (<span class="id">sregs</span> <span class="id">ctx</span> <span class="id">args</span>) (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">s1</span>) (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">s2</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Ijumptable</span> <span class="id">r</span> <span class="id">tbl</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">Ijumptable</span> (<span class="id">sreg</span> <span class="id">ctx</span> <span class="id">r</span>) (<span class="id">List.map</span> (<span class="id">spc</span> <span class="id">ctx</span>) <span class="id">tbl</span>))<br/>
+&nbsp;&nbsp;| <span class="id">Ireturn</span> <span class="id">or</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">ctx</span>.(<span class="id">retinfo</span>) <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>) (<span class="id">Ireturn</span> (<span class="id">option_map</span> (<span class="id">sreg</span> <span class="id">ctx</span>) <span class="id">or</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">rinfo</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">set_instr</span> (<span class="id">spc</span> <span class="id">ctx</span> <span class="id">pc</span>) (<span class="id">inline_return</span> <span class="id">ctx</span> <span class="id">or</span> <span class="id">rinfo</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">The expansion of a function <span class="bracket"><span class="id">f</span></span> iteratively expands all its
+  instructions, after recording how much stack it needs. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">expand_cfg_rec</span> (<span class="id">ctx</span>: <span class="id">context</span>) (<span class="id">f</span>: <span class="id">function</span>): <span class="id">mon</span> <span class="id">unit</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">x</span> &lt;- <span class="id">request_stack</span> (<span class="id">ctx</span>.(<span class="id">dstk</span>) + <span class="id">ctx</span>.(<span class="id">mstk</span>));<br/>
+&nbsp;&nbsp;<span class="id">ptree_mfold</span> (<span class="id">expand_instr</span> <span class="id">ctx</span>) <span class="id">f</span>.(<span class="id">fn_code</span>).<br/>
+<br/>
+<span class="kwd">End</span> <span class="id">EXPAND_CFG</span>.<br/>
+<br/>
+<div class="doc">Here we "tie the knot" of the recursion, taking the fixpoint
+  of <span class="bracket"><span class="id">expand_cfg_rec</span></span>. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">expand_cfg</span> := <span class="id">Fixm</span> <span class="id">size_fenv</span> <span class="id">expand_cfg_rec</span>.<br/>
+<br/>
+<div class="doc">Start of the recursion: copy and inline function <span class="bracket"><span class="id">f</span></span> in the
+  initial context. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">expand_function</span> (<span class="id">fenv</span>: <span class="id">funenv</span>) (<span class="id">f</span>: <span class="id">function</span>): <span class="id">mon</span> <span class="id">context</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">npc</span> := <span class="id">max_pc_function</span> <span class="id">f</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">nreg</span> := <span class="id">max_reg_function</span> <span class="id">f</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">dpc</span> &lt;- <span class="id">reserve_nodes</span> <span class="id">npc</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">dreg</span> &lt;- <span class="id">reserve_regs</span> <span class="id">nreg</span>;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">ctx</span> := <span class="id">initcontext</span> <span class="id">dpc</span> <span class="id">dreg</span> <span class="id">nreg</span> <span class="id">f</span>.(<span class="id">fn_stacksize</span>) <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">x</span> &lt;- <span class="id">expand_cfg</span> <span class="id">fenv</span> <span class="id">ctx</span> <span class="id">f</span>;<br/>
+&nbsp;&nbsp;<span class="id">ret</span> <span class="id">ctx</span>.<br/>
+<br/>
+<h2> Inlining in functions and whole programs. </h2>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">string_scope</span>.<br/>
+<br/>
+<div class="doc">Inlining can increase the size of the function's stack block.  We must
+  make sure that the new size does not exceed <span class="bracket"><span class="id">Ptrofs.max_unsigned</span></span>, otherwise
+  address computations within the stack would overflow and produce incorrect
+  results. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_function</span> (<span class="id">fenv</span>: <span class="id">funenv</span>) (<span class="id">f</span>: <span class="id">function</span>) : <span class="id">Errors.res</span> <span class="id">function</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> '(<span class="id">R</span> <span class="id">ctx</span> <span class="id">s</span> <span class="id">_</span>) := <span class="id">expand_function</span> <span class="id">fenv</span> <span class="id">f</span> <span class="id">initstate</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">zlt</span> <span class="id">s</span>.(<span class="id">st_stksize</span>) <span class="id">Ptrofs.max_unsigned</span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">mkfunction</span> <span class="id">f</span>.(<span class="id">fn_sig</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">sregs</span> <span class="id">ctx</span> <span class="id">f</span>.(<span class="id">fn_params</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">s</span>.(<span class="id">st_stksize</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">s</span>.(<span class="id">st_code</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">spc</span> <span class="id">ctx</span> <span class="id">f</span>.(<span class="id">fn_entrypoint</span>)))<br/>
+&nbsp;&nbsp;<span class="kwd">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Error</span>(<span class="id">msg</span> "<span class="id">Inlining</span>: <span class="id">stack</span> <span class="id">too</span> <span class="id">big</span>").<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_fundef</span> (<span class="id">fenv</span>: <span class="id">funenv</span>) (<span class="id">fd</span>: <span class="id">fundef</span>) : <span class="id">Errors.res</span> <span class="id">fundef</span> :=<br/>
+&nbsp;&nbsp;<span class="id">AST.transf_partial_fundef</span> (<span class="id">transf_function</span> <span class="id">fenv</span>) <span class="id">fd</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_program</span> (<span class="id">p</span>: <span class="id">program</span>): <span class="id">Errors.res</span> <span class="id">program</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">fenv</span> := <span class="id">funenv_program</span> <span class="id">p</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">AST.transform_partial_program</span> (<span class="id">transf_fundef</span> <span class="id">fenv</span>) <span class="id">p</span>.<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

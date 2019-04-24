@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module GlobSemantics_Lemmas</title>
+<meta name="description" content="Documentation of Coq module GlobSemantics_Lemmas" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module GlobSemantics_Lemmas</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Maps.html">Maps</a></span> <span class="id"><a href="AST.html">AST</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span> <span class="id"><a href="GAST.html">GAST</a></span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="ETrace.html">ETrace</a></span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Injections.html">Injections</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html">Coq.Lists.Streams</a></span> <span class="id"><a href="GlobSemantics.html">GlobSemantics</a></span> <span class="id"><a href="MemAux.html">MemAux</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="GE_mod_wd">GE_mod_wd</a></span> (<span class="id">GE</span>: <span class="id"><a href="GlobDefs.html#GlobEnv.t">GlobEnv.t</a></span>): <span class="kwd">Prop</span>:=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">modules</span> := <span class="id"><a href="GlobDefs.html#GlobEnv.modules">GlobEnv.modules</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">Mod</span> := <span class="id">modules</span> <span class="id"><a href="GlobSemantics_Lemmas.html#i">i</a></span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span>: <span class="id">lang</span> := <span class="id"><a href="InteractionSemantics.html#ModSem.lang">ModSem.lang</a></span> <span class="id">Mod</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html#wd">wd</a></span> <span class="id">lang</span>.<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="get_top_in_cs">get_top_in_cs</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> (<span class="id">thdp</span>: @<span class="id"><a href="GlobDefs.html#ThreadPool.t">ThreadPool.t</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span>) <span class="id">i</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.get_top">ThreadPool.get_top</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#thdp">thdp</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">cs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#thdp">thdp</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#i">i</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#cs">cs</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#CallStack.top">CallStack.top</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#cs">cs</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#c">c</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6349')">Proof.</div>
+<div class="proofscript" id="proof6349">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.get_top">ThreadPool.get_top</a></span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="GlobDefs.html#ThreadPool.get_cs">ThreadPool.get_cs</a></span> <span class="id">thdp</span> <span class="id">i</span>); <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">t</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="GE_mod_wd_forward">GE_mod_wd_forward</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> <span class="id">pc</span> <span class="id">l</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd">GE_mod_wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#l">l</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.forward">GMem.forward</a></span> (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id">pc</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6350')">Proof.</div>
+<div class="proofscript" id="proof6350">
+&nbsp;&nbsp;<span class="tactic">inversion</span> 2; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">try</span> <span class="tactic">apply</span> <span class="id"><a href="GMemory.html#GMem.forward_refl">GMem.forward_refl</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">c</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H</span> <span class="id">i</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id"><a href="InteractionSemantics.html#step_forward">step_forward</a></span> <span class="id">_</span> <span class="id">H</span>) <span class="kwd">in</span> <span class="id">H_core_step</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="GE_mod_wd_star_forward">GE_mod_wd_star_forward</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> (<span class="id">pc</span> <span class="id">pc</span>': @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span>) <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd">GE_mod_wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> <span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.forward">GMem.forward</a></span> (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id">pc</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6351')">Proof.</div>
+<div class="proofscript" id="proof6351">
+&nbsp;&nbsp;<span class="tactic">induction</span> 2.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GMemory.html#GMem.forward_refl">GMem.forward_refl</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GMemory.html#GMem.forward_trans">GMem.forward_trans</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_forward">GE_mod_wd_forward</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="GE_mod_wd_plus_forward">GE_mod_wd_plus_forward</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> (<span class="id">pc</span> <span class="id">pc</span>': @<span class="id"><a href="GlobDefs.html#ProgConfig">ProgConfig</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span>) <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd">GE_mod_wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_plus">tau_plus</a></span> <span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.forward">GMem.forward</a></span> (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id">pc</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6352')">Proof.</div>
+<div class="proofscript" id="proof6352">
+&nbsp;&nbsp;<span class="tactic">induction</span> 2.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_forward">GE_mod_wd_forward</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GMemory.html#GMem.forward_trans">GMem.forward_trans</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_forward">GE_mod_wd_forward</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="GE_mod_wd_tp_inv">GE_mod_wd_tp_inv</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> <span class="id">pc</span> <span class="id">l</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#GlobEnv.wd">GlobEnv.wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#l">l</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id">pc</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6353')">Proof.</div>
+<div class="proofscript" id="proof6353">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">destruct</span> <span class="id">pc</span>, <span class="id">pc</span>'.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>; <span class="tactic">clear</span> <span class="id">H1</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;core&nbsp;step&nbsp;*)</span>&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.upd_top_inv">ThreadPool.upd_top_inv</a></span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;call&nbsp;ext&nbsp;*)</span>&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.push_inv">ThreadPool.push_inv</a></span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;return&nbsp;*)</span>&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.upd_top_inv">ThreadPool.upd_top_inv</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Focus</span> 2. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.pop_inv">ThreadPool.pop_inv</a></span>; <span class="tactic">eauto</span>. <span class="tactic">eauto</span>. <span class="tactic">eauto</span>. }<br/>
+&nbsp;thread&nbsp;halt&nbsp;*)</span>&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.pop_inv">ThreadPool.pop_inv</a></span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;primitives&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.upd_top_inv">ThreadPool.upd_top_inv</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.upd_top_inv">ThreadPool.upd_top_inv</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobDefs.html#ThreadPool.upd_top_inv">ThreadPool.upd_top_inv</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="GE_mod_wd_plus_tp_inv">GE_mod_wd_plus_tp_inv</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> <span class="id">pc</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#GlobEnv.wd">GlobEnv.wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_plus">tau_plus</a></span> (@<span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span>) <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id">pc</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6354')">Proof.</div>
+<div class="proofscript" id="proof6354">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H1</span>. <span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_tp_inv">GE_mod_wd_tp_inv</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_tp_inv">GE_mod_wd_tp_inv</a></span> <span class="kwd">in</span> <span class="id">H1</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="GE_mod_wd_star_tp_inv">GE_mod_wd_star_tp_inv</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> <span class="id">pc</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#GlobEnv.wd">GlobEnv.wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> (@<span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span>) <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id">pc</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6355')">Proof.</div>
+<div class="proofscript" id="proof6355">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H1</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_tp_inv">GE_mod_wd_tp_inv</a></span> <span class="kwd">in</span> <span class="id">H1</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<span class="kwd">Lemma</span> <span class="id"><a name="GE_mod_wd_tp_inv_mem">GE_mod_wd_tp_inv_mem</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> <span class="id">pc</span> <span class="id">l</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd">GE_mod_wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#GlobEnv.wd">GlobEnv.wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv_mem">ThreadPool.inv_mem</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#l">l</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;      <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv_mem">ThreadPool.inv_mem</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id">pc</span>') (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id">pc</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6356')">Proof.</div>
+<div class="proofscript" id="proof6356">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H1</span>,<span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H3</span>;<span class="tactic">simpl</span> <span class="kwd">in</span> *;<span class="id">constructor</span>;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H_tp_upd</span>; <span class="tactic">destruct</span> <span class="id">c</span>; <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> <span class="id">H1</span>. <span class="tactic">apply</span> <span class="id">tp_valid_freelist_free</span> <span class="kwd">in</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;/&nbsp;need&nbsp;lemma&nbsp;for&nbsp;blockset&nbsp;and&nbsp;no_overlap&nbsp;*)</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">b</span> <span class="id">n0</span> <span class="id">H</span>'. <span class="id">specialize</span> (<span class="id">H1</span> <span class="id">b</span> <span class="id">n0</span> <span class="id">H</span>').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intro</span>. <span class="tactic">apply</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="MemAux.html#valid_block_bset">valid_block_bset</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">cs_inv</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H2</span>). <span class="tactic">destruct</span> <span class="id">cs_inv</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">fid_valid</span> {| <span class="id"><a href="GlobDefs.html#Core.Build_t">Core.i</a></span> := <span class="id">i0</span>; <span class="id">Core.c</span> := <span class="id">c</span>; <span class="id">Core.sg</span> := <span class="id">sg</span>; <span class="id">Core.F</span> := <span class="id">F</span> |}).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">fid_valid</span>. <span class="tactic">clear</span> <span class="id">fid_disjoint</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id"><a href="InteractionSemantics.html#step_local_eff">step_local_eff</a></span> <span class="id">_</span> (<span class="id">H</span> <span class="id">i0</span>)) <span class="kwd">in</span> <span class="id">H_core_step</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InteractionSemantics.html#LEffect_local_alloc">LEffect_local_alloc</a></span> <span class="kwd">in</span> <span class="id">H_core_step</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rename</span> <span class="id">H_core_step</span> <span class="id">into</span> <span class="id">H_in_fl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H_in_fl</span> <span class="kwd">as</span> (<span class="id">n0</span>'&amp;<span class="id">H_in_fl</span>). <span class="tactic">subst</span> <span class="id">b</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#FLists.get_tfl">FLists.get_tfl</a></span> <span class="kwd">in</span> <span class="id">H_in_fl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id"><a href="GlobDefs.html#FLists.get_tfid">FLists.get_tfid</a></span> (<span class="id"><a href="GlobDefs.html#GlobEnv.freelists">GlobEnv.freelists</a></span> <span class="id">GE</span>) <span class="id">i</span> <span class="id">n</span> &lt;&gt; <span class="id">F</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#get_top_in_cs">get_top_in_cs</a></span> <span class="kwd">in</span> <span class="id">H_tp_core</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H_tp_core</span> <span class="kwd">as</span> (<span class="id">cs0</span>&amp;<span class="id">H</span>''&amp;<span class="id">H</span>''').<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H</span>'' <span class="kwd">in</span> <span class="id">H2</span>. <span class="tactic">inversion</span> <span class="id">H2</span>. <span class="tactic">subst</span>. <span class="tactic">clear</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#CallStack.top">CallStack.top</a></span> <span class="kwd">in</span> <span class="id">H</span>'''. <span class="tactic">destruct</span> <span class="id">cs</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>'''. <span class="tactic">subst</span>. <span class="tactic">clear</span> <span class="id">H</span>'''.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="tactic">clear</span> <span class="id">H_tp_upd</span> <span class="id">H_core_upd</span> <span class="id">fid_belongsto</span> <span class="id">tp_valid_freelist_free</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">fid_valid</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#or_introl">or_introl</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#eq_refl">eq_refl</a></span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">fid_valid</span> <span class="kwd">as</span> (<span class="id">nF</span>&amp;<span class="id">HnF</span>&amp;<span class="id">HF</span>). <span class="tactic">subst</span> <span class="id">F</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#peq">peq</a></span> <span class="id">i</span> <span class="id">t</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">subst</span>. <span class="tactic">apply</span> (<span class="id"><a href="GlobDefs.html#FLists.thread_fl_norep">FLists.thread_fl_norep</a></span> <span class="id">_</span> (<span class="id"><a href="GlobDefs.html#GlobEnv.wd_fl">GlobEnv.wd_fl</a></span> <span class="id">_</span> <span class="id">H0</span>)); <span class="tactic">omega</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">apply</span> (<span class="id"><a href="GlobDefs.html#FLists.thread_fl_disj">FLists.thread_fl_disj</a></span> <span class="id">_</span> (<span class="id"><a href="GlobDefs.html#GlobEnv.wd_fl">GlobEnv.wd_fl</a></span> <span class="id">_</span> <span class="id">H0</span>)); <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exfalso</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> (<span class="id"><a href="GlobDefs.html#FLists.flist_disj">FLists.flist_disj</a></span> <span class="id">_</span> (<span class="id"><a href="GlobDefs.html#GlobEnv.wd_fl">GlobEnv.wd_fl</a></span> <span class="id">_</span> <span class="id">H0</span>) <span class="id">_</span> <span class="id">_</span> <span class="id">H6</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H7</span>. <span class="tactic">eapply</span> <span class="id">H7</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;call&nbsp;*)</span>&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id">tp_valid_freelist_free</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.push">ThreadPool.push</a></span> <span class="kwd">in</span> <span class="id">H_tp_push</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> ((<span class="id"><a href="GlobDefs.html#ThreadPool.content">ThreadPool.content</a></span> <span class="id">thdp</span>)!!<span class="id">t</span>); <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H_tp_push</span>. <span class="tactic">subst</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id"><a href="Coqlib.html#peq">peq</a></span>; <span class="tactic">subst</span>; <span class="tactic">omega</span>. }<br/>
+&nbsp;*)</span>&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id">tp_valid_freelist_free</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.pop">ThreadPool.pop</a></span> <span class="kwd">in</span> <span class="id">H_tp_pop</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> ((<span class="id"><a href="GlobDefs.html#ThreadPool.content">ThreadPool.content</a></span> <span class="id">thdp</span>)!!<span class="id">t</span>); <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="GlobDefs.html#CallStack.pop">CallStack.pop</a></span> <span class="id">t0</span>); <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H_tp_pop</span>; <span class="tactic">inversion</span> <span class="id">H_tp_upd</span>. <span class="tactic">subst</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id">tp_valid_freelist_free</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GlobDefs.html#ThreadPool.pop">ThreadPool.pop</a></span> <span class="kwd">in</span> <span class="id">H_tp_pop</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> ((<span class="id"><a href="GlobDefs.html#ThreadPool.content">ThreadPool.content</a></span> <span class="id">thdp</span>) !! <span class="id">t</span>); <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="GlobDefs.html#CallStack.pop">CallStack.pop</a></span> <span class="id">t0</span>); <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H_tp_pop</span>. <span class="tactic">subst</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id">tp_valid_freelist_free</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H_tp_upd</span>; <span class="tactic">subst</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id">tp_valid_freelist_free</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H_tp_upd</span>; <span class="tactic">subst</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id">tp_valid_freelist_free</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H_tp_upd</span>; <span class="tactic">subst</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="GE_mod_wd_star_tp_inv_mem">GE_mod_wd_star_tp_inv_mem</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> <span class="id">pc</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd">GE_mod_wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#GlobEnv.wd">GlobEnv.wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv_mem">ThreadPool.inv_mem</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_star">tau_star</a></span> (@<span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span>) <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;      <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv_mem">ThreadPool.inv_mem</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id">pc</span>') (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id">pc</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6357')">Proof.</div>
+<div class="proofscript" id="proof6357">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H3</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHtau_star</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_tp_inv">GE_mod_wd_tp_inv</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_tp_inv_mem">GE_mod_wd_tp_inv_mem</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="GE_mod_wd_plus_tp_inv_mem">GE_mod_wd_plus_tp_inv_mem</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">GE</span> <span class="id">pc</span> <span class="id">fp</span> <span class="id">pc</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd">GE_mod_wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#GlobEnv.wd">GlobEnv.wd</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv">ThreadPool.inv</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv_mem">ThreadPool.inv_mem</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ETrace.html#tau_plus">tau_plus</a></span> (@<span class="id"><a href="GlobSemantics.html#glob_step">glob_step</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE">GE</a></span>) <span class="id"><a href="GlobSemantics_Lemmas.html#pc">pc</a></span> <span class="id"><a href="GlobSemantics_Lemmas.html#fp">fp</a></span> <span class="id">pc</span>' -&gt;      <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GlobDefs.html#ThreadPool.inv_mem">ThreadPool.inv_mem</a></span> (<span class="id"><a href="GlobDefs.html#thread_pool">thread_pool</a></span> <span class="id">pc</span>') (<span class="id"><a href="GlobDefs.html#gm">gm</a></span> <span class="id">pc</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6358')">Proof.</div>
+<div class="proofscript" id="proof6358">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">H3</span>. <span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_tp_inv_mem">GE_mod_wd_tp_inv_mem</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHtau_plus</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_tp_inv">GE_mod_wd_tp_inv</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GlobSemantics_Lemmas.html#GE_mod_wd_tp_inv_mem">GE_mod_wd_tp_inv_mem</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

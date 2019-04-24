@@ -1,0 +1,345 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Alphabet</title>
+<meta name="description" content="Documentation of Coq module Alphabet" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Alphabet</h1>
+<div class="coq">
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Int31</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Cyclic31</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Omega</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">List</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="kwd">Syntax</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Relations</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">RelationClasses</span>.<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Obligation</span> <span class="kwd">Tactic</span> := <span class="tactic">intros</span>.<br/>
+<br/>
+<div class="doc">A comparable type is equiped with a <span class="bracket"><span class="id">compare</span></span> function, that define an order
+   relation. *</div>
+<span class="kwd">Class</span> <span class="id">Comparable</span> (<span class="id">A</span>:<span class="kwd">Type</span>) := {<br/>
+&nbsp;&nbsp;<span class="id">compare</span> : <span class="id">A</span> -&gt; <span class="id">A</span> -&gt; <span class="id">comparison</span>;<br/>
+&nbsp;&nbsp;<span class="id">compare_antisym</span> : <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id">CompOpp</span> (<span class="id">compare</span> <span class="id">x</span> <span class="id">y</span>) = <span class="id">compare</span> <span class="id">y</span> <span class="id">x</span>;<br/>
+&nbsp;&nbsp;<span class="id">compare_trans</span> :  <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span> <span class="id">z</span> <span class="id">c</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">compare</span> <span class="id">x</span> <span class="id">y</span>) = <span class="id">c</span> -&gt; (<span class="id">compare</span> <span class="id">y</span> <span class="id">z</span>) = <span class="id">c</span> -&gt; (<span class="id">compare</span> <span class="id">x</span> <span class="id">z</span>) = <span class="id">c</span><br/>
+}.<br/>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">compare_refl</span> {<span class="id">A</span>:<span class="kwd">Type</span>} (<span class="id">C</span>: <span class="id">Comparable</span> <span class="id">A</span>) :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span>, <span class="id">compare</span> <span class="id">x</span> <span class="id">x</span> = <span class="id">Eq</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5586')">Proof.</div>
+<div class="proofscript" id="proof5586">
+<span class="tactic">intros</span>.<br/>
+<span class="id">pose</span> <span class="id">proof</span> (<span class="id">compare_antisym</span> <span class="id">x</span> <span class="id">x</span>).<br/>
+<span class="tactic">destruct</span> (<span class="id">compare</span> <span class="id">x</span> <span class="id">x</span>); <span class="tactic">intuition</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">The corresponding order is a strict order. *</div>
+<span class="kwd">Definition</span> <span class="id">comparableLt</span> {<span class="id">A</span>:<span class="kwd">Type</span>} (<span class="id">C</span>: <span class="id">Comparable</span> <span class="id">A</span>) : <span class="id">relation</span> <span class="id">A</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">x</span> <span class="id">y</span> =&gt; <span class="id">compare</span> <span class="id">x</span> <span class="id">y</span> = <span class="id">Lt</span>.<br/>
+<br/>
+<span class="kwd">Instance</span> <span class="id">ComparableLtStrictOrder</span> {<span class="id">A</span>:<span class="kwd">Type</span>} (<span class="id">C</span>: <span class="id">Comparable</span> <span class="id">A</span>) :<br/>
+&nbsp;&nbsp;<span class="id">StrictOrder</span> (<span class="id">comparableLt</span> <span class="id">C</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5587')">Proof.</div>
+<div class="proofscript" id="proof5587">
+<span class="tactic">apply</span> <span class="id">Build_StrictOrder</span>.<br/>
+<span class="tactic">unfold</span> <span class="id">Irreflexive</span>, <span class="id">Reflexive</span>, <span class="id">complement</span>, <span class="id">comparableLt</span>.<br/>
+<span class="tactic">intros</span>.<br/>
+<span class="id">pose</span> <span class="id">proof</span> <span class="id">H</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">compare_antisym</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+<span class="tactic">discriminate</span> <span class="id">H</span>.<br/>
+<span class="tactic">unfold</span> <span class="id">Transitive</span>, <span class="id">comparableLt</span>.<br/>
+<span class="tactic">intros</span> <span class="id">x</span> <span class="id">y</span> <span class="id">z</span>.<br/>
+<span class="tactic">apply</span> <span class="id">compare_trans</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">nat is comparable. *</div>
+<span class="kwd">Program</span> <span class="kwd">Instance</span> <span class="id">natComparable</span> : <span class="id">Comparable</span> <span class="id">nat</span> :=<br/>
+&nbsp;&nbsp;{ <span class="id">compare</span> := <span class="id">nat_compare</span> }.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5588')">Next Obligation.</div>
+<div class="proofscript" id="proof5588">
+<span class="tactic">symmetry</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">nat_compare</span> <span class="id">x</span> <span class="id">y</span>)  <span class="kwd">as</span> [] <span class="id">eqn</span>:?.<br/>
+<span class="tactic">rewrite</span> <span class="id">nat_compare_eq_iff</span> <span class="kwd">in</span> <span class="id">Heqc</span>.<br/>
+<span class="tactic">destruct</span> <span class="id">Heqc</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">nat_compare_eq_iff</span>.<br/>
+<span class="tactic">trivial</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">nat_compare_lt</span> <span class="kwd">in</span> *.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">nat_compare_gt</span> <span class="kwd">in</span> *.<br/>
+<span class="tactic">trivial</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">nat_compare_lt</span> <span class="kwd">in</span> *.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">nat_compare_gt</span> <span class="kwd">in</span> *.<br/>
+<span class="tactic">trivial</span>.<br/>
+Qed.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof5589')">Next Obligation.</div>
+<div class="proofscript" id="proof5589">
+<span class="tactic">destruct</span> <span class="id">c</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">nat_compare_eq_iff</span> <span class="kwd">in</span> *; <span class="tactic">destruct</span> <span class="id">H</span>; <span class="tactic">assumption</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">nat_compare_lt</span> <span class="kwd">in</span> *.<br/>
+<span class="tactic">apply</span> (<span class="id">lt_trans</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span> <span class="id">H0</span>).<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">nat_compare_gt</span> <span class="kwd">in</span> *.<br/>
+<span class="tactic">apply</span> (<span class="id">gt_trans</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span> <span class="id">H0</span>).<br/>
+Qed.</div>
+<br/>
+<div class="doc">A pair of comparable is comparable. *</div>
+<span class="kwd">Program</span> <span class="kwd">Instance</span> <span class="id">PairComparable</span> {<span class="id">A</span>:<span class="kwd">Type</span>} (<span class="id">CA</span>:<span class="id">Comparable</span> <span class="id">A</span>) {<span class="id">B</span>:<span class="kwd">Type</span>} (<span class="id">CB</span>:<span class="id">Comparable</span> <span class="id">B</span>) :<br/>
+&nbsp;&nbsp;<span class="id">Comparable</span> (<span class="id">A</span>*<span class="id">B</span>) :=<br/>
+&nbsp;&nbsp;{ <span class="id">compare</span> := <span class="kwd">fun</span> <span class="id">x</span> <span class="id">y</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">xa</span>, <span class="id">xb</span>) := <span class="id">x</span> <span class="kwd">in</span> <span class="kwd">let</span> (<span class="id">ya</span>, <span class="id">yb</span>) := <span class="id">y</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">compare</span> <span class="id">xa</span> <span class="id">ya</span> <span class="kwd">return</span> <span class="id">comparison</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Eq</span> =&gt; <span class="id">compare</span> <span class="id">xb</span> <span class="id">yb</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">x</span> =&gt; <span class="id">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span> }.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5590')">Next Obligation.</div>
+<div class="proofscript" id="proof5590">
+<span class="tactic">destruct</span> <span class="id">x</span>, <span class="id">y</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- (<span class="id">compare_antisym</span> <span class="id">a</span> <span class="id">a0</span>).<br/>
+<span class="tactic">rewrite</span> &lt;- (<span class="id">compare_antisym</span> <span class="id">b</span> <span class="id">b0</span>).<br/>
+<span class="tactic">destruct</span> (<span class="id">compare</span> <span class="id">a</span> <span class="id">a0</span>); <span class="tactic">intuition</span>.<br/>
+Qed.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof5591')">Next Obligation.</div>
+<div class="proofscript" id="proof5591">
+<span class="tactic">destruct</span> <span class="id">x</span>, <span class="id">y</span>, <span class="id">z</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">compare</span> <span class="id">a</span> <span class="id">a0</span>) <span class="kwd">as</span> [] <span class="id">eqn</span>:?, (<span class="id">compare</span> <span class="id">a0</span> <span class="id">a1</span>) <span class="kwd">as</span> [] <span class="id">eqn</span>:?;<br/>
+<span class="tactic">try</span> (<span class="tactic">rewrite</span> &lt;- <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">discriminate</span>);<br/>
+<span class="tactic">try</span> (<span class="tactic">destruct</span> (<span class="id">compare</span> <span class="id">a</span> <span class="id">a1</span>) <span class="kwd">as</span> [] <span class="id">eqn</span>:?;<br/>
+&nbsp;&nbsp;<span class="tactic">try</span> (<span class="tactic">rewrite</span> &lt;- <span class="id">compare_antisym</span> <span class="kwd">in</span> <span class="id">Heqc0</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">CompOpp_iff</span> <span class="kwd">in</span> <span class="id">Heqc0</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> (<span class="id">compare_trans</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span>  <span class="id">_</span> <span class="id">Heqc0</span> <span class="id">Heqc2</span>) <span class="kwd">in</span> <span class="id">Heqc1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">discriminate</span>);<br/>
+&nbsp;&nbsp;<span class="tactic">try</span> (<span class="tactic">rewrite</span> &lt;- <span class="id">compare_antisym</span> <span class="kwd">in</span> <span class="id">Heqc1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">CompOpp_iff</span> <span class="kwd">in</span> <span class="id">Heqc1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> (<span class="id">compare_trans</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">Heqc2</span> <span class="id">Heqc1</span>) <span class="kwd">in</span> <span class="id">Heqc0</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">discriminate</span>);<br/>
+&nbsp;&nbsp;<span class="tactic">assumption</span>);<br/>
+<span class="tactic">rewrite</span> (<span class="id">compare_trans</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">Heqc0</span> <span class="id">Heqc1</span>);<br/>
+<span class="tactic">try</span> <span class="tactic">assumption</span>.<br/>
+<span class="tactic">apply</span> (<span class="id">compare_trans</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span> <span class="id">H0</span>).<br/>
+Qed.</div>
+<br/>
+<div class="doc">Special case of comparable, where equality is usual equality. *</div>
+<span class="kwd">Class</span> <span class="id">ComparableUsualEq</span> {<span class="id">A</span>:<span class="kwd">Type</span>} (<span class="id">C</span>: <span class="id">Comparable</span> <span class="id">A</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">compare_eq</span> : <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id">compare</span> <span class="id">x</span> <span class="id">y</span> = <span class="id">Eq</span> -&gt; <span class="id">x</span> = <span class="id">y</span>.<br/>
+<br/>
+<div class="doc">Boolean equality for a <span class="bracket"><span class="id">Comparable</span></span>. *</div>
+<span class="kwd">Definition</span> <span class="id">compare_eqb</span> {<span class="id">A</span>:<span class="kwd">Type</span>} {<span class="id">C</span>:<span class="id">Comparable</span> <span class="id">A</span>} (<span class="id">x</span> <span class="id">y</span>:<span class="id">A</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">compare</span> <span class="id">x</span> <span class="id">y</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Eq</span> =&gt; <span class="id">true</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">false</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">compare_eqb_iff</span> {<span class="id">A</span>:<span class="kwd">Type</span>} {<span class="id">C</span>:<span class="id">Comparable</span> <span class="id">A</span>} {<span class="id">U</span>:<span class="id">ComparableUsualEq</span> <span class="id">C</span>} :<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id">compare_eqb</span> <span class="id">x</span> <span class="id">y</span> = <span class="id">true</span> &lt;-&gt; <span class="id">x</span> = <span class="id">y</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5592')">Proof.</div>
+<div class="proofscript" id="proof5592">
+<span class="tactic">unfold</span> <span class="id">compare_eqb</span>.<br/>
+<span class="tactic">intuition</span>.<br/>
+<span class="tactic">apply</span> <span class="id">compare_eq</span>.<br/>
+<span class="tactic">destruct</span> (<span class="id">compare</span> <span class="id">x</span> <span class="id">y</span>); <span class="tactic">intuition</span>; <span class="tactic">discriminate</span>.<br/>
+<span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">compare_refl</span>; <span class="tactic">intuition</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">Comparable</span></span> provides a decidable equality. *</div>
+<span class="kwd">Definition</span> <span class="id">compare_eqdec</span> {<span class="id">A</span>:<span class="kwd">Type</span>} {<span class="id">C</span>:<span class="id">Comparable</span> <span class="id">A</span>} {<span class="id">U</span>:<span class="id">ComparableUsualEq</span> <span class="id">C</span>} (<span class="id">x</span> <span class="id">y</span>:<span class="id">A</span>):<br/>
+&nbsp;&nbsp;{<span class="id">x</span> = <span class="id">y</span>} + {<span class="id">x</span> &lt;&gt; <span class="id">y</span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5593')">Proof.</div>
+<div class="proofscript" id="proof5593">
+<span class="tactic">destruct</span> (<span class="id">compare</span> <span class="id">x</span> <span class="id">y</span>) <span class="kwd">as</span> [] <span class="id">eqn</span>:?; [<span class="id">left</span>; <span class="tactic">apply</span> <span class="id">compare_eq</span>; <span class="tactic">intuition</span> | ..];<br/>
+&nbsp;&nbsp;<span class="id">right</span>; <span class="tactic">intro</span>; <span class="tactic">destruct</span> <span class="id">H</span>; <span class="tactic">rewrite</span> <span class="id">compare_refl</span> <span class="kwd">in</span> <span class="id">Heqc</span>; <span class="tactic">discriminate</span>.<br/>
+Defined.</div>
+<br/>
+<span class="kwd">Instance</span> <span class="id">NComparableUsualEq</span> : <span class="id">ComparableUsualEq</span> <span class="id">natComparable</span> := <span class="id">nat_compare_eq</span>.<br/>
+<br/>
+<div class="doc">A pair of ComparableUsualEq is ComparableUsualEq *</div>
+<span class="kwd">Instance</span> <span class="id">PairComparableUsualEq</span><br/>
+&nbsp;&nbsp;{<span class="id">A</span>:<span class="kwd">Type</span>} {<span class="id">CA</span>:<span class="id">Comparable</span> <span class="id">A</span>} (<span class="id">UA</span>:<span class="id">ComparableUsualEq</span> <span class="id">CA</span>)<br/>
+&nbsp;&nbsp;{<span class="id">B</span>:<span class="kwd">Type</span>} {<span class="id">CB</span>:<span class="id">Comparable</span> <span class="id">B</span>} (<span class="id">UB</span>:<span class="id">ComparableUsualEq</span> <span class="id">CB</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">ComparableUsualEq</span> (<span class="id">PairComparable</span> <span class="id">CA</span> <span class="id">CB</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5594')">Proof.</div>
+<div class="proofscript" id="proof5594">
+<span class="tactic">intros</span> <span class="id">x</span> <span class="id">y</span>; <span class="tactic">destruct</span> <span class="id">x</span>, <span class="id">y</span>; <span class="tactic">simpl</span>.<br/>
+<span class="id">pose</span> <span class="id">proof</span> (<span class="id">compare_eq</span> <span class="id">a</span> <span class="id">a0</span>); <span class="id">pose</span> <span class="id">proof</span> (<span class="id">compare_eq</span> <span class="id">b</span> <span class="id">b0</span>).<br/>
+<span class="tactic">destruct</span> (<span class="id">compare</span> <span class="id">a</span> <span class="id">a0</span>); <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+<span class="tactic">intuition</span>.<br/>
+<span class="tactic">destruct</span> <span class="id">H2</span>, <span class="id">H0</span>.<br/>
+<span class="tactic">reflexivity</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">An <span class="bracket"><span class="id">Finite</span></span> type is a type with the list of all elements. *</div>
+<span class="kwd">Class</span> <span class="id">Finite</span> (<span class="id">A</span>:<span class="kwd">Type</span>) := {<br/>
+&nbsp;&nbsp;<span class="id">all_list</span> : <span class="id">list</span> <span class="id">A</span>;<br/>
+&nbsp;&nbsp;<span class="id">all_list_forall</span> : <span class="kwd">forall</span> <span class="id">x</span>:<span class="id">A</span>, <span class="id">In</span> <span class="id">x</span> <span class="id">all_list</span><br/>
+}.<br/>
+<br/>
+<div class="doc">An alphabet is both <span class="bracket"><span class="id">ComparableUsualEq</span></span> and <span class="bracket"><span class="id">Finite</span></span>. *</div>
+<span class="kwd">Class</span> <span class="id">Alphabet</span> (<span class="id">A</span>:<span class="kwd">Type</span>) := {<br/>
+&nbsp;&nbsp;<span class="id">AlphabetComparable</span> :&gt; <span class="id">Comparable</span> <span class="id">A</span>;<br/>
+&nbsp;&nbsp;<span class="id">AlphabetComparableUsualEq</span> :&gt; <span class="id">ComparableUsualEq</span> <span class="id">AlphabetComparable</span>;<br/>
+&nbsp;&nbsp;<span class="id">AlphabetFinite</span> :&gt; <span class="id">Finite</span> <span class="id">A</span><br/>
+}.<br/>
+<br/>
+<div class="doc">The <span class="bracket"><span class="id">Numbered</span></span> class provides a conveniant way to build <span class="bracket"><span class="id">Alphabet</span></span> instances,
+   with a good computationnal complexity. It is mainly a injection from it to
+   <span class="bracket"><span class="id">Int31</span></span> *</div>
+<span class="kwd">Class</span> <span class="id">Numbered</span> (<span class="id">A</span>:<span class="kwd">Type</span>) := {<br/>
+&nbsp;&nbsp;<span class="id">inj</span> : <span class="id">A</span> -&gt; <span class="id">int31</span>;<br/>
+&nbsp;&nbsp;<span class="id">surj</span> : <span class="id">int31</span> -&gt; <span class="id">A</span>;<br/>
+&nbsp;&nbsp;<span class="id">surj_inj_compat</span> : <span class="kwd">forall</span> <span class="id">x</span>, <span class="id">surj</span> (<span class="id">inj</span> <span class="id">x</span>) = <span class="id">x</span>;<br/>
+&nbsp;&nbsp;<span class="id">inj_bound</span> : <span class="id">int31</span>;<br/>
+&nbsp;&nbsp;<span class="id">inj_bound_spec</span> : <span class="kwd">forall</span> <span class="id">x</span>, (<span class="id">phi</span> (<span class="id">inj</span> <span class="id">x</span>) &lt; <span class="id">phi</span> <span class="id">inj_bound</span>)%<span class="id">Z</span><br/>
+}.<br/>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Instance</span> <span class="id">NumberedAlphabet</span> {<span class="id">A</span>:<span class="kwd">Type</span>} (<span class="id">N</span>:<span class="id">Numbered</span> <span class="id">A</span>) : <span class="id">Alphabet</span> <span class="id">A</span> :=<br/>
+&nbsp;&nbsp;{ <span class="id">AlphabetComparable</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{| <span class="id">compare</span> := <span class="kwd">fun</span> <span class="id">x</span> <span class="id">y</span> =&gt; <span class="id">compare31</span> (<span class="id">inj</span> <span class="id">x</span>) (<span class="id">inj</span> <span class="id">y</span>) |};<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">AlphabetFinite</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{| <span class="id">all_list</span> := <span class="id">fst</span> (<span class="id">iter_int31</span> <span class="id">inj_bound</span> <span class="id">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">fun</span> <span class="id">p</span> =&gt; (<span class="id">cons</span> (<span class="id">surj</span> (<span class="id">snd</span> <span class="id">p</span>)) (<span class="id">fst</span> <span class="id">p</span>), <span class="id">incr</span> (<span class="id">snd</span> <span class="id">p</span>))) ([], 0%<span class="id">int31</span>)) |} }.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5595')">Next Obligation.</div>
+<div class="proofscript" id="proof5595">
+ <span class="tactic">apply</span> <span class="id">Zcompare_antisym</span>. Qed.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof5596')">Next Obligation.</div>
+<div class="proofscript" id="proof5596">
+<span class="tactic">destruct</span> <span class="id">c</span>. <span class="tactic">unfold</span> <span class="id">compare31</span> <span class="kwd">in</span> *.<br/>
+<span class="tactic">rewrite</span> <span class="id">Z.compare_eq_iff</span> <span class="kwd">in</span> *. <span class="tactic">congruence</span>.<br/>
+<span class="tactic">eapply</span> <span class="id">Zcompare_Lt_trans</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id">H0</span>.<br/>
+<span class="tactic">eapply</span> <span class="id">Zcompare_Gt_trans</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">apply</span> <span class="id">H0</span>.<br/>
+Qed.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof5597')">Next Obligation.</div>
+<div class="proofscript" id="proof5597">
+<span class="tactic">intros</span> <span class="id">x</span> <span class="id">y</span> <span class="id">H</span>. <span class="tactic">unfold</span> <span class="id">compare</span>, <span class="id">compare31</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Z.compare_eq_iff</span> <span class="kwd">in</span> *.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">surj_inj_compat</span>, &lt;- <span class="id">phi_inv_phi</span> <span class="kwd">with</span> (<span class="id">inj</span> <span class="id">y</span>), &lt;- <span class="id">H</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">phi_inv_phi</span>, <span class="id">surj_inj_compat</span>; <span class="tactic">reflexivity</span>.<br/>
+Qed.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof5598')">Next Obligation.</div>
+<div class="proofscript" id="proof5598">
+<span class="tactic">rewrite</span> <span class="id">iter_int31_iter_nat</span>.<br/>
+<span class="id">pose</span> <span class="id">proof</span> (<span class="id">inj_bound_spec</span> <span class="id">x</span>).<br/>
+<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span> |- <span class="id">In</span> <span class="id">x</span> (<span class="id">fst</span> ?<span class="id">p</span>) =&gt; <span class="tactic">destruct</span> <span class="id">p</span> <span class="kwd">as</span> [] <span class="id">eqn</span>:? <span class="kwd">end</span>.<br/>
+<span class="tactic">replace</span> <span class="id">inj_bound</span> <span class="kwd">with</span> <span class="id">i</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+<span class="id">revert</span> <span class="id">l</span> <span class="id">i</span> <span class="id">Heqp</span> <span class="id">x</span> <span class="id">H</span>.<br/>
+<span class="tactic">induction</span> (<span class="id">Z.abs_nat</span> (<span class="id">phi</span> <span class="id">inj_bound</span>)); <span class="tactic">intros</span>.<br/>
+<span class="tactic">inversion</span> <span class="id">Heqp</span>; <span class="tactic">clear</span> <span class="id">Heqp</span>; <span class="tactic">subst</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">spec_0</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="id">pose</span> <span class="id">proof</span> (<span class="id">phi_bounded</span> (<span class="id">inj</span> <span class="id">x</span>)). <span class="tactic">omega</span>.<br/>
+<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">Heqp</span>.<br/>
+<span class="tactic">destruct</span> <span class="id">nat_rect</span>; <span class="id">specialize</span> (<span class="id">IHn</span> <span class="id">_</span> <span class="id">_</span> (<span class="id">eq_refl</span> <span class="id">_</span>) <span class="id">x</span>); <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+<span class="tactic">inversion</span> <span class="id">Heqp</span>. <span class="tactic">subst</span>. <span class="tactic">clear</span> <span class="id">Heqp</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">phi_incr</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+<span class="id">pose</span> <span class="id">proof</span> (<span class="id">phi_bounded</span> <span class="id">i0</span>).<br/>
+<span class="id">pose</span> <span class="id">proof</span> (<span class="id">phi_bounded</span> (<span class="id">inj</span> <span class="id">x</span>)).<br/>
+<span class="tactic">destruct</span> (<span class="id">Z_lt_le_dec</span> (<span class="id">Zsucc</span> (<span class="id">phi</span> <span class="id">i0</span>)) (2 ^ <span class="id">Z_of_nat</span> <span class="id">size</span>)%<span class="id">Z</span>).<br/>
+<span class="tactic">rewrite</span> <span class="id">Zmod_small</span> <span class="kwd">in</span> <span class="id">H</span> <span class="tactic">by</span> <span class="tactic">omega</span>.<br/>
+<span class="tactic">apply</span> <span class="id">Zlt_succ_le</span>, <span class="id">Zle_lt_or_eq</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+<span class="tactic">destruct</span> <span class="id">H</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="id">left</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">surj_inj_compat</span>, &lt;- <span class="id">phi_inv_phi</span> <span class="kwd">with</span> (<span class="id">inj</span> <span class="id">x</span>), <span class="id">H</span>, <span class="id">phi_inv_phi</span>; <span class="tactic">reflexivity</span>.<br/>
+<span class="tactic">replace</span> (<span class="id">Zsucc</span> (<span class="id">phi</span> <span class="id">i0</span>)) <span class="kwd">with</span> (2 ^ <span class="id">Z_of_nat</span> <span class="id">size</span>)%<span class="id">Z</span> <span class="kwd">in</span> <span class="id">H</span> <span class="tactic">by</span> <span class="tactic">omega</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">Z_mod_same_full</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+<span class="id">exfalso</span>; <span class="tactic">omega</span>.<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">phi_inv_phi</span> <span class="kwd">with</span> <span class="id">i</span>, &lt;- <span class="id">phi_inv_phi</span> <span class="kwd">with</span> <span class="id">inj_bound</span>; <span class="tactic">f_equal</span>.<br/>
+<span class="id">pose</span> <span class="id">proof</span> (<span class="id">phi_bounded</span> <span class="id">inj_bound</span>); <span class="id">pose</span> <span class="id">proof</span> (<span class="id">phi_bounded</span> <span class="id">i</span>).<br/>
+<span class="tactic">rewrite</span> &lt;- <span class="id">Zabs_eq</span> <span class="kwd">with</span> (<span class="id">phi</span> <span class="id">i</span>), &lt;- <span class="id">Zabs_eq</span> <span class="kwd">with</span> (<span class="id">phi</span> <span class="id">inj_bound</span>) <span class="tactic">by</span> <span class="tactic">omega</span>.<br/>
+<span class="tactic">clear</span> <span class="id">H</span> <span class="id">H0</span> <span class="id">H1</span>.<br/>
+<span class="tactic">do</span> 2 <span class="tactic">rewrite</span> &lt;- <span class="id">inj_Zabs_nat</span>.<br/>
+<span class="tactic">f_equal</span>.<br/>
+<span class="id">revert</span> <span class="id">l</span> <span class="id">i</span> <span class="id">Heqp</span>.<br/>
+<span class="tactic">assert</span> (<span class="id">Zabs_nat</span> (<span class="id">phi</span> <span class="id">inj_bound</span>) &lt; <span class="id">Zabs_nat</span> (2^31)).<br/>
+<span class="tactic">apply</span> <span class="id">Zabs_nat_lt</span>, <span class="id">phi_bounded</span>.<br/>
+<span class="tactic">induction</span> (<span class="id">Zabs_nat</span> (<span class="id">phi</span> <span class="id">inj_bound</span>)); <span class="tactic">intros</span>.<br/>
+<span class="tactic">inversion</span> <span class="id">Heqp</span>; <span class="tactic">reflexivity</span>.<br/>
+<span class="tactic">inversion</span> <span class="id">Heqp</span>; <span class="tactic">clear</span> <span class="id">H1</span> <span class="id">H2</span> <span class="id">Heqp</span>.<br/>
+<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span> |- <span class="id">_</span> (<span class="id">_</span> (<span class="id">_</span> (<span class="id">snd</span> ?<span class="id">p</span>))) = <span class="id">_</span> =&gt; <span class="tactic">destruct</span> <span class="id">p</span> <span class="kwd">end</span>.<br/>
+<span class="id">pose</span> <span class="id">proof</span> (<span class="id">phi_bounded</span> <span class="id">i0</span>).<br/>
+<span class="id">erewrite</span> &lt;- <span class="id">IHn</span>, &lt;- <span class="id">Zabs_nat_Zsucc</span> <span class="kwd">in</span> <span class="id">H</span> |- *; <span class="tactic">eauto</span>; <span class="tactic">try</span> <span class="tactic">omega</span>.<br/>
+<span class="tactic">rewrite</span> <span class="id">phi_incr</span>, <span class="id">Zmod_small</span>; <span class="tactic">intuition</span>; <span class="tactic">try</span> <span class="tactic">omega</span>.<br/>
+<span class="tactic">apply</span> <span class="id">inj_lt</span> <span class="kwd">in</span> <span class="id">H</span>.<br/>
+<span class="id">pose</span> <span class="id">proof</span> <span class="id">Zle_le_succ</span>.<br/>
+<span class="tactic">do</span> 2 <span class="tactic">rewrite</span> <span class="id">inj_Zabs_nat</span>, <span class="id">Zabs_eq</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Previous class instances for <span class="bracket"><span class="id">option</span> <span class="id">A</span></span> *</div>
+<span class="kwd">Program</span> <span class="kwd">Instance</span> <span class="id">OptionComparable</span> {<span class="id">A</span>:<span class="kwd">Type</span>} (<span class="id">C</span>:<span class="id">Comparable</span> <span class="id">A</span>) : <span class="id">Comparable</span> (<span class="id">option</span> <span class="id">A</span>) :=<br/>
+&nbsp;&nbsp;{ <span class="id">compare</span> := <span class="kwd">fun</span> <span class="id">x</span> <span class="id">y</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">x</span>, <span class="id">y</span> <span class="kwd">return</span> <span class="id">comparison</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span>, <span class="id">None</span> =&gt; <span class="id">Eq</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span>, <span class="id">Some</span> <span class="id">_</span> =&gt; <span class="id">Lt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">_</span>, <span class="id">None</span> =&gt; <span class="id">Gt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">x</span>, <span class="id">Some</span> <span class="id">y</span> =&gt; <span class="id">compare</span> <span class="id">x</span> <span class="id">y</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span> }.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5599')">Next Obligation.</div>
+<div class="proofscript" id="proof5599">
+<span class="tactic">destruct</span> <span class="id">x</span>, <span class="id">y</span>; <span class="tactic">intuition</span>.<br/>
+<span class="tactic">apply</span> <span class="id">compare_antisym</span>.<br/>
+Qed.</div>
+<div class="toggleproof" onclick="toggleDisplay('proof5600')">Next Obligation.</div>
+<div class="proofscript" id="proof5600">
+<span class="tactic">destruct</span> <span class="id">x</span>, <span class="id">y</span>, <span class="id">z</span>; <span class="tactic">try</span> <span class="id">now</span> <span class="tactic">intuition</span>;<br/>
+<span class="tactic">try</span> (<span class="tactic">rewrite</span> &lt;- <span class="id">H</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">discriminate</span>).<br/>
+<span class="tactic">apply</span> (<span class="id">compare_trans</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span> <span class="id">H0</span>).<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Instance</span> <span class="id">OptionComparableUsualEq</span> {<span class="id">A</span>:<span class="kwd">Type</span>} {<span class="id">C</span>:<span class="id">Comparable</span> <span class="id">A</span>} (<span class="id">U</span>:<span class="id">ComparableUsualEq</span> <span class="id">C</span>) :<br/>
+&nbsp;&nbsp;<span class="id">ComparableUsualEq</span> (<span class="id">OptionComparable</span> <span class="id">C</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5601')">Proof.</div>
+<div class="proofscript" id="proof5601">
+<span class="tactic">intros</span> <span class="id">x</span> <span class="id">y</span>.<br/>
+<span class="tactic">destruct</span> <span class="id">x</span>, <span class="id">y</span>; <span class="tactic">intuition</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+<span class="tactic">rewrite</span> (<span class="id">compare_eq</span> <span class="id">a</span> <span class="id">a0</span>); <span class="tactic">intuition</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Program</span> <span class="kwd">Instance</span> <span class="id">OptionFinite</span> {<span class="id">A</span>:<span class="kwd">Type</span>} (<span class="id">E</span>:<span class="id">Finite</span> <span class="id">A</span>) : <span class="id">Finite</span> (<span class="id">option</span> <span class="id">A</span>) :=<br/>
+&nbsp;&nbsp;{ <span class="id">all_list</span> := <span class="id">None</span> :: <span class="id">map</span> <span class="id">Some</span> <span class="id">all_list</span> }.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5602')">Next Obligation.</div>
+<div class="proofscript" id="proof5602">
+<span class="tactic">destruct</span> <span class="id">x</span>; <span class="tactic">intuition</span>.<br/>
+<span class="id">right</span>.<br/>
+<span class="tactic">apply</span> <span class="id">in_map</span>.<br/>
+<span class="tactic">apply</span> <span class="id">all_list_forall</span>.<br/>
+Defined.</div>
+<br/>
+<div class="doc">Definitions of <span class="bracket"><span class="id">FSet</span></span>/<span class="bracket"><span class="id">FMap</span></span> from <span class="bracket"><span class="id">Comparable</span></span> *</div>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">OrderedTypeAlt</span>.<br/>
+<span class="kwd">Require</span> <span class="id">FSetAVL</span>.<br/>
+<span class="kwd">Require</span> <span class="id">FMapAVL</span>.<br/>
+<span class="kwd">Import</span> <span class="id">OrderedType</span>.<br/>
+<br/>
+<span class="kwd">Module</span> <span class="kwd">Type</span> <span class="id">ComparableM</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Parameter</span> <span class="id">t</span> : <span class="kwd">Type</span>.<br/>
+&nbsp;&nbsp;<span class="id">Declare</span> <span class="kwd">Instance</span> <span class="id">tComparable</span> : <span class="id">Comparable</span> <span class="id">t</span>.<br/>
+<span class="kwd">End</span> <span class="id">ComparableM</span>.<br/>
+<br/>
+<span class="kwd">Module</span> <span class="id">OrderedTypeAlt_from_ComparableM</span> (<span class="id">C</span>:<span class="id">ComparableM</span>) &lt;: <span class="id">OrderedTypeAlt</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id">t</span> := <span class="id">C.t</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id">compare</span> : <span class="id">t</span> -&gt; <span class="id">t</span> -&gt; <span class="id">comparison</span> := <span class="id">compare</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Infix</span> "?=" := <span class="id">compare</span> (<span class="tactic">at</span> <span class="id">level</span> 70, <span class="id">no</span> <span class="id">associativity</span>).<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id">compare_sym</span> <span class="id">x</span> <span class="id">y</span> : (<span class="id">y</span>?=<span class="id">x</span>) = <span class="id">CompOpp</span> (<span class="id">x</span>?=<span class="id">y</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5603')">Proof.</div>
+<div class="proofscript" id="proof5603">
+ <span class="tactic">exact</span> (<span class="id">Logic.eq_sym</span> (<span class="id">compare_antisym</span> <span class="id">x</span> <span class="id">y</span>)). Qed.</div>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id">compare_trans</span> <span class="id">c</span> <span class="id">x</span> <span class="id">y</span> <span class="id">z</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">x</span>?=<span class="id">y</span>) = <span class="id">c</span> -&gt; (<span class="id">y</span>?=<span class="id">z</span>) = <span class="id">c</span> -&gt; (<span class="id">x</span>?=<span class="id">z</span>) = <span class="id">c</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5604')">Proof.</div>
+<div class="proofscript" id="proof5604">
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">compare_trans</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<span class="kwd">End</span> <span class="id">OrderedTypeAlt_from_ComparableM</span>.<br/>
+<br/>
+<span class="kwd">Module</span> <span class="id">OrderedType_from_ComparableM</span> (<span class="id">C</span>:<span class="id">ComparableM</span>) &lt;: <span class="id">OrderedType</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Module</span> <span class="id">Alt</span> := <span class="id">OrderedTypeAlt_from_ComparableM</span> <span class="id">C</span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Include</span> (<span class="id">OrderedType_from_Alt</span> <span class="id">Alt</span>).<br/>
+<span class="kwd">End</span> <span class="id">OrderedType_from_ComparableM</span>.<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

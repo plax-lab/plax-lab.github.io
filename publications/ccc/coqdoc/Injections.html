@@ -1,0 +1,330 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Injections</title>
+<meta name="description" content="Documentation of Coq module Injections" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Injections</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span>.<br/>
+<br/>
+<h1> The triple <span class="bracket"><span class="id">Mu</span></span> for recording shared memory locations </h1>
+<div class="doc">- <span class="bracket"><span class="id">inj</span></span> : the injection function relating source and target shared blocks 
+    - <span class="bracket"><span class="id">SharedSrc</span></span> : shared memory blocks of source program state 
+    - <span class="bracket"><span class="id">SharedTgt</span></span> : shared memory blocks of target program state 
+  </div>
+<br/>
+<span class="kwd">Record</span> <span class="id"><a name="Mu">Mu</a></span>: <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="inj">inj</a></span>: <span class="id"><a href="Blockset.html#Bset.inj">Bset.inj</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="SharedSrc">SharedSrc</a></span>: <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="SharedTgt">SharedTgt</a></span>: <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span>;<br/>
+&nbsp;&nbsp;}.<br/>
+<br/>
+<div class="doc">Consistency relation between locations.
+    It is basically a subset relation modulo <span class="bracket"><span class="id">Mu</span></span> </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="LocMatch">LocMatch</a></span> (<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>) (<span class="id">lsSrc</span> <span class="id">lsTgt</span>: <span class="id"><a href="Footprint.html#Locs.t">Locs.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="Loc_Match">Loc_Match</a></span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id">mu</span>) <span class="id"><a href="Injections.html#b">b</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span> <span class="id">lsTgt</span> <span class="id"><a href="Injections.html#b">b</a></span> <span class="id"><a href="Injections.html#ofs">ofs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">exists</span> <span class="id">bSrc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.inject_block">Bset.inject_block</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id">mu</span>) <span class="id"><a href="Injections.html#bSrc">bSrc</a></span> <span class="id"><a href="Injections.html#b">b</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span> <span class="id">lsSrc</span> <span class="id"><a href="Injections.html#bSrc">bSrc</a></span> <span class="id"><a href="Injections.html#ofs">ofs</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id">mu</span> <span class="id">lsSrc</span> <span class="id">lsTgt</span>.<br/>
+<br/>
+<div class="doc">Target footprint matches with source, 
+    each component of target footprint <span class="bracket"><span class="id">fpTgt</span></span> subsets of 
+    the corresponding component of source footprint <span class="bracket"><span class="id">fpSrc</span></span> </div>
+<span class="kwd">Record</span> <span class="id"><a name="FPMatch">FPMatch</a></span> (<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>) (<span class="id">fpSrc</span> <span class="id">fpTgt</span>: <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="cmp_match">cmp_match</a></span>: <span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.cmps">FP.cmps</a></span> <span class="id"><a href="Injections.html#fpSrc">fpSrc</a></span>) (<span class="id"><a href="Footprint.html#FP.cmps">FP.cmps</a></span> <span class="id"><a href="Injections.html#fpTgt">fpTgt</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="read_match">read_match</a></span>: <span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.reads">FP.reads</a></span> <span class="id"><a href="Injections.html#fpSrc">fpSrc</a></span>) (<span class="id"><a href="Footprint.html#FP.reads">FP.reads</a></span> <span class="id"><a href="Injections.html#fpTgt">fpTgt</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="write_match">write_match</a></span>: <span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.writes">FP.writes</a></span> <span class="id"><a href="Injections.html#fpSrc">fpSrc</a></span>) (<span class="id"><a href="Footprint.html#FP.writes">FP.writes</a></span> <span class="id"><a href="Injections.html#fpTgt">fpTgt</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="free_match">free_match</a></span>: <span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.frees">FP.frees</a></span> <span class="id"><a href="Injections.html#fpSrc">fpSrc</a></span>) (<span class="id"><a href="Footprint.html#FP.frees">FP.frees</a></span> <span class="id"><a href="Injections.html#fpTgt">fpTgt</a></span>);<br/>
+&nbsp;&nbsp;}.<br/>
+<br/>
+<div class="doc">A generalized definition that is weaker, 
+    such that it is possible to degrade a shared memory write to read </div>
+<span class="kwd">Record</span> <span class="id">FPMatch</span>' (<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>) (<span class="id">fpSrc</span> <span class="id">fpTgt</span>: <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cmp_match</span>': <span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.ge_cmps">FP.ge_cmps</a></span> <span class="id"><a href="Injections.html#fpSrc">fpSrc</a></span>) (<span class="id"><a href="Footprint.html#FP.cmps">FP.cmps</a></span> <span class="id"><a href="Injections.html#fpTgt">fpTgt</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">read_match</span>': <span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.ge_reads">FP.ge_reads</a></span> <span class="id"><a href="Injections.html#fpSrc">fpSrc</a></span>) (<span class="id"><a href="Footprint.html#FP.reads">FP.reads</a></span> <span class="id"><a href="Injections.html#fpTgt">fpTgt</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">write_match</span>': <span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.ge_writes">FP.ge_writes</a></span> <span class="id"><a href="Injections.html#fpSrc">fpSrc</a></span>) (<span class="id"><a href="Footprint.html#FP.writes">FP.writes</a></span> <span class="id"><a href="Injections.html#fpTgt">fpTgt</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">free_match</span>': <span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.ge_frees">FP.ge_frees</a></span> <span class="id"><a href="Injections.html#fpSrc">fpSrc</a></span>) (<span class="id"><a href="Footprint.html#FP.frees">FP.frees</a></span> <span class="id"><a href="Injections.html#fpTgt">fpTgt</a></span>);<br/>
+&nbsp;&nbsp;}.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="eq_locs_match">eq_locs_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">ls1</span> <span class="id">ls2</span> <span class="id">ls1</span>' <span class="id">ls2</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.eq">Locs.eq</a></span> <span class="id"><a href="Injections.html#ls1">ls1</a></span> <span class="id">ls1</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.eq">Locs.eq</a></span> <span class="id"><a href="Injections.html#ls2">ls2</a></span> <span class="id">ls2</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#ls1">ls1</a></span> <span class="id"><a href="Injections.html#ls2">ls2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id">ls1</span>' <span class="id">ls2</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5894')">Proof.</div>
+<div class="proofscript" id="proof5894">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#Locs.belongsto_eq">Locs.belongsto_eq</a></span> <span class="kwd">in</span> <span class="id">H</span>, <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H2</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">H3</span>).<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> &lt;- <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H4</span>. <span class="tactic">clear</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H2</span> <span class="id">H4</span>). <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> (<span class="id">b</span>'&amp;<span class="id">Hinj</span>&amp;<span class="id">Hbelong</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">b</span>'. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="locs_match_union">locs_match_union</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sls</span> <span class="id">sls</span>' <span class="id">tls</span> <span class="id">tls</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> <span class="id"><a href="Injections.html#tls">tls</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id">sls</span>' <span class="id">tls</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> <span class="id">sls</span>') (<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="id"><a href="Injections.html#tls">tls</a></span> <span class="id">tls</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5895')">Proof.</div>
+<div class="proofscript" id="proof5895">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span>, <span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_true_elim">Bool.orb_true_elim</a></span> <span class="kwd">in</span> <span class="id">H4</span>; <span class="tactic">destruct</span> <span class="id">H4</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id">H1</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H3</span>) <span class="kwd">in</span> <span class="id">e</span>. <span class="tactic">destruct</span> <span class="id">e</span> <span class="kwd">as</span> (<span class="id">b</span>'&amp;<span class="id">H</span>'&amp;<span class="id">H</span>'').<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">b</span>'. <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>''; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id">H2</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H3</span>) <span class="kwd">in</span> <span class="id">e</span>. <span class="tactic">destruct</span> <span class="id">e</span> <span class="kwd">as</span> (<span class="id">b</span>'&amp;<span class="id">H</span>'&amp;<span class="id">H</span>'').<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">b</span>'. <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>''. <span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_true_r">Bool.orb_true_r</a></span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="locs_match_union_S">locs_match_union_S</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sls</span> <span class="id">tls</span> <span class="id">sls</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> <span class="id"><a href="Injections.html#tls">tls</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> <span class="id">sls</span>') <span class="id"><a href="Injections.html#tls">tls</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5896')">Proof.</div>
+<div class="proofscript" id="proof5896">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>. <span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H0</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">H1</span> <span class="id">H2</span>) <span class="kwd">as</span> (<span class="id">b</span>'&amp;<span class="id">Hinj</span>&amp;<span class="id">Hbelong</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">b</span>'. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span>, <span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="kwd">in</span> *. <span class="tactic">rewrite</span> <span class="id">Hbelong</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="locs_match_union_T">locs_match_union_T</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sls</span> <span class="id">tls</span> <span class="id">tls</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> <span class="id"><a href="Injections.html#tls">tls</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> <span class="id">tls</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> (<span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="id"><a href="Injections.html#tls">tls</a></span> <span class="id">tls</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5897')">Proof.</div>
+<div class="proofscript" id="proof5897">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>. <span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span>, <span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#orb_true_elim">Bool.orb_true_elim</a></span> <span class="kwd">in</span> <span class="id">H4</span>; <span class="tactic">destruct</span> <span class="id">H4</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id">H1</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H3</span>) <span class="kwd">in</span> <span class="id">e</span>. <span class="tactic">destruct</span> <span class="id">e</span> <span class="kwd">as</span> (<span class="id">b</span>'&amp;<span class="id">H</span>'&amp;<span class="id">H</span>''). <span class="id">exists</span> <span class="id">b</span>'. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id">H2</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H3</span>) <span class="kwd">in</span> <span class="id">e</span>. <span class="tactic">destruct</span> <span class="id">e</span> <span class="kwd">as</span> (<span class="id">b</span>'&amp;<span class="id">H</span>'&amp;<span class="id">H</span>''). <span class="id">exists</span> <span class="id">b</span>'. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="locs_match_subset_S">locs_match_subset_S</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sls</span> <span class="id">tls</span> <span class="id">sls</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> <span class="id"><a href="Injections.html#tls">tls</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.subset">Locs.subset</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> <span class="id">sls</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id">sls</span>' <span class="id"><a href="Injections.html#tls">tls</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5898')">Proof.</div>
+<div class="proofscript" id="proof5898">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>. <span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id">H1</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H2</span>) <span class="kwd">in</span> <span class="id">H3</span>. <span class="tactic">destruct</span> <span class="id">H3</span> <span class="kwd">as</span> (<span class="id">b</span>'&amp;<span class="id">H</span>'&amp;<span class="id">H</span>''). <span class="id">exists</span> <span class="id">b</span>'. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="locs_match_subset_T">locs_match_subset_T</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sls</span> <span class="id">tls</span> <span class="id">tls</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> <span class="id"><a href="Injections.html#tls">tls</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.subset">Locs.subset</a></span> <span class="id">tls</span>' <span class="id"><a href="Injections.html#tls">tls</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sls">sls</a></span> <span class="id">tls</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5899')">Proof.</div>
+<div class="proofscript" id="proof5899">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>. <span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H1</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="eq_fp_match">eq_fp_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">fp1</span> <span class="id">fp2</span> <span class="id">fp1</span>' <span class="id">fp2</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.eq">FP.eq</a></span> <span class="id"><a href="Injections.html#fp1">fp1</a></span> <span class="id">fp1</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.eq">FP.eq</a></span> <span class="id"><a href="Injections.html#fp2">fp2</a></span> <span class="id">fp2</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#fp1">fp1</a></span> <span class="id"><a href="Injections.html#fp2">fp2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id">fp1</span>' <span class="id">fp2</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5900')">Proof.</div>
+<div class="proofscript" id="proof5900">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">inversion</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">try</span> (<span class="tactic">eapply</span> <span class="id"><a href="Injections.html#eq_locs_match">eq_locs_match</a></span>; <span class="tactic">eauto</span>).<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">eq_fp_match</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">fp1</span> <span class="id">fp2</span> <span class="id">fp1</span>' <span class="id">fp2</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.eq">FP.eq</a></span> <span class="id"><a href="Injections.html#fp1">fp1</a></span> <span class="id">fp1</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.eq">FP.eq</a></span> <span class="id"><a href="Injections.html#fp2">fp2</a></span> <span class="id">fp2</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#fp1">fp1</a></span> <span class="id"><a href="Injections.html#fp2">fp2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id">fp1</span>' <span class="id">fp2</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5901')">Proof.</div>
+<div class="proofscript" id="proof5901">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">inversion</span> <span class="id">H1</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Injections.html#eq_locs_match">eq_locs_match</a></span>; <span class="tactic">try</span> (<span class="tactic">eapply</span> <span class="id"><a href="Footprint.html#FP.eq_fp_eq_ge_cmps">FP.eq_fp_eq_ge_cmps</a></span>; <span class="tactic">eauto</span>); <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Injections.html#eq_locs_match">eq_locs_match</a></span>; <span class="tactic">try</span> (<span class="tactic">eapply</span> <span class="id"><a href="Footprint.html#FP.eq_fp_eq_ge_reads">FP.eq_fp_eq_ge_reads</a></span>; <span class="tactic">eauto</span>); <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Injections.html#eq_locs_match">eq_locs_match</a></span>; <span class="tactic">try</span> (<span class="tactic">eapply</span> <span class="id"><a href="Footprint.html#FP.eq_fp_eq_ge_writes">FP.eq_fp_eq_ge_writes</a></span>; <span class="tactic">eauto</span>); <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Injections.html#eq_locs_match">eq_locs_match</a></span>; <span class="tactic">try</span> (<span class="tactic">eapply</span> <span class="id"><a href="Footprint.html#FP.eq_fp_eq_ge_frees">FP.eq_fp_eq_ge_frees</a></span>; <span class="tactic">eauto</span>); <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_match_union">fp_match_union</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sfp</span> <span class="id">sfp</span>' <span class="id">tfp</span> <span class="id">tfp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id">sfp</span>' <span class="id">tfp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id">sfp</span>') (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> <span class="id">tfp</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5902')">Proof.</div>
+<div class="proofscript" id="proof5902">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union">locs_match_union</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">fp_match_union</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sfp</span> <span class="id">sfp</span>' <span class="id">tfp</span> <span class="id">tfp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id">sfp</span>' <span class="id">tfp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id">sfp</span>') (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> <span class="id">tfp</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5903')">Proof.</div>
+<div class="proofscript" id="proof5903">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.union_ge_cmps_comm">FP.union_ge_cmps_comm</a></span>; <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union">locs_match_union</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.union_ge_reads_comm">FP.union_ge_reads_comm</a></span>; <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union">locs_match_union</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.union_ge_writes_comm">FP.union_ge_writes_comm</a></span>; <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union">locs_match_union</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union">locs_match_union</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_match_union_S">fp_match_union_S</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sfp</span> <span class="id">tfp</span> <span class="id">sfp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id">sfp</span>') <span class="id"><a href="Injections.html#tfp">tfp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5904')">Proof.</div>
+<div class="proofscript" id="proof5904">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>. <span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#FP.union">FP.union</a></span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_S">locs_match_union_S</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">fp_match_union_S</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sfp</span> <span class="id">tfp</span> <span class="id">sfp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id">sfp</span>') <span class="id"><a href="Injections.html#tfp">tfp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5905')">Proof.</div>
+<div class="proofscript" id="proof5905">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>. <span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.union_ge_cmps_comm">FP.union_ge_cmps_comm</a></span>; <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_S">locs_match_union_S</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.union_ge_reads_comm">FP.union_ge_reads_comm</a></span>; <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_S">locs_match_union_S</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Footprint.html#FP.union_ge_writes_comm">FP.union_ge_writes_comm</a></span>; <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_S">locs_match_union_S</a></span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_S">locs_match_union_S</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_match_union_T">fp_match_union_T</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sfp</span> <span class="id">tfp</span> <span class="id">tfp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id">tfp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> <span class="id">tfp</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5906')">Proof.</div>
+<div class="proofscript" id="proof5906">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>. <span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#FP.union">FP.union</a></span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_T">locs_match_union_T</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">fp_match_union_T</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sfp</span> <span class="id">tfp</span> <span class="id">tfp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id">tfp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> <span class="id">tfp</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5907')">Proof.</div>
+<div class="proofscript" id="proof5907">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_T">locs_match_union_T</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_match_subset_S">fp_match_subset_S</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sfp</span> <span class="id">tfp</span> <span class="id">sfp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.subset">FP.subset</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id">sfp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id">sfp</span>' <span class="id"><a href="Injections.html#tfp">tfp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5908')">Proof.</div>
+<div class="proofscript" id="proof5908">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">eapply</span> <span class="id"><a href="Injections.html#locs_match_subset_S">locs_match_subset_S</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">fp_match_subset_S</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sfp</span> <span class="id">tfp</span> <span class="id">sfp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.subset">FP.subset</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id">sfp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id">sfp</span>' <span class="id"><a href="Injections.html#tfp">tfp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5909')">Proof.</div>
+<div class="proofscript" id="proof5909">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">eapply</span> <span class="id"><a href="Injections.html#locs_match_subset_S">locs_match_subset_S</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Footprint.html#FP.subset_ge_cmps_subset">FP.subset_ge_cmps_subset</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Footprint.html#FP.subset_ge_reads_subset">FP.subset_ge_reads_subset</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Footprint.html#FP.subset_ge_writes_subset">FP.subset_ge_writes_subset</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_match_subset_T">fp_match_subset_T</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sfp</span> <span class="id">tfp</span> <span class="id">tfp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.subset">FP.subset</a></span> <span class="id">tfp</span>' <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id">tfp</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5910')">Proof.</div>
+<div class="proofscript" id="proof5910">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">eapply</span> <span class="id"><a href="Injections.html#locs_match_subset_T">locs_match_subset_T</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">fp_match_subset_T</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">sfp</span> <span class="id">tfp</span> <span class="id">tfp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.subset">FP.subset</a></span> <span class="id">tfp</span>' <span class="id"><a href="Injections.html#tfp">tfp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#sfp">sfp</a></span> <span class="id">tfp</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5911')">Proof.</div>
+<div class="proofscript" id="proof5911">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">eapply</span> <span class="id"><a href="Injections.html#locs_match_subset_T">locs_match_subset_T</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">fp_match_emp</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">fp</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#fp">fp</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5912')">Proof.</div>
+<div class="proofscript" id="proof5912">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>. <span class="id">constructor</span>; <span class="id">constructor</span>; <span class="tactic">intros</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">_</span> <span class="id">C</span>; <span class="tactic">inversion</span> <span class="id">C</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_match_local_block">fp_match_local_block</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">fp</span>' <span class="id">fp</span>, <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> (<span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span> <span class="id">fp</span>') <span class="id"><a href="Injections.html#b">b</a></span> -&gt; ~ <span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#b">b</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="Injections.html#mu">mu</a></span> <span class="id"><a href="Injections.html#fp">fp</a></span> <span class="id">fp</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5913')">Proof.</div>
+<div class="proofscript" id="proof5913">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="id">exfalso</span>; <span class="tactic">eapply</span> <span class="id">H</span>; <span class="tactic">eauto</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span>, <span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span>, <span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span>; <span class="id">Locs.unfolds</span>; <span class="id">eexists</span>; <span class="id">red_boolean_true</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Liveness</title>
+<meta name="description" content="Documentation of Coq module Liveness" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Liveness</h1>
+<div class="coq">
+<br/>
+<div class="doc">Liveness analysis over RTL </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Maps</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Lattice</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Op</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Registers</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">RTL</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Kildall</span>.<br/>
+<br/>
+<div class="doc">A register <span class="bracket"><span class="id">r</span></span> is live at a point <span class="bracket"><span class="id">p</span></span> if there exists a path
+  from <span class="bracket"><span class="id">p</span></span> to some instruction that uses <span class="bracket"><span class="id">r</span></span> as argument,
+  and <span class="bracket"><span class="id">r</span></span> is not redefined along this path.
+  Liveness can be computed by a backward dataflow analysis.
+  The analysis operates over sets of (live) pseudo-registers. </div>
+<br/>
+<span class="kwd">Notation</span> <span class="id">reg_live</span> := <span class="id">Regset.add</span>.<br/>
+<span class="kwd">Notation</span> <span class="id">reg_dead</span> := <span class="id">Regset.remove</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">reg_option_live</span> (<span class="id">or</span>: <span class="id">option</span> <span class="id">reg</span>) (<span class="id">lv</span>: <span class="id">Regset.t</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">or</span> <span class="kwd">with</span> <span class="id">None</span> =&gt; <span class="id">lv</span> | <span class="id">Some</span> <span class="id">r</span> =&gt; <span class="id">reg_live</span> <span class="id">r</span> <span class="id">lv</span> <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">reg_sum_live</span> (<span class="id">ros</span>: <span class="id">reg</span> + <span class="id">ident</span>) (<span class="id">lv</span>: <span class="id">Regset.t</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">ros</span> <span class="kwd">with</span> <span class="id">inl</span> <span class="id">r</span> =&gt; <span class="id">reg_live</span> <span class="id">r</span> <span class="id">lv</span> | <span class="id">inr</span> <span class="id">s</span> =&gt; <span class="id">lv</span> <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">reg_list_live</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">rl</span>: <span class="id">list</span> <span class="id">reg</span>) (<span class="id">lv</span>: <span class="id">Regset.t</span>) {<span class="kwd">struct</span> <span class="id">rl</span>} : <span class="id">Regset.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">rl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">nil</span> =&gt; <span class="id">lv</span><br/>
+&nbsp;&nbsp;| <span class="id">r1</span> :: <span class="id">rs</span> =&gt; <span class="id">reg_list_live</span> <span class="id">rs</span> (<span class="id">reg_live</span> <span class="id">r1</span> <span class="id">lv</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">reg_list_dead</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">rl</span>: <span class="id">list</span> <span class="id">reg</span>) (<span class="id">lv</span>: <span class="id">Regset.t</span>) {<span class="kwd">struct</span> <span class="id">rl</span>} : <span class="id">Regset.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">rl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">nil</span> =&gt; <span class="id">lv</span><br/>
+&nbsp;&nbsp;| <span class="id">r1</span> :: <span class="id">rs</span> =&gt; <span class="id">reg_list_dead</span> <span class="id">rs</span> (<span class="id">reg_dead</span> <span class="id">r1</span> <span class="id">lv</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Here is the transfer function for the dataflow analysis.
+  Since this is a backward dataflow analysis, it takes as argument
+  the abstract register set ``after'' the given instruction,
+  i.e. the registers that are live after; and it returns as result
+  the abstract register set ``before'' the given instruction,
+  i.e. the registers that must be live before.
+  The general relation between ``live before'' and ``live after''
+  an instruction is that a register is live before if either
+  it is one of the arguments of the instruction, or it is not the result
+  of the instruction and it is live after.
+  However, if the result of a side-effect-free instruction is not
+  live ``after'', the whole instruction will be removed later
+  (since it computes a useless result), thus its arguments need not
+  be live ``before''. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transfer</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">f</span>: <span class="id">function</span>) (<span class="id">pc</span>: <span class="id">node</span>) (<span class="id">after</span>: <span class="id">Regset.t</span>) : <span class="id">Regset.t</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">f</span>.(<span class="id">fn_code</span>)!<span class="id">pc</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Regset.empty</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">i</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">i</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Inop</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">after</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Iop</span> <span class="id">op</span> <span class="id">args</span> <span class="id">res</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Regset.mem</span> <span class="id">res</span> <span class="id">after</span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reg_list_live</span> <span class="id">args</span> (<span class="id">reg_dead</span> <span class="id">res</span> <span class="id">after</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">after</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Iload</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">dst</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">Regset.mem</span> <span class="id">dst</span> <span class="id">after</span> <span class="kwd">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reg_list_live</span> <span class="id">args</span> (<span class="id">reg_dead</span> <span class="id">dst</span> <span class="id">after</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">after</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Istore</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">src</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reg_list_live</span> <span class="id">args</span> (<span class="id">reg_live</span> <span class="id">src</span> <span class="id">after</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Icall</span> <span class="id">sig</span> <span class="id">ros</span> <span class="id">args</span> <span class="id">res</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reg_list_live</span> <span class="id">args</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">reg_sum_live</span> <span class="id">ros</span> (<span class="id">reg_dead</span> <span class="id">res</span> <span class="id">after</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Itailcall</span> <span class="id">sig</span> <span class="id">ros</span> <span class="id">args</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reg_list_live</span> <span class="id">args</span> (<span class="id">reg_sum_live</span> <span class="id">ros</span> <span class="id">Regset.empty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Ibuiltin</span> <span class="id">ef</span> <span class="id">args</span> <span class="id">res</span> <span class="id">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reg_list_live</span> (<span class="id">params_of_builtin_args</span> <span class="id">args</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">reg_list_dead</span> (<span class="id">params_of_builtin_res</span> <span class="id">res</span>) <span class="id">after</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Icond</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">ifso</span> <span class="id">ifnot</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reg_list_live</span> <span class="id">args</span> <span class="id">after</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Ijumptable</span> <span class="id">arg</span> <span class="id">tbl</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reg_live</span> <span class="id">arg</span> <span class="id">after</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Ireturn</span> <span class="id">optarg</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">reg_option_live</span> <span class="id">optarg</span> <span class="id">Regset.empty</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">The liveness analysis is then obtained by instantiating the
+  general framework for backward dataflow analysis provided by
+  module <span class="bracket"><span class="id">Kildall</span></span>.  </div>
+<br/>
+<span class="kwd">Module</span> <span class="id">RegsetLat</span> := <span class="id">LFSet</span>(<span class="id">Regset</span>).<br/>
+<span class="kwd">Module</span> <span class="id">DS</span> := <span class="id">Backward_Dataflow_Solver</span>(<span class="id">RegsetLat</span>)(<span class="id">NodeSetBackward</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">analyze</span> (<span class="id">f</span>: <span class="id">function</span>): <span class="id">option</span> (<span class="id">PMap.t</span> <span class="id">Regset.t</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">DS.fixpoint</span> <span class="id">f</span>.(<span class="id">fn_code</span>) <span class="id">successors_instr</span> (<span class="id">transfer</span> <span class="id">f</span>).<br/>
+<br/>
+<div class="doc">Basic property of the liveness information computed by <span class="bracket"><span class="id">analyze</span></span>. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">analyze_solution</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">live</span> <span class="id">n</span> <span class="id">i</span> <span class="id">s</span>,<br/>
+&nbsp;&nbsp;<span class="id">analyze</span> <span class="id">f</span> = <span class="id">Some</span> <span class="id">live</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">f</span>.(<span class="id">fn_code</span>)!<span class="id">n</span> = <span class="id">Some</span> <span class="id">i</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">In</span> <span class="id">s</span> (<span class="id">successors_instr</span> <span class="id">i</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">Regset.Subset</span> (<span class="id">transfer</span> <span class="id">f</span> <span class="id">s</span> <span class="id">live</span>!!<span class="id">s</span>) <span class="id">live</span>!!<span class="id">n</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2757')">Proof.</div>
+<div class="proofscript" id="proof2757">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">analyze</span>; <span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">DS.fixpoint_solution</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id">transfer</span>; <span class="tactic">rewrite</span> <span class="id">H2</span>. <span class="tactic">apply</span> <span class="id">DS.L.eq_refl</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Given an RTL function, compute (for every PC) the list of
+  pseudo-registers that are used for the last time in the instruction
+  at PC.  These are the registers that are used or defined by the instruction
+  and dead afterwards.  </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">last_uses_at</span> (<span class="id">live</span>: <span class="id">PMap.t</span> <span class="id">Regset.t</span>) (<span class="id">pc</span>: <span class="id">node</span>) (<span class="id">i</span>: <span class="id">instruction</span>) : <span class="id">list</span> <span class="id">reg</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">l</span> := <span class="id">live</span>!!<span class="id">pc</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">lu</span> := <span class="id">List.filter</span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id">negb</span> (<span class="id">Regset.mem</span> <span class="id">r</span> <span class="id">l</span>)) (<span class="id">instr_uses</span> <span class="id">i</span>) <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">instr_defs</span> <span class="id">i</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">lu</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">r</span> =&gt; <span class="kwd">if</span> <span class="id">Regset.mem</span> <span class="id">r</span> <span class="id">l</span> <span class="kwd">then</span> <span class="id">lu</span> <span class="kwd">else</span> <span class="id">r</span> :: <span class="id">lu</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">last_uses</span> (<span class="id">f</span>: <span class="id">function</span>) : <span class="id">PTree.t</span> (<span class="id">list</span> <span class="id">reg</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">analyze</span> <span class="id">f</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">PTree.empty</span> (<span class="id">list</span> <span class="id">reg</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">live</span> =&gt; <span class="id">PTree.map</span> (<span class="id">last_uses_at</span> <span class="id">live</span>) <span class="id">f</span>.(<span class="id">fn_code</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

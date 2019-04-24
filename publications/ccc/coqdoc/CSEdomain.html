@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module CSEdomain</title>
+<meta name="description" content="Documentation of Coq module CSEdomain" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module CSEdomain</h1>
+<div class="coq">
+<br/>
+<div class="doc">The abstract domain for value numbering, used in common
+    subexpression elimination. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Maps</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Values</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Memory</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Op</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Registers</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">RTL</span>.<br/>
+<br/>
+<div class="doc">Value numbers are represented by positive integers.  Equations are
+  of the form <span class="bracket"><span class="id">valnum</span> = <span class="id">rhs</span></span> or <span class="bracket"><span class="id">valnum</span> &gt;= <span class="id">rhs</span></span>, where the right-hand
+  sides <span class="bracket"><span class="id">rhs</span></span> are either arithmetic operations or memory loads, <span class="bracket">=</span> is
+  strict equality of values, and <span class="bracket">&gt;=</span> is the "more defined than" relation
+  over values. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">valnum</span> := <span class="id">positive</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">rhs</span> : <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Op</span>: <span class="id">operation</span> -&gt; <span class="id">list</span> <span class="id">valnum</span> -&gt; <span class="id">rhs</span><br/>
+&nbsp;&nbsp;| <span class="kwd">Load</span>: <span class="id">memory_chunk</span> -&gt; <span class="id">addressing</span> -&gt; <span class="id">list</span> <span class="id">valnum</span> -&gt; <span class="id">rhs</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">equation</span> : <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Eq</span> (<span class="id">v</span>: <span class="id">valnum</span>) (<span class="id">strict</span>: <span class="id">bool</span>) (<span class="id">r</span>: <span class="id">rhs</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">eq_valnum</span>: <span class="kwd">forall</span> (<span class="id">x</span> <span class="id">y</span>: <span class="id">valnum</span>), {<span class="id">x</span>=<span class="id">y</span>}+{<span class="id">x</span>&lt;&gt;<span class="id">y</span>} := <span class="id">peq</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">eq_list_valnum</span>: <span class="kwd">forall</span> (<span class="id">x</span> <span class="id">y</span>: <span class="id">list</span> <span class="id">valnum</span>), {<span class="id">x</span>=<span class="id">y</span>}+{<span class="id">x</span>&lt;&gt;<span class="id">y</span>} := <span class="id">list_eq_dec</span> <span class="id">peq</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">eq_rhs</span> (<span class="id">x</span> <span class="id">y</span>: <span class="id">rhs</span>) : {<span class="id">x</span>=<span class="id">y</span>}+{<span class="id">x</span>&lt;&gt;<span class="id">y</span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3127')">Proof.</div>
+<div class="proofscript" id="proof3127">
+&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">chunk_eq</span> <span class="id">eq_operation</span> <span class="id">eq_addressing</span> <span class="id">eq_valnum</span> <span class="id">eq_list_valnum</span>.<br/>
+&nbsp;&nbsp;<span class="id">decide</span> <span class="id">equality</span>.<br/>
+Defined.</div>
+<br/>
+<div class="doc">A value numbering is a collection of equations between value numbers
+  plus a partial map from registers to value numbers.  Additionally,
+  we maintain the next unused value number, so as to easily generate
+  fresh value numbers.  We also maintain a reverse mapping from value
+  numbers to registers, redundant with the mapping from registers to
+  value numbers, in order to speed up some operations. </div>
+<br/>
+<span class="kwd">Record</span> <span class="id">numbering</span> : <span class="kwd">Type</span> := <span class="id">mknumbering</span> {<br/>
+&nbsp;&nbsp;<span class="id">num_next</span>: <span class="id">valnum</span>;                  <span class="docright">(* first unused value number  *)</span><br/>
+&nbsp;&nbsp;<span class="id">num_eqs</span>: <span class="id">list</span> <span class="id">equation</span>;            <span class="docright">(* valid equations  *)</span><br/>
+&nbsp;&nbsp;<span class="id">num_reg</span>: <span class="id">PTree.t</span> <span class="id">valnum</span>;           <span class="docright">(* mapping register to valnum  *)</span><br/>
+&nbsp;&nbsp;<span class="id">num_val</span>: <span class="id">PMap.t</span> (<span class="id">list</span> <span class="id">reg</span>)         <span class="docright">(* reverse mapping valnum to regs containing it  *)</span><br/>
+}.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">empty_numbering</span> :=<br/>
+&nbsp;&nbsp;{| <span class="id">num_next</span> := 1%<span class="id">positive</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">num_eqs</span>  := <span class="id">nil</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">num_reg</span>  := <span class="id">PTree.empty</span> <span class="id">_</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">num_val</span>  := <span class="id">PMap.init</span> <span class="id">nil</span> |}.<br/>
+<br/>
+<div class="doc">A numbering is well formed if all value numbers mentioned are below
+  <span class="bracket"><span class="id">num_next</span></span>.  Moreover, the <span class="bracket"><span class="id">num_val</span></span> reverse mapping must be consistent
+  with the <span class="bracket"><span class="id">num_reg</span></span> direct mapping. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">valnums_rhs</span> (<span class="id">r</span>: <span class="id">rhs</span>): <span class="id">list</span> <span class="id">valnum</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">r</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Op</span> <span class="id">op</span> <span class="id">vl</span> =&gt; <span class="id">vl</span><br/>
+&nbsp;&nbsp;| <span class="kwd">Load</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">vl</span> =&gt; <span class="id">vl</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">wf_rhs</span> (<span class="id">next</span>: <span class="id">valnum</span>) (<span class="id">r</span>: <span class="id">rhs</span>) : <span class="kwd">Prop</span> :=<br/>
+<span class="kwd">forall</span> <span class="id">v</span>, <span class="id">In</span> <span class="id">v</span> (<span class="id">valnums_rhs</span> <span class="id">r</span>) -&gt; <span class="id">Plt</span> <span class="id">v</span> <span class="id">next</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">wf_equation</span> (<span class="id">next</span>: <span class="id">valnum</span>) (<span class="id">e</span>: <span class="id">equation</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">e</span> <span class="kwd">with</span> <span class="id">Eq</span> <span class="id">l</span> <span class="id">str</span> <span class="id">r</span> =&gt; <span class="id">Plt</span> <span class="id">l</span> <span class="id">next</span> /\ <span class="id">wf_rhs</span> <span class="id">next</span> <span class="id">r</span> <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Record</span> <span class="id">wf_numbering</span> (<span class="id">n</span>: <span class="id">numbering</span>) : <span class="kwd">Prop</span> := {<br/>
+&nbsp;&nbsp;<span class="id">wf_num_eqs</span>: <span class="kwd">forall</span> <span class="id">e</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">In</span> <span class="id">e</span> <span class="id">n</span>.(<span class="id">num_eqs</span>) -&gt; <span class="id">wf_equation</span> <span class="id">n</span>.(<span class="id">num_next</span>) <span class="id">e</span>;<br/>
+&nbsp;&nbsp;<span class="id">wf_num_reg</span>: <span class="kwd">forall</span> <span class="id">r</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">PTree.get</span> <span class="id">r</span> <span class="id">n</span>.(<span class="id">num_reg</span>) = <span class="id">Some</span> <span class="id">v</span> -&gt; <span class="id">Plt</span> <span class="id">v</span> <span class="id">n</span>.(<span class="id">num_next</span>);<br/>
+&nbsp;&nbsp;<span class="id">wf_num_val</span>: <span class="kwd">forall</span> <span class="id">r</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">In</span> <span class="id">r</span> (<span class="id">PMap.get</span> <span class="id">v</span> <span class="id">n</span>.(<span class="id">num_val</span>)) -&gt; <span class="id">PTree.get</span> <span class="id">r</span> <span class="id">n</span>.(<span class="id">num_reg</span>) = <span class="id">Some</span> <span class="id">v</span><br/>
+}.<br/>
+<br/>
+<span class="kwd">Hint</span> <span class="kwd">Resolve</span> <span class="id">wf_num_eqs</span> <span class="id">wf_num_reg</span> <span class="id">wf_num_val</span>: <span class="id">cse</span>.<br/>
+<br/>
+<div class="doc">Satisfiability of numberings.  A numbering holds in a concrete
+  execution state if there exists a valuation assigning values to
+  value numbers that satisfies the equations and register mapping
+  of the numbering. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">valuation</span> := <span class="id">valnum</span> -&gt; <span class="id">val</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">rhs_eval_to</span> (<span class="id">valu</span>: <span class="id">valuation</span>) (<span class="id">ge</span>: <span class="id">genv</span>) (<span class="id">sp</span>: <span class="id">val</span>) (<span class="id">m</span>: <span class="id">mem</span>):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rhs</span> -&gt; <span class="id">val</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">op_eval_to</span>: <span class="kwd">forall</span> <span class="id">op</span> <span class="id">vl</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eval_operation</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">op</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">vl</span>) <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rhs_eval_to</span> <span class="id">valu</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">m</span> (<span class="id">Op</span> <span class="id">op</span> <span class="id">vl</span>) <span class="id">v</span><br/>
+&nbsp;&nbsp;| <span class="id">load_eval_to</span>: <span class="kwd">forall</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">vl</span> <span class="id">a</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eval_addressing</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">addr</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">vl</span>) = <span class="id">Some</span> <span class="id">a</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Mem.loadv</span> <span class="id">chunk</span> <span class="id">m</span> <span class="id">a</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rhs_eval_to</span> <span class="id">valu</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">m</span> (<span class="kwd">Load</span> <span class="id">chunk</span> <span class="id">addr</span> <span class="id">vl</span>) <span class="id">v</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">equation_holds</span> (<span class="id">valu</span>: <span class="id">valuation</span>) (<span class="id">ge</span>: <span class="id">genv</span>) (<span class="id">sp</span>: <span class="id">val</span>) (<span class="id">m</span>: <span class="id">mem</span>):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">equation</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">eq_holds_strict</span>: <span class="kwd">forall</span> <span class="id">l</span> <span class="id">r</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rhs_eval_to</span> <span class="id">valu</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">m</span> <span class="id">r</span> (<span class="id">valu</span> <span class="id">l</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">equation_holds</span> <span class="id">valu</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">m</span> (<span class="id">Eq</span> <span class="id">l</span> <span class="id">true</span> <span class="id">r</span>)<br/>
+&nbsp;&nbsp;| <span class="id">eq_holds_lessdef</span>: <span class="kwd">forall</span> <span class="id">l</span> <span class="id">r</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">rhs_eval_to</span> <span class="id">valu</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">m</span> <span class="id">r</span> <span class="id">v</span> -&gt; <span class="id">Val.lessdef</span> <span class="id">v</span> (<span class="id">valu</span> <span class="id">l</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">equation_holds</span> <span class="id">valu</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">m</span> (<span class="id">Eq</span> <span class="id">l</span> <span class="id">false</span> <span class="id">r</span>).<br/>
+<br/>
+<span class="kwd">Record</span> <span class="id">numbering_holds</span> (<span class="id">valu</span>: <span class="id">valuation</span>) (<span class="id">ge</span>: <span class="id">genv</span>) (<span class="id">sp</span>: <span class="id">val</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">rs</span>: <span class="id">regset</span>) (<span class="id">m</span>: <span class="id">mem</span>) (<span class="id">n</span>: <span class="id">numbering</span>) : <span class="kwd">Prop</span> := {<br/>
+&nbsp;&nbsp;<span class="id">num_holds_wf</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">wf_numbering</span> <span class="id">n</span>;<br/>
+&nbsp;&nbsp;<span class="id">num_holds_eq</span>: <span class="kwd">forall</span> <span class="id">eq</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">In</span> <span class="id">eq</span> <span class="id">n</span>.(<span class="id">num_eqs</span>) -&gt; <span class="id">equation_holds</span> <span class="id">valu</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">m</span> <span class="id">eq</span>;<br/>
+&nbsp;&nbsp;<span class="id">num_holds_reg</span>: <span class="kwd">forall</span> <span class="id">r</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">n</span>.(<span class="id">num_reg</span>)!<span class="id">r</span> = <span class="id">Some</span> <span class="id">v</span> -&gt; <span class="id">rs</span>#<span class="id">r</span> = <span class="id">valu</span> <span class="id">v</span><br/>
+}.<br/>
+<br/>
+<span class="kwd">Hint</span> <span class="kwd">Resolve</span> <span class="id">num_holds_wf</span> <span class="id">num_holds_eq</span> <span class="id">num_holds_reg</span>: <span class="id">cse</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">empty_numbering_holds</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">valu</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">rs</span> <span class="id">m</span>,<br/>
+&nbsp;&nbsp;<span class="id">numbering_holds</span> <span class="id">valu</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">rs</span> <span class="id">m</span> <span class="id">empty_numbering</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3128')">Proof.</div>
+<div class="proofscript" id="proof3128">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">split</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+- <span class="tactic">split</span>; <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;+ <span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">rewrite</span> <span class="id">PTree.gempty</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;+ <span class="tactic">rewrite</span> <span class="id">PMap.gi</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="id">contradiction</span>.<br/>
+- <span class="id">contradiction</span>.<br/>
+- <span class="tactic">rewrite</span> <span class="id">PTree.gempty</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">discriminate</span>.<br/>
+Qed.</div>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

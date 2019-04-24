@@ -1,0 +1,241 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Csyntax</title>
+<meta name="description" content="Documentation of Coq module Csyntax" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Csyntax</h1>
+<div class="coq">
+<br/>
+<div class="doc">Abstract syntax for the Compcert C language </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span> <span class="id">Maps</span> <span class="id">Integers</span> <span class="id">Floats</span> <span class="id">Errors</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span> <span class="id">Linking</span> <span class="id">Values</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Ctypes</span> <span class="id">Cop</span>.<br/>
+<br/>
+<h2> Expressions </h2>
+<br/>
+<div class="doc">Compcert C expressions are almost identical to those of C.
+  The only omission is string literals.  Some operators are treated
+  as derived forms: array indexing, pre-increment, pre-decrement, and
+  the <span class="bracket">&amp;&amp;</span> and <span class="bracket">||</span> operators.  All expressions are annotated with
+  their types. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">expr</span> : <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="kwd">Eval</span> (<span class="id">v</span>: <span class="id">val</span>) (<span class="id">ty</span>: <span class="id">type</span>)                                  <span class="docright">(* constant  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Evar</span> (<span class="id">x</span>: <span class="id">ident</span>) (<span class="id">ty</span>: <span class="id">type</span>)                                <span class="docright">(* variable  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Efield</span> (<span class="id">l</span>: <span class="id">expr</span>) (<span class="id">f</span>: <span class="id">ident</span>) (<span class="id">ty</span>: <span class="id">type</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Evalof</span> (<span class="id">l</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)              <span class="docright">(* l-value used as a r-value  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Ederef</span> (<span class="id">r</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)        <span class="docright">(* pointer dereference (unary <span class="bracket">*</span>)  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Eaddrof</span> (<span class="id">l</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)            <span class="docright">(* address-of operators (<span class="bracket">&amp;</span>)  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Eunop</span> (<span class="id">op</span>: <span class="id">unary_operation</span>) (<span class="id">r</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ebinop</span> (<span class="id">op</span>: <span class="id">binary_operation</span>) (<span class="id">r1</span> <span class="id">r2</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ecast</span> (<span class="id">r</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)                        <span class="docright">(* type cast <span class="bracket">(<span class="id">ty</span>)<span class="id">r</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Eseqand</span> (<span class="id">r1</span> <span class="id">r2</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)       <span class="docright">(* sequential "and" <span class="bracket"><span class="id">r1</span> &amp;&amp; <span class="id">r2</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Eseqor</span> (<span class="id">r1</span> <span class="id">r2</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)        <span class="docright">(* sequential "or" <span class="bracket"><span class="id">r1</span> &amp;&amp; <span class="id">r2</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Econdition</span> (<span class="id">r1</span> <span class="id">r2</span> <span class="id">r3</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)  <span class="docright">(* conditional <span class="bracket"><span class="id">r1</span> ? <span class="id">r2</span> : <span class="id">r3</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Esizeof</span> (<span class="id">ty</span>': <span class="id">type</span>) (<span class="id">ty</span>: <span class="id">type</span>)                      <span class="docright">(* size of a type  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Ealignof</span> (<span class="id">ty</span>': <span class="id">type</span>) (<span class="id">ty</span>: <span class="id">type</span>)        <span class="docright">(* natural alignment of a type  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Eassign</span> (<span class="id">l</span>: <span class="id">expr</span>) (<span class="id">r</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)          <span class="docright">(* assignment <span class="bracket"><span class="id">l</span> = <span class="id">r</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Eassignop</span> (<span class="id">op</span>: <span class="id">binary_operation</span>) (<span class="id">l</span>: <span class="id">expr</span>) (<span class="id">r</span>: <span class="id">expr</span>) (<span class="id">tyres</span> <span class="id">ty</span>: <span class="id">type</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Epostincr</span> (<span class="id">id</span>: <span class="id">incr_or_decr</span>) (<span class="id">l</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ecomma</span> (<span class="id">r1</span> <span class="id">r2</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>)       <span class="docright">(* sequence expression <span class="bracket"><span class="id">r1</span>, <span class="id">r2</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Ecall</span> (<span class="id">r1</span>: <span class="id">expr</span>) (<span class="id">rargs</span>: <span class="id">exprlist</span>) (<span class="id">ty</span>: <span class="id">type</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ebuiltin</span> (<span class="id">ef</span>: <span class="id">external_function</span>) (<span class="id">tyargs</span>: <span class="id">typelist</span>) (<span class="id">rargs</span>: <span class="id">exprlist</span>) (<span class="id">ty</span>: <span class="id">type</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Eloc</span> (<span class="id">b</span>: <span class="id">block</span>) (<span class="id">ofs</span>: <span class="id">ptrofs</span>) (<span class="id">ty</span>: <span class="id">type</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Eparen</span> (<span class="id">r</span>: <span class="id">expr</span>) (<span class="id">tycast</span>: <span class="id">type</span>) (<span class="id">ty</span>: <span class="id">type</span>)   <span class="docright">(* marked subexpression  *)</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">exprlist</span> : <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Enil</span><br/>
+&nbsp;&nbsp;| <span class="id">Econs</span> (<span class="id">r1</span>: <span class="id">expr</span>) (<span class="id">rl</span>: <span class="id">exprlist</span>).<br/>
+<br/>
+<div class="doc">Expressions are implicitly classified into l-values and r-values,
+ranged over by <span class="bracket"><span class="id">l</span></span> and <span class="bracket"><span class="id">r</span></span>, respectively, in the grammar above.
+L-values are those expressions that can occur to the left of an assignment.
+They denote memory locations.  (Indeed, the reduction semantics for
+expression reduces them to <span class="bracket"><span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span></span> expressions.)  L-values are
+variables (<span class="bracket"><span class="id">Evar</span></span>), pointer dereferences (<span class="bracket"><span class="id">Ederef</span></span>), field accesses (<span class="bracket"><span class="id">Efield</span></span>).
+R-values are all other expressions.  They denote values, and the reduction
+semantics reduces them to <span class="bracket"><span class="kwd">Eval</span> <span class="id">v</span></span> expressions.
+A l-value can be used in a r-value context, but this use must be marked
+explicitly with the <span class="bracket"><span class="id">Evalof</span></span> operator, which is not materialized in the
+concrete syntax of C but denotes a read from the location corresponding to
+the l-value <span class="bracket"><span class="id">l</span></span> argument of <span class="bracket"><span class="id">Evalof</span> <span class="id">l</span></span>.
+The grammar above contains some forms that cannot appear in source terms
+but appear during reduction.  These forms are:
+<ul>
+<li>
+ <span class="bracket"><span class="kwd">Eval</span> <span class="id">v</span></span> where <span class="bracket"><span class="id">v</span></span> is a pointer or <span class="bracket"><span class="id">Vundef</span></span>.  (<span class="bracket"><span class="kwd">Eval</span></span> of an integer or
+  float value can occur in a source term and represents a numeric literal.)
+</li>
+<li>
+ <span class="bracket"><span class="id">Eloc</span> <span class="id">b</span> <span class="id">ofs</span></span>, which appears during reduction of l-values.
+</li>
+<li>
+ <span class="bracket"><span class="id">Eparen</span> <span class="id">r</span> <span class="id">tycast</span> <span class="id">ty</span></span>, which appears during reduction of conditionals
+  <span class="bracket"><span class="id">r1</span> ? <span class="id">r2</span> : <span class="id">r3</span></span> as well as sequential `and' / `or'.
+</li>
+</ul>
+Some C expressions are derived forms.  Array access <span class="bracket"><span class="id">r1</span>[<span class="id">r2</span>]</span> is expressed
+as <span class="bracket">*(<span class="id">r1</span> + <span class="id">r2</span>)</span>.
+</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">Eindex</span> (<span class="id">r1</span> <span class="id">r2</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">Ederef</span> (<span class="id">Ebinop</span> <span class="id">Oadd</span> <span class="id">r1</span> <span class="id">r2</span> (<span class="id">Tpointer</span> <span class="id">ty</span> <span class="id">noattr</span>)) <span class="id">ty</span>.<br/>
+<br/>
+<div class="doc">Pre-increment <span class="bracket">++<span class="id">l</span></span> and pre-decrement <span class="bracket">--<span class="id">l</span></span> are expressed as
+    <span class="bracket"><span class="id">l</span> += 1</span> and <span class="bracket"><span class="id">l</span> -= 1</span>, respectively. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">Epreincr</span> (<span class="id">id</span>: <span class="id">incr_or_decr</span>) (<span class="id">l</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>) :=<br/>
+&nbsp;&nbsp;<span class="id">Eassignop</span> (<span class="kwd">match</span> <span class="id">id</span> <span class="kwd">with</span> <span class="id">Incr</span> =&gt; <span class="id">Oadd</span> | <span class="id">Decr</span> =&gt; <span class="id">Osub</span> <span class="kwd">end</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">l</span> (<span class="kwd">Eval</span> (<span class="id">Vint</span> <span class="id">Int.one</span>) <span class="id">type_int32s</span>) (<span class="id">typeconv</span> <span class="id">ty</span>) <span class="id">ty</span>.<br/>
+<br/>
+<div class="doc">Extract the type part of a type-annotated expression. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">typeof</span> (<span class="id">a</span>: <span class="id">expr</span>) : <span class="id">type</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">a</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Eloc</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Evar</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ederef</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Efield</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="kwd">Eval</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Evalof</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Eaddrof</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Eunop</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ebinop</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ecast</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Econdition</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Eseqand</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Eseqor</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Esizeof</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ealignof</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Eassign</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Eassignop</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Epostincr</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ecomma</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ecall</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Ebuiltin</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Eparen</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ty</span> =&gt; <span class="id">ty</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<h2> Statements </h2>
+<br/>
+<div class="doc">Compcert C statements are very much like those of C and include:
+<ul>
+<li>
+ empty statement <span class="bracket"><span class="id">Sskip</span></span>
+</li>
+<li>
+ evaluation of an expression for its side-effects <span class="bracket"><span class="id">Sdo</span> <span class="id">r</span></span>
+</li>
+<li>
+ conditional <span class="bracket"><span class="kwd">if</span> (...) { ... } <span class="kwd">else</span> { ... }</span>
+</li>
+<li>
+ the three loops <span class="bracket"><span class="id">while</span>(...) { ... }</span> and <span class="bracket"><span class="tactic">do</span> { ... } <span class="id">while</span> (...)</span>
+  and <span class="bracket"><span class="kwd">for</span>(..., ..., ...) { ... }</span>
+</li>
+<li>
+ the <span class="bracket"><span class="id">switch</span></span> construct
+</li>
+<li>
+ <span class="bracket"><span class="id">break</span></span>, <span class="bracket"><span class="id">continue</span></span>, <span class="bracket"><span class="kwd">return</span></span> (with and without argument)
+</li>
+<li>
+ <span class="bracket"><span class="id">goto</span></span> and labeled statements.
+</li>
+</ul>
+Only structured forms of <span class="bracket"><span class="id">switch</span></span> are supported; moreover,
+the <span class="bracket"><span class="id">default</span></span> case must occur last.  Blocks and block-scoped declarations
+are not supported. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">label</span> := <span class="id">ident</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">statement</span> : <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Sskip</span> : <span class="id">statement</span>                   <span class="docright">(* do nothing  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Sdo</span> : <span class="id">expr</span> -&gt; <span class="id">statement</span>            <span class="docright">(* evaluate expression for side effects  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Ssequence</span> : <span class="id">statement</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span>  <span class="docright">(* sequence  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Sifthenelse</span> : <span class="id">expr</span>  -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span> <span class="docright">(* conditional  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Swhile</span> : <span class="id">expr</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span>   <span class="docright">(* <span class="bracket"><span class="id">while</span></span> loop  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Sdowhile</span> : <span class="id">expr</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span> <span class="docright">(* <span class="bracket"><span class="tactic">do</span></span> loop  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Sfor</span>: <span class="id">statement</span> -&gt; <span class="id">expr</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span> <span class="docright">(* <span class="bracket"><span class="kwd">for</span></span> loop  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Sbreak</span> : <span class="id">statement</span>                      <span class="docright">(* <span class="bracket"><span class="id">break</span></span> statement  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Scontinue</span> : <span class="id">statement</span>                   <span class="docright">(* <span class="bracket"><span class="id">continue</span></span> statement  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Sreturn</span> : <span class="id">option</span> <span class="id">expr</span> -&gt; <span class="id">statement</span>     <span class="docright">(* <span class="bracket"><span class="kwd">return</span></span> statement  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Sswitch</span> : <span class="id">expr</span> -&gt; <span class="id">labeled_statements</span> -&gt; <span class="id">statement</span>  <span class="docright">(* <span class="bracket"><span class="id">switch</span></span> statement  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">Slabel</span> : <span class="id">label</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">statement</span><br/>
+&nbsp;&nbsp;| <span class="id">Sgoto</span> : <span class="id">label</span> -&gt; <span class="id">statement</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">labeled_statements</span> : <span class="kwd">Type</span> :=            <span class="docright">(* cases of a <span class="bracket"><span class="id">switch</span></span>  *)</span><br/>
+&nbsp;&nbsp;| <span class="id">LSnil</span>: <span class="id">labeled_statements</span><br/>
+&nbsp;&nbsp;| <span class="id">LScons</span>: <span class="id">option</span> <span class="id">Z</span> -&gt; <span class="id">statement</span> -&gt; <span class="id">labeled_statements</span> -&gt; <span class="id">labeled_statements</span>.<br/>
+<h2> Functions </h2>
+<br/>
+<div class="doc">A function definition is composed of its return type (<span class="bracket"><span class="id">fn_return</span></span>),
+  the names and types of its parameters (<span class="bracket"><span class="id">fn_params</span></span>), the names
+  and types of its local variables (<span class="bracket"><span class="id">fn_vars</span></span>), and the body of the
+  function (a statement, <span class="bracket"><span class="id">fn_body</span></span>). </div>
+<br/>
+<span class="kwd">Record</span> <span class="id">function</span> : <span class="kwd">Type</span> := <span class="id">mkfunction</span> {<br/>
+&nbsp;&nbsp;<span class="id">fn_return</span>: <span class="id">type</span>;<br/>
+&nbsp;&nbsp;<span class="id">fn_callconv</span>: <span class="id">calling_convention</span>;<br/>
+&nbsp;&nbsp;<span class="id">fn_params</span>: <span class="id">list</span> (<span class="id">ident</span> * <span class="id">type</span>);<br/>
+&nbsp;&nbsp;<span class="id">fn_vars</span>: <span class="id">list</span> (<span class="id">ident</span> * <span class="id">type</span>);<br/>
+&nbsp;&nbsp;<span class="id">fn_body</span>: <span class="id">statement</span><br/>
+}.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">var_names</span> (<span class="id">vars</span>: <span class="id">list</span>(<span class="id">ident</span> * <span class="id">type</span>)) : <span class="id">list</span> <span class="id">ident</span> :=<br/>
+&nbsp;&nbsp;<span class="id">List.map</span> (@<span class="id">fst</span> <span class="id">ident</span> <span class="id">type</span>) <span class="id">vars</span>.<br/>
+<br/>
+<div class="doc">Functions can either be defined (<span class="bracket"><span class="id">Internal</span></span>) or declared as
+  external functions (<span class="bracket"><span class="id">External</span></span>). </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">fundef</span> := <span class="id">Ctypes.fundef</span> <span class="id">function</span>.<br/>
+<br/>
+<div class="doc">The type of a function definition. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">type_of_function</span> (<span class="id">f</span>: <span class="id">function</span>) : <span class="id">type</span> :=<br/>
+&nbsp;&nbsp;<span class="id">Tfunction</span> (<span class="id">type_of_params</span> (<span class="id">fn_params</span> <span class="id">f</span>)) (<span class="id">fn_return</span> <span class="id">f</span>) (<span class="id">fn_callconv</span> <span class="id">f</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">type_of_fundef</span> (<span class="id">f</span>: <span class="id">fundef</span>) : <span class="id">type</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">f</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Internal</span> <span class="id">fd</span> =&gt; <span class="id">type_of_function</span> <span class="id">fd</span><br/>
+&nbsp;&nbsp;| <span class="id">External</span> <span class="id">id</span> <span class="id">args</span> <span class="id">res</span> <span class="id">cc</span> =&gt; <span class="id">Tfunction</span> <span class="id">args</span> <span class="id">res</span> <span class="id">cc</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<h2> Programs and compilation units </h2>
+<br/>
+<div class="doc">As defined in module <span class="bracket"><span class="id">Ctypes</span></span>, a program, or compilation unit, is
+  composed of:
+<ul>
+<li>
+ a list of definitions of functions and global variables;
+</li>
+<li>
+ the names of functions and global variables that are public (not static);
+</li>
+<li>
+ the name of the function that acts as entry point ("main" function).
+</li>
+<li>
+ a list of definitions for structure and union names
+</li>
+<li>
+ the corresponding composite environment
+</li>
+<li>
+ a proof that this environment is consistent with the definitions. </li>
+</ul>
+</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">program</span> := <span class="id">Ctypes.program</span> <span class="id">function</span>.<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

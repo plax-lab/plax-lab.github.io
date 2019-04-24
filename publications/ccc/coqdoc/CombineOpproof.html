@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module CombineOpproof</title>
+<meta name="description" content="Documentation of Coq module CombineOpproof" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module CombineOpproof</h1>
+<div class="coq">
+<br/>
+<div class="doc">Recognition of combined operations, addressing modes and conditions
+  during the <span class="bracket"><span class="id">CSE</span></span> phase. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Integers</span> <span class="id">Values</span> <span class="id">Memory</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Op</span> <span class="id">RTL</span> <span class="id">CSEdomain</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">CombineOp</span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id">COMBINE</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">ge</span>: <span class="id">genv</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">sp</span>: <span class="id">val</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">m</span>: <span class="id">mem</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">get</span>: <span class="id">valnum</span> -&gt; <span class="id">option</span> <span class="id">rhs</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">valu</span>: <span class="id">valnum</span> -&gt; <span class="id">val</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id">get_sound</span>: <span class="kwd">forall</span> <span class="id">v</span> <span class="id">rhs</span>, <span class="id">get</span> <span class="id">v</span> = <span class="id">Some</span> <span class="id">rhs</span> -&gt; <span class="id">rhs_eval_to</span> <span class="id">valu</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">m</span> <span class="id">rhs</span> (<span class="id">valu</span> <span class="id">v</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">get_op_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">v</span> <span class="id">op</span> <span class="id">vl</span>, <span class="id">get</span> <span class="id">v</span> = <span class="id">Some</span> (<span class="id">Op</span> <span class="id">op</span> <span class="id">vl</span>) -&gt; <span class="id">eval_operation</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">op</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">vl</span>) <span class="id">m</span> = <span class="id">Some</span> (<span class="id">valu</span> <span class="id">v</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3131')">Proof.</div>
+<div class="proofscript" id="proof3131">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">exploit</span> <span class="id">get_sound</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> <span class="id">REV</span>; <span class="id">inv</span> <span class="id">REV</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">UseGetSound</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id">get</span> <span class="id">_</span> = <span class="id">Some</span> <span class="id">_</span> |- <span class="id">_</span> ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">x</span> := <span class="tactic">fresh</span> "<span class="id">EQ</span>" <span class="kwd">in</span> (<span class="tactic">generalize</span> (<span class="id">get_op_sound</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span>); <span class="tactic">intros</span> <span class="id">x</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">x</span>; <span class="id">FuncInv</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">combine_compimm_ne_0_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">cond</span> <span class="id">args</span>,<br/>
+&nbsp;&nbsp;<span class="id">combine_compimm_ne_0</span> <span class="id">get</span> <span class="id">x</span> = <span class="id">Some</span>(<span class="id">cond</span>, <span class="id">args</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span> = <span class="id">Val.cmp_bool</span> <span class="id">Cne</span> (<span class="id">valu</span> <span class="id">x</span>) (<span class="id">Vint</span> <span class="id">Int.zero</span>) /\<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span> = <span class="id">Val.cmpu_bool</span> (<span class="id">Mem.valid_pointer</span> <span class="id">m</span>) <span class="id">Cne</span> (<span class="id">valu</span> <span class="id">x</span>) (<span class="id">Vint</span> <span class="id">Int.zero</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3132')">Proof.</div>
+<div class="proofscript" id="proof3132">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">args</span>. <span class="id">functional</span> <span class="tactic">induction</span> (<span class="id">combine_compimm_ne_0</span> <span class="id">get</span> <span class="id">x</span>); <span class="tactic">intros</span> <span class="id">EQ</span>; <span class="id">inv</span> <span class="id">EQ</span>.<br/>
+&nbsp;of&nbsp;cmp&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span>); <span class="tactic">simpl</span>; [<span class="id">inv</span> <span class="id">EQ</span>|<span class="tactic">discriminate</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">b</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;of&nbsp;and&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">v</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">combine_compimm_eq_0_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">cond</span> <span class="id">args</span>,<br/>
+&nbsp;&nbsp;<span class="id">combine_compimm_eq_0</span> <span class="id">get</span> <span class="id">x</span> = <span class="id">Some</span>(<span class="id">cond</span>, <span class="id">args</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span> = <span class="id">Val.cmp_bool</span> <span class="id">Ceq</span> (<span class="id">valu</span> <span class="id">x</span>) (<span class="id">Vint</span> <span class="id">Int.zero</span>) /\<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span> = <span class="id">Val.cmpu_bool</span> (<span class="id">Mem.valid_pointer</span> <span class="id">m</span>) <span class="id">Ceq</span> (<span class="id">valu</span> <span class="id">x</span>) (<span class="id">Vint</span> <span class="id">Int.zero</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3133')">Proof.</div>
+<div class="proofscript" id="proof3133">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">args</span>. <span class="id">functional</span> <span class="tactic">induction</span> (<span class="id">combine_compimm_eq_0</span> <span class="id">get</span> <span class="id">x</span>); <span class="tactic">intros</span> <span class="id">EQ</span>; <span class="id">inv</span> <span class="id">EQ</span>.<br/>
+&nbsp;of&nbsp;cmp&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">eval_negate_condition</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">eval_condition</span> <span class="id">c</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span>); <span class="tactic">simpl</span>; [<span class="id">inv</span> <span class="id">EQ</span>|<span class="tactic">discriminate</span>]. <span class="tactic">destruct</span> <span class="id">b</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;of&nbsp;and&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H</span>. <span class="tactic">destruct</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">combine_compimm_eq_1_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">cond</span> <span class="id">args</span>,<br/>
+&nbsp;&nbsp;<span class="id">combine_compimm_eq_1</span> <span class="id">get</span> <span class="id">x</span> = <span class="id">Some</span>(<span class="id">cond</span>, <span class="id">args</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span> = <span class="id">Val.cmp_bool</span> <span class="id">Ceq</span> (<span class="id">valu</span> <span class="id">x</span>) (<span class="id">Vint</span> <span class="id">Int.one</span>) /\<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span> = <span class="id">Val.cmpu_bool</span> (<span class="id">Mem.valid_pointer</span> <span class="id">m</span>) <span class="id">Ceq</span> (<span class="id">valu</span> <span class="id">x</span>) (<span class="id">Vint</span> <span class="id">Int.one</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3134')">Proof.</div>
+<div class="proofscript" id="proof3134">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">args</span>. <span class="id">functional</span> <span class="tactic">induction</span> (<span class="id">combine_compimm_eq_1</span> <span class="id">get</span> <span class="id">x</span>); <span class="tactic">intros</span> <span class="id">EQ</span>; <span class="id">inv</span> <span class="id">EQ</span>.<br/>
+&nbsp;of&nbsp;cmp&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span>); <span class="tactic">simpl</span>; [<span class="id">inv</span> <span class="id">EQ</span>|<span class="tactic">discriminate</span>]. <span class="tactic">destruct</span> <span class="id">b</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">combine_compimm_ne_1_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">x</span> <span class="id">cond</span> <span class="id">args</span>,<br/>
+&nbsp;&nbsp;<span class="id">combine_compimm_ne_1</span> <span class="id">get</span> <span class="id">x</span> = <span class="id">Some</span>(<span class="id">cond</span>, <span class="id">args</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span> = <span class="id">Val.cmp_bool</span> <span class="id">Cne</span> (<span class="id">valu</span> <span class="id">x</span>) (<span class="id">Vint</span> <span class="id">Int.one</span>) /\<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span> = <span class="id">Val.cmpu_bool</span> (<span class="id">Mem.valid_pointer</span> <span class="id">m</span>) <span class="id">Cne</span> (<span class="id">valu</span> <span class="id">x</span>) (<span class="id">Vint</span> <span class="id">Int.one</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3135')">Proof.</div>
+<div class="proofscript" id="proof3135">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">args</span>. <span class="id">functional</span> <span class="tactic">induction</span> (<span class="id">combine_compimm_ne_1</span> <span class="id">get</span> <span class="id">x</span>); <span class="tactic">intros</span> <span class="id">EQ</span>; <span class="id">inv</span> <span class="id">EQ</span>.<br/>
+&nbsp;of&nbsp;cmp&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">eval_negate_condition</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">eval_condition</span> <span class="id">c</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span>); <span class="tactic">simpl</span>; [<span class="id">inv</span> <span class="id">EQ</span>|<span class="tactic">discriminate</span>]. <span class="tactic">destruct</span> <span class="id">b</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">combine_cond_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">cond</span>' <span class="id">args</span>',<br/>
+&nbsp;&nbsp;<span class="id">combine_cond</span> <span class="id">get</span> <span class="id">cond</span> <span class="id">args</span> = <span class="id">Some</span>(<span class="id">cond</span>', <span class="id">args</span>') -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span>' (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>') <span class="id">m</span> = <span class="id">eval_condition</span> <span class="id">cond</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3136')">Proof.</div>
+<div class="proofscript" id="proof3136">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">functional</span> <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;compimm&nbsp;ne&nbsp;zero&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">eapply</span> <span class="id">combine_compimm_ne_0_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;compimm&nbsp;ne&nbsp;one&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">eapply</span> <span class="id">combine_compimm_ne_1_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;compimm&nbsp;eq&nbsp;zero&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">eapply</span> <span class="id">combine_compimm_eq_0_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;compimm&nbsp;eq&nbsp;one&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">eapply</span> <span class="id">combine_compimm_eq_1_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;compuimm&nbsp;ne&nbsp;zero&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">eapply</span> <span class="id">combine_compimm_ne_0_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;compuimm&nbsp;ne&nbsp;one&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">eapply</span> <span class="id">combine_compimm_ne_1_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;compuimm&nbsp;eq&nbsp;zero&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">eapply</span> <span class="id">combine_compimm_eq_0_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;compuimm&nbsp;eq&nbsp;one&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">eapply</span> <span class="id">combine_compimm_eq_1_sound</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">combine_addr_32_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">addr</span>' <span class="id">args</span>',<br/>
+&nbsp;&nbsp;<span class="id">combine_addr_32</span> <span class="id">get</span> <span class="id">addr</span> <span class="id">args</span> = <span class="id">Some</span>(<span class="id">addr</span>', <span class="id">args</span>') -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing32</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">addr</span>' (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>') = <span class="id">eval_addressing32</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">addr</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3137')">Proof.</div>
+<div class="proofscript" id="proof3137">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">functional</span> <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;indexed&nbsp;-&nbsp;lea&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>. <span class="tactic">simpl</span>. <span class="tactic">unfold</span> <span class="id">offset_addressing</span> <span class="kwd">in</span> <span class="id">H7</span>. <span class="tactic">destruct</span> (<span class="id">addressing_valid</span> (<span class="id">offset_addressing_total</span> <span class="id">a</span> <span class="id">n</span>)); <span class="id">inv</span> <span class="id">H7</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">eval_offset_addressing_total_32</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">combine_addr_64_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">addr</span>' <span class="id">args</span>',<br/>
+&nbsp;&nbsp;<span class="id">combine_addr_64</span> <span class="id">get</span> <span class="id">addr</span> <span class="id">args</span> = <span class="id">Some</span>(<span class="id">addr</span>', <span class="id">args</span>') -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing64</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">addr</span>' (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>') = <span class="id">eval_addressing64</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">addr</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3138')">Proof.</div>
+<div class="proofscript" id="proof3138">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">functional</span> <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;indexed&nbsp;-&nbsp;leal&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>. <span class="tactic">simpl</span>. <span class="tactic">unfold</span> <span class="id">offset_addressing</span> <span class="kwd">in</span> <span class="id">H7</span>. <span class="tactic">destruct</span> (<span class="id">addressing_valid</span> (<span class="id">offset_addressing_total</span> <span class="id">a</span> <span class="id">n</span>)); <span class="id">inv</span> <span class="id">H7</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">eval_offset_addressing_total_64</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">combine_addr_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">addr</span>' <span class="id">args</span>',<br/>
+&nbsp;&nbsp;<span class="id">combine_addr</span> <span class="id">get</span> <span class="id">addr</span> <span class="id">args</span> = <span class="id">Some</span>(<span class="id">addr</span>', <span class="id">args</span>') -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">addr</span>' (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>') = <span class="id">eval_addressing</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">addr</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3139')">Proof.</div>
+<div class="proofscript" id="proof3139">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">combine_addr</span>, <span class="id">eval_addressing</span>; <span class="tactic">intros</span>; <span class="tactic">destruct</span> <span class="id">Archi.ptr64</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">combine_addr_64_sound</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">combine_addr_32_sound</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">combine_op_sound</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">op</span> <span class="id">args</span> <span class="id">op</span>' <span class="id">args</span>',<br/>
+&nbsp;&nbsp;<span class="id">combine_op</span> <span class="id">get</span> <span class="id">op</span> <span class="id">args</span> = <span class="id">Some</span>(<span class="id">op</span>', <span class="id">args</span>') -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_operation</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">op</span>' (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>') <span class="id">m</span> = <span class="id">eval_operation</span> <span class="id">ge</span> <span class="id">sp</span> <span class="id">op</span> (<span class="id">map</span> <span class="id">valu</span> <span class="id">args</span>) <span class="id">m</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3140')">Proof.</div>
+<div class="proofscript" id="proof3140">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">functional</span> <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;lea-lea&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">eapply</span> <span class="id">combine_addr_32_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;leal-leal&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">eapply</span> <span class="id">combine_addr_64_sound</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;andimm&nbsp;-&nbsp;andimm&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>; <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H0</span>. <span class="tactic">rewrite</span> <span class="id">Val.and_assoc</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;orimm&nbsp;-&nbsp;orimm&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>; <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H0</span>. <span class="tactic">rewrite</span> <span class="id">Val.or_assoc</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;xorimm&nbsp;-&nbsp;xorimm&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>; <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H0</span>. <span class="tactic">rewrite</span> <span class="id">Val.xor_assoc</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;andimm&nbsp;-&nbsp;andimm&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>; <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H0</span>. <span class="tactic">rewrite</span> <span class="id">Val.andl_assoc</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;orimm&nbsp;-&nbsp;orimm&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>; <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H0</span>. <span class="tactic">rewrite</span> <span class="id">Val.orl_assoc</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;xorimm&nbsp;-&nbsp;xorimm&nbsp;*)</span>&nbsp;&nbsp;<span class="id">UseGetSound</span>; <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H0</span>. <span class="tactic">rewrite</span> <span class="id">Val.xorl_assoc</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;cmp&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">erewrite</span> <span class="id">combine_cond_sound</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">COMBINE</span>.<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

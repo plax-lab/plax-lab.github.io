@@ -1,0 +1,575 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module LDSimDefs</title>
+<meta name="description" content="Documentation of Coq module LDSimDefs" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module LDSimDefs</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Maps.html">Maps</a></span> <span class="id"><a href="Errors.html">Errors</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html">List</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html">Streams</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="MemAux.html">MemAux</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span> <span class="id"><a href="Injections.html">Injections</a></span> <span class="id"><a href="MemClosures.html">MemClosures</a></span>.<br/>
+<br/>
+<br/>
+<br/>
+<h1> Footprint Matching and Rely/Guarantee Conditions in Local Simulations </h1>
+<br/>
+<div class="doc">This file defines the footprint matching relations and 
+    rely/guarantee conditions used in module local simulations. 
+    (Draft Fig. 11) </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">fpG</span></span>: footprint subset of shared memory blocks union local freelist </div>
+<span class="kwd">Definition</span> <span class="id"><a name="fpG">fpG</a></span> (<span class="id">fl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">Shared</span>: <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span>) (<span class="id">fp</span>: <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> (<span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span> <span class="id"><a href="LDSimDefs.html#fp">fp</a></span>) <span class="id"><a href="LDSimDefs.html#b">b</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="id"><a href="LDSimDefs.html#Shared">Shared</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> \/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">n</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html#Str_nth">Str_nth</a></span> <span class="id"><a href="LDSimDefs.html#n">n</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> = <span class="id"><a href="LDSimDefs.html#b">b</a></span>).<br/>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">LfpG</span></span>: target footprint <span class="bracket"><span class="id">fpG</span></span> and footprints matched by <span class="bracket"><span class="id">FPMatch</span></span> </div>
+<span class="kwd">Inductive</span> <span class="id">LfpG</span>' (<span class="id">fl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>) (<span class="id">fpSrc</span> <span class="id">fpTgt</span>: <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id">LFPG</span>':  <span class="id">FPMatch</span>' <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">fpTgt</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id">fl</span> (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id">mu</span>) <span class="id">fpTgt</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">fpTgt</span>.<br/>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">HfpG</span></span>: source footprint <span class="bracket"><span class="id">fpG</span></span> </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="HfpG">HfpG</a></span> (<span class="id">fl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>) (<span class="id">fpSrc</span> : <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="HFPG">HFPG</a></span>: <span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id">fl</span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id">mu</span>) <span class="id">fpSrc</span> -&gt; <span class="id"><a href="LDSimDefs.html#HfpG">HfpG</a></span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpSrc</span>.<br/>
+<br/>
+<div class="doc">The guarantee condition : footprint subset of shared memory blocks and resulting memory is reach-closed </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="Guarantee">Guarantee</a></span> (<span class="id">fl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">Shared</span>: <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span>) (<span class="id">fp</span>: <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>) (<span class="id">gm</span>': <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="GUARANTEE">GUARANTEE</a></span>: <span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id">fl</span> <span class="id">Shared</span> <span class="id">fp</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemClosures.html#reach_closed">reach_closed</a></span> <span class="id">gm</span>' <span class="id">Shared</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#Guarantee">Guarantee</a></span> <span class="id">fl</span> <span class="id">Shared</span> <span class="id">fp</span> <span class="id">gm</span>'.<br/>
+<br/>
+<div class="doc">The Inv in paper Fig. 8 is instantiated as memory injection of CompCert </div>
+<span class="kwd">Definition</span> <span class="id"><a name="Inv">Inv</a></span> <span class="id">mu</span> <span class="id">sgm</span> <span class="id">tgm</span> : <span class="kwd">Prop</span> := <span class="id"><a href="GMemory.html#GMem.inject">GMem.inject</a></span> (<span class="id"><a href="Blockset.html#Bset.inj_to_meminj">Bset.inj_to_meminj</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>)) <span class="id"><a href="LDSimDefs.html#sgm">sgm</a></span> <span class="id"><a href="LDSimDefs.html#tgm">tgm</a></span>.<br/>
+<br/>
+<div class="doc">HG in paper Fig. 8, source memory action satisfies <span class="bracket"><span class="id">Guarantee</span></span> </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="HG">HG</a></span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">sgm</span>' : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="HGuarantee">HGuarantee</a></span>: <span class="id"><a href="LDSimDefs.html#Guarantee">Guarantee</a></span> <span class="id">fl</span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id">mu</span>) <span class="id">fpSrc</span> <span class="id">sgm</span>' -&gt; <span class="id"><a href="LDSimDefs.html#HG">HG</a></span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">sgm</span>'.<br/>
+<br/>
+<div class="doc">LG in paper Fig. 8, target memory action satisfies <span class="bracket"><span class="id">Guarantee</span></span>,
+    and footprint are matched by <span class="bracket"><span class="id">mu</span></span>,
+    and resulting memory states are related by <span class="bracket"><span class="id">Inv</span></span>. </div>
+<span class="kwd">Inductive</span> <span class="id">LG</span>' <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">sgm</span>' <span class="id">fpTgt</span> <span class="id">tgm</span>' : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id">LGuarantee</span>': <span class="id"><a href="LDSimDefs.html#Guarantee">Guarantee</a></span> <span class="id">fl</span> (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id">mu</span>) <span class="id">fpTgt</span> <span class="id">tgm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">fpTgt</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#Inv">Inv</a></span> <span class="id">mu</span> <span class="id">sgm</span>' <span class="id">tgm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LG</span>' <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">sgm</span>' <span class="id">fpTgt</span> <span class="id">tgm</span>'.<br/>
+<br/>
+<div class="doc">constraints on argument: 
+    arguments of external calls cannot be <span class="bracket"><span class="id">Vundef</span></span> or 
+    pointers of memory location outside of shared memory </div>
+<span class="kwd">Definition</span> <span class="id"><a name="G_arg">G_arg</a></span> (<span class="id">S</span>: <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span>) (<span class="id">arg</span>: <span class="id"><a href="Values.html#val">val</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="LDSimDefs.html#arg">arg</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Values.html#Vundef">Vundef</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">b</span> <span class="id">_</span> =&gt; <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id">b</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="G_oarg">G_oarg</a></span> (<span class="id">S</span>: <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span>) (<span class="id">oarg</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Values.html#val">val</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="LDSimDefs.html#oarg">oarg</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">arg</span> =&gt; <span class="id"><a href="LDSimDefs.html#G_arg">G_arg</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id">arg</span><br/>
+&nbsp;&nbsp;| <span class="id">Noen</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="G_args">G_args</a></span> (<span class="id">S</span>: <span class="id"><a href="Blockset.html#Bset.t">Bset.t</a></span>) (<span class="id">args</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#val">val</a></span>) : <span class="kwd">Prop</span>:=<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#Forall">Forall</a></span> (<span class="id"><a href="LDSimDefs.html#G_arg">G_arg</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span>) <span class="id"><a href="LDSimDefs.html#args">args</a></span>.<br/>
+<br/>
+<div class="doc">source and target arguments and return values 
+    should be related by value-injection of CompCert </div>
+<span class="kwd">Definition</span> <span class="id"><a name="arg_rel">arg_rel</a></span> (<span class="id">phi</span>: <span class="id"><a href="Blockset.html#Bset.inj">Bset.inj</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="Values.html#Val.inject_list">Val.inject_list</a></span> (<span class="id"><a href="Blockset.html#Bset.inj_to_meminj">Bset.inj_to_meminj</a></span> <span class="id"><a href="LDSimDefs.html#phi">phi</a></span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="res_rel">res_rel</a></span> (<span class="id">phi</span>: <span class="id"><a href="Blockset.html#Bset.inj">Bset.inj</a></span>) : <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="Values.html#Val.inject">Val.inject</a></span> (<span class="id"><a href="Blockset.html#Bset.inj_to_meminj">Bset.inj_to_meminj</a></span> <span class="id"><a href="LDSimDefs.html#phi">phi</a></span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="ores_rel">ores_rel</a></span> (<span class="id">phi</span>: <span class="id"><a href="Blockset.html#Bset.inj">Bset.inj</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">fun</span> <span class="id">or1</span> <span class="id">or2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="LDSimDefs.html#or1">or1</a></span>, <span class="id"><a href="LDSimDefs.html#or2">or2</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">res1</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">res2</span> =&gt; <span class="id"><a href="LDSimDefs.html#res_rel">res_rel</a></span> <span class="id"><a href="LDSimDefs.html#phi">phi</a></span> <span class="id">res1</span> <span class="id">res2</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">The R condition in paper Fig. 8 </div>
+<div class="doc">The enviconment step should make sure:
+    - memory domain is enlarged
+    - module local freelist is not changed
+    - the resulting memory state is still reach-closed </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="Rely">Rely</a></span> <span class="id">fl</span> <span class="id">Shared</span> <span class="id">gm</span> <span class="id">gm</span>' : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="RELY">RELY</a></span>: <span class="id"><a href="GMemory.html#GMem.forward">GMem.forward</a></span> <span class="id">gm</span> <span class="id">gm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#unchg_freelist">unchg_freelist</a></span> <span class="id">fl</span> <span class="id">gm</span> <span class="id">gm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemClosures.html#reach_closed">reach_closed</a></span> <span class="id">gm</span>' <span class="id">Shared</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#Rely">Rely</a></span> <span class="id">fl</span> <span class="id">Shared</span> <span class="id">gm</span> <span class="id">gm</span>'.<br/>
+<br/>
+<div class="doc">The Rely condition in paper Fig. 8 </div>
+<div class="doc">The <span class="bracket"><span class="id">HLRely</span></span> requires source and target environment steps
+    satisfying <span class="bracket"><span class="id">Rely</span></span> condition, and the resulting memory states satisfies <span class="bracket"><span class="id">Inv</span></span> </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="HLRely">HLRely</a></span> <span class="id">flSrc</span> <span class="id">flTgt</span> <span class="id">mu</span> <span class="id">sgm</span> <span class="id">sgm</span>' <span class="id">tgm</span> <span class="id">tgm</span>' : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="HLR">HLR</a></span>: <span class="id"><a href="LDSimDefs.html#Rely">Rely</a></span> <span class="id">flSrc</span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id">mu</span>) <span class="id">sgm</span> <span class="id">sgm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#Rely">Rely</a></span> <span class="id">flTgt</span> (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id">mu</span>) <span class="id">tgm</span> <span class="id">tgm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#Inv">Inv</a></span> <span class="id">mu</span> <span class="id">sgm</span>' <span class="id">tgm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#HLRely">HLRely</a></span> <span class="id">flSrc</span> <span class="id">flTgt</span> <span class="id">mu</span> <span class="id">sgm</span> <span class="id">sgm</span>' <span class="id">tgm</span> <span class="id">tgm</span>'.<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<div class="doc">obsoleted definitions </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="LfpG">LfpG</a></span> (<span class="id">fl</span>: <span class="id"><a href="MemAux.html#freelist">freelist</a></span>) (<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>) (<span class="id">fpSrc</span> <span class="id">fpTgt</span>: <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="LFPG">LFPG</a></span>:  <span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">fpTgt</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id">fl</span> (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id">mu</span>) <span class="id">fpTgt</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#LfpG">LfpG</a></span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">fpTgt</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="LG">LG</a></span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">sgm</span>' <span class="id">fpTgt</span> <span class="id">tgm</span>' : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a name="LGuarantee">LGuarantee</a></span>: <span class="id"><a href="LDSimDefs.html#Guarantee">Guarantee</a></span> <span class="id">fl</span> (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id">mu</span>) <span class="id">fpTgt</span> <span class="id">tgm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#FPMatch">FPMatch</a></span> <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">fpTgt</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#Inv">Inv</a></span> <span class="id">mu</span> <span class="id">sgm</span>' <span class="id">tgm</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#LG">LG</a></span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpSrc</span> <span class="id">sgm</span>' <span class="id">fpTgt</span> <span class="id">tgm</span>'.<br/>
+<br/>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fpG_eq">fpG_eq</a></span>: <span class="kwd">forall</span> <span class="id">fl</span> <span class="id">S</span> <span class="id">fp</span> <span class="id">fp</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id"><a href="LDSimDefs.html#fp">fp</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.eq">FP.eq</a></span> <span class="id"><a href="LDSimDefs.html#fp">fp</a></span> <span class="id">fp</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id">fp</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5919')">Proof.</div>
+<div class="proofscript" id="proof5919">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span>, <span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span>, <span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">clear</span> <span class="id">H</span>. <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span>, <span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span>, <span class="id"><a href="Footprint.html#Locs.belongsto">Locs.belongsto</a></span>, <span class="id"><a href="Footprint.html#Locs.union">Locs.union</a></span>, <span class="id"><a href="Footprint.html#Locs.eq">Locs.eq</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H1</span>. <span class="id">exists</span> <span class="id">x</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> (<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span> [<span class="id">H</span>:<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>, <span class="id">_</span>|-<span class="id">_</span>]=&gt; <span class="id">specialize</span> (<span class="id">H</span> <span class="id">b</span> <span class="id">x</span>); <span class="tactic">rewrite</span> <span class="id">H</span> <span class="kwd">end</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fpG_emp">fpG_emp</a></span>: <span class="kwd">forall</span> <span class="id">fl</span> <span class="id">S</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id"><a href="Footprint.html#FP.emp">FP.emp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5920')">Proof.</div>
+<div class="proofscript" id="proof5920">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span>; <span class="tactic">intros</span>. <span class="id">exfalso</span>. <span class="tactic">destruct</span> <span class="id">H</span>. <span class="tactic">eauto</span> <span class="kwd">with</span> <span class="id">locs</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fpG_union">fpG_union</a></span>: <span class="kwd">forall</span> <span class="id">fl</span> <span class="id">S</span> <span class="id">fp1</span> <span class="id">fp2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id"><a href="LDSimDefs.html#fp1">fp1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id"><a href="LDSimDefs.html#fp2">fp2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="LDSimDefs.html#fp1">fp1</a></span> <span class="id"><a href="LDSimDefs.html#fp2">fp2</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5921')">Proof.</div>
+<div class="proofscript" id="proof5921">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">intros</span> <span class="id">b</span> <span class="id">H1</span>. <span class="tactic">apply</span> <span class="id"><a href="Footprint.html#FP.union_belongsto">FP.union_belongsto</a></span> <span class="kwd">in</span> <span class="id">H1</span>. <span class="tactic">destruct</span> <span class="id">H1</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fpG_subset">fpG_subset</a></span>: <span class="kwd">forall</span> <span class="id">fl</span> <span class="id">S</span> <span class="id">fp1</span> <span class="id">fp2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id"><a href="LDSimDefs.html#fp1">fp1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.subset">FP.subset</a></span> <span class="id"><a href="LDSimDefs.html#fp2">fp2</a></span> <span class="id"><a href="LDSimDefs.html#fp1">fp1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id"><a href="LDSimDefs.html#fp2">fp2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5922')">Proof.</div>
+<div class="proofscript" id="proof5922">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">intros</span> <span class="id">b</span> <span class="id">H1</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">eapply</span> <span class="id"><a href="Footprint.html#FP.belongsto_subset">FP.belongsto_subset</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">LfpG</span>'<span class="id">_union_S</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">fpS</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id">fpS</span>') <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5923')">Proof.</div>
+<div class="proofscript" id="proof5923">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">fp_match_union_S</span>'; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">LfpG</span>'<span class="id">_union_T</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">fpT</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id">fpT</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> <span class="id">fpT</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5924')">Proof.</div>
+<div class="proofscript" id="proof5924">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <span class="tactic">apply</span> <span class="id">fp_match_union_T</span>'; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="LDSimDefs.html#fpG_union">fpG_union</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">LfpG</span>'<span class="id">_union</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">fpS</span>' <span class="id">fpT</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id">fpS</span>' <span class="id">fpT</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id">fpS</span>') (<span class="id"><a href="Footprint.html#FP.union">FP.union</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> <span class="id">fpT</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5925')">Proof.</div>
+<div class="proofscript" id="proof5925">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">fp_match_union</span>'; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="LDSimDefs.html#fpG_union">fpG_union</a></span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">LfpG</span>'<span class="id">_subset_S</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">fpS</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.subset">FP.subset</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id">fpS</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id">fpS</span>' <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5926')">Proof.</div>
+<div class="proofscript" id="proof5926">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>. <span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">fp_match_subset_S</span>'; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">LfpG</span>'<span class="id">_subset_T</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fl</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span> <span class="id">fpT</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#FP.subset">FP.subset</a></span> <span class="id">fpT</span>' <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id">fpT</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5927')">Proof.</div>
+<div class="proofscript" id="proof5927">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">inversion</span> <span class="id">H</span>. <span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">fp_match_subset_T</span>'; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LDSimDefs.html#fpG_subset">fpG_subset</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<div class="doc">In order to deal with arguments in external calls 
+    (like no stack pointer leakage etc.),
+    we need a stricted version of value injection, 
+    i.e. Vundef could not be inject to a stack pointer.
+    For convenience here I further restrict Vundef only able to 
+    inject to Vundef
+ </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="Rely_trans">Rely_trans</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fl</span> <span class="id">Shared</span> <span class="id">gm1</span> <span class="id">gm2</span> <span class="id">gm3</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#Rely">Rely</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#Shared">Shared</a></span> <span class="id"><a href="LDSimDefs.html#gm1">gm1</a></span> <span class="id"><a href="LDSimDefs.html#gm2">gm2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#Rely">Rely</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#Shared">Shared</a></span> <span class="id"><a href="LDSimDefs.html#gm2">gm2</a></span> <span class="id"><a href="LDSimDefs.html#gm3">gm3</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#Rely">Rely</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#Shared">Shared</a></span> <span class="id"><a href="LDSimDefs.html#gm1">gm1</a></span> <span class="id"><a href="LDSimDefs.html#gm3">gm3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5928')">Proof.</div>
+<div class="proofscript" id="proof5928">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="GMemory.html#GMem.forward_trans">GMem.forward_trans</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="MemAux.html#unchg_freelist_trans">unchg_freelist_trans</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="HLRely_trans">HLRely_trans</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">flSrc</span> <span class="id">flTgt</span> <span class="id">mu</span> <span class="id">sgm1</span> <span class="id">sgm2</span> <span class="id">sgm3</span> <span class="id">tgm1</span> <span class="id">tgm2</span> <span class="id">tgm3</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#HLRely">HLRely</a></span> <span class="id"><a href="LDSimDefs.html#flSrc">flSrc</a></span> <span class="id"><a href="LDSimDefs.html#flTgt">flTgt</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#sgm1">sgm1</a></span> <span class="id"><a href="LDSimDefs.html#sgm2">sgm2</a></span> <span class="id"><a href="LDSimDefs.html#tgm1">tgm1</a></span> <span class="id"><a href="LDSimDefs.html#tgm2">tgm2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#HLRely">HLRely</a></span> <span class="id"><a href="LDSimDefs.html#flSrc">flSrc</a></span> <span class="id"><a href="LDSimDefs.html#flTgt">flTgt</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#sgm2">sgm2</a></span> <span class="id"><a href="LDSimDefs.html#sgm3">sgm3</a></span> <span class="id"><a href="LDSimDefs.html#tgm2">tgm2</a></span> <span class="id"><a href="LDSimDefs.html#tgm3">tgm3</a></span> -&gt;    <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#HLRely">HLRely</a></span> <span class="id"><a href="LDSimDefs.html#flSrc">flSrc</a></span> <span class="id"><a href="LDSimDefs.html#flTgt">flTgt</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#sgm1">sgm1</a></span> <span class="id"><a href="LDSimDefs.html#sgm3">sgm3</a></span> <span class="id"><a href="LDSimDefs.html#tgm1">tgm1</a></span> <span class="id"><a href="LDSimDefs.html#tgm3">tgm3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5929')">Proof.</div>
+<div class="proofscript" id="proof5929">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LDSimDefs.html#Rely_trans">Rely_trans</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LDSimDefs.html#Rely_trans">Rely_trans</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_match_ge_cmps_match">fp_match_ge_cmps_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.ge_cmps">FP.ge_cmps</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span>) (<span class="id"><a href="Footprint.html#FP.ge_cmps">FP.ge_cmps</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5930')">Proof.</div>
+<div class="proofscript" id="proof5930">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">FP.unfolds_thrshd</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_T">locs_match_union_T</a></span>; <span class="tactic">eapply</span> <span class="id"><a href="Injections.html#locs_match_subset_S">locs_match_subset_S</a></span>; <span class="tactic">eauto</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Locs.unfolds</span>; <span class="tactic">intros</span>; <span class="id">red_boolean_true</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_match_ge_reads_match">fp_match_ge_reads_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.ge_reads">FP.ge_reads</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span>) (<span class="id"><a href="Footprint.html#FP.ge_reads">FP.ge_reads</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5931')">Proof.</div>
+<div class="proofscript" id="proof5931">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">FP.unfolds_thrshd</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_T">locs_match_union_T</a></span>; <span class="tactic">eapply</span> <span class="id"><a href="Injections.html#locs_match_subset_S">locs_match_subset_S</a></span>; <span class="tactic">eauto</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="id">Locs.unfolds</span>; <span class="tactic">intros</span>; <span class="id">red_boolean_true</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_match_ge_writes_match">fp_match_ge_writes_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.ge_writes">FP.ge_writes</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span>) (<span class="id"><a href="Footprint.html#FP.ge_writes">FP.ge_writes</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5932')">Proof.</div>
+<div class="proofscript" id="proof5932">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">FP.unfolds_thrshd</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_T">locs_match_union_T</a></span>; <span class="tactic">eapply</span> <span class="id"><a href="Injections.html#locs_match_subset_S">locs_match_subset_S</a></span>; <span class="tactic">eauto</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="id">Locs.unfolds</span>; <span class="tactic">intros</span>; <span class="id">red_boolean_true</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fp_match_ge_frees_match">fp_match_ge_frees_match</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">fpS</span> <span class="id">fpT</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FPMatch</span>' <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> (<span class="id"><a href="Footprint.html#FP.ge_frees">FP.ge_frees</a></span> <span class="id"><a href="LDSimDefs.html#fpS">fpS</a></span>) (<span class="id"><a href="Footprint.html#FP.ge_frees">FP.ge_frees</a></span> <span class="id"><a href="LDSimDefs.html#fpT">fpT</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5933')">Proof.</div>
+<div class="proofscript" id="proof5933">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">FP.unfolds_thrshd</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">apply</span> <span class="id"><a href="Injections.html#locs_match_union_T">locs_match_union_T</a></span>; <span class="tactic">eapply</span> <span class="id"><a href="Injections.html#locs_match_subset_S">locs_match_subset_S</a></span>; <span class="tactic">eauto</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="id">Locs.unfolds</span>; <span class="tactic">intros</span>; <span class="id">red_boolean_true</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="locs_smile_preservation_via_locmatch">locs_smile_preservation_via_locmatch</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">ls1</span> <span class="id">ls2</span> <span class="id">lt1</span> <span class="id">lt2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.inj_inject">Bset.inj_inject</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#ls1">ls1</a></span> <span class="id"><a href="LDSimDefs.html#lt1">lt1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#LocMatch">LocMatch</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#ls2">ls2</a></span> <span class="id"><a href="LDSimDefs.html#lt2">lt2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.smile">Locs.smile</a></span> <span class="id"><a href="LDSimDefs.html#ls1">ls1</a></span> <span class="id"><a href="LDSimDefs.html#ls2">ls2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.subset">Bset.subset</a></span> (<span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span> (<span class="id"><a href="Footprint.html#Locs.intersect">Locs.intersect</a></span> <span class="id"><a href="LDSimDefs.html#lt1">lt1</a></span> <span class="id"><a href="LDSimDefs.html#lt2">lt2</a></span>)) (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Footprint.html#Locs.smile">Locs.smile</a></span> <span class="id"><a href="LDSimDefs.html#lt1">lt1</a></span> <span class="id"><a href="LDSimDefs.html#lt2">lt2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5934')">Proof.</div>
+<div class="proofscript" id="proof5934">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H0</span>, <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Blockset.html#Bset.inject_block">Bset.inject_block</a></span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span>, <span class="id"><a href="Blockset.html#Bset.subset">Bset.subset</a></span>, <span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span> <span class="kwd">in</span> *. <span class="id">Locs.unfolds</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id">lt1</span> <span class="id">b</span> <span class="id">ofs</span>) <span class="id">eqn</span>:<span class="id">Hlt1</span>, (<span class="id">lt2</span> <span class="id">b</span> <span class="id">ofs</span>) <span class="id">eqn</span>:<span class="id">Hlt2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id">mu</span> <span class="id">b</span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">apply</span> <span class="id">H3</span>. <span class="id">exists</span> <span class="id">ofs</span>. <span class="tactic">rewrite</span> <span class="id">Hlt1</span>, <span class="id">Hlt2</span>. <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H0</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">H4</span> <span class="id">Hlt1</span>). <span class="id">specialize</span> (<span class="id">H1</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">H4</span> <span class="id">Hlt2</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">H3</span> <span class="id">H4</span> <span class="id">Hlt1</span> <span class="id">Hlt2</span>. <span class="tactic">destruct</span> <span class="id">H0</span> <span class="kwd">as</span> (<span class="id">b1</span> &amp; <span class="id">INJ1</span> &amp; <span class="id">Hls1</span>), <span class="id">H1</span> <span class="kwd">as</span> (<span class="id">b2</span> &amp; <span class="id">INJ2</span> &amp; <span class="id">Hls2</span>).<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">INJ1</span> <span class="id">INJ2</span>). <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H2</span> <span class="id">b2</span> <span class="id">ofs</span>). <span class="tactic">rewrite</span> <span class="id">Hls1</span>, <span class="id">Hls2</span> <span class="kwd">in</span> *. <span class="tactic">inversion</span> <span class="id">H2</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="fpG_disj_fl_intersect">fpG_disj_fl_intersect</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fp1</span> <span class="id">fp2</span> <span class="id">S</span> <span class="id">fl1</span> <span class="id">fl2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#disj">disj</a></span> <span class="id"><a href="LDSimDefs.html#fl1">fl1</a></span> <span class="id"><a href="LDSimDefs.html#fl2">fl2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl1">fl1</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id"><a href="LDSimDefs.html#fp1">fp1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl2">fl2</a></span> <span class="id"><a href="LDSimDefs.html#S">S</a></span> <span class="id"><a href="LDSimDefs.html#fp2">fp2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.subset">Bset.subset</a></span> (<span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span> (<span class="id"><a href="Footprint.html#Locs.intersect">Locs.intersect</a></span> (<span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span> <span class="id"><a href="LDSimDefs.html#fp1">fp1</a></span>) (<span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span> <span class="id"><a href="LDSimDefs.html#fp2">fp2</a></span>))) <span class="id"><a href="LDSimDefs.html#S">S</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5935')">Proof.</div>
+<div class="proofscript" id="proof5935">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span>, <span class="id"><a href="Blockset.html#Bset.subset">Bset.subset</a></span>, <span class="id"><a href="Footprint.html#FP.blocks">FP.blocks</a></span>, <span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span>, <span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">Locs.unfolds</span>. <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> [<span class="id">ofs</span> <span class="id">H2</span>].<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id">H0</span> <span class="id">b</span>). <span class="id">exists</span> <span class="id">ofs</span>. <span class="id">red_boolean_true</span>. <span class="tactic">clear</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id">H1</span> <span class="id">b</span>). <span class="id">exists</span> <span class="id">ofs</span>. <span class="id">red_boolean_true</span>. <span class="tactic">clear</span> <span class="id">H1</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H0</span>; [<span class="tactic">auto</span>|<span class="tactic">destruct</span> <span class="id">H1</span>]; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H0</span>, <span class="id">H1</span>. <span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">specialize</span> (<span class="id">H</span> <span class="id">x0</span> <span class="id">x</span>). <span class="tactic">rewrite</span> &lt;- <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id"><a name="smile_preserv_via_LfpG">smile_preserv_via_LfpG</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fpS1</span> <span class="id">fpS2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FP.smile</span>' <span class="id"><a href="LDSimDefs.html#fpS1">fpS1</a></span> <span class="id"><a href="LDSimDefs.html#fpS2">fpS2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">fl1</span> <span class="id">fpT1</span> <span class="id">fl2</span> <span class="id">fpT2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.inj_inject">Bset.inj_inject</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="MemAux.html#disj">disj</a></span> <span class="id"><a href="LDSimDefs.html#fl1">fl1</a></span> <span class="id"><a href="LDSimDefs.html#fl2">fl2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl1">fl1</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS1">fpS1</a></span> <span class="id"><a href="LDSimDefs.html#fpT1">fpT1</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">LfpG</span>' <span class="id"><a href="LDSimDefs.html#fl2">fl2</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#fpS2">fpS2</a></span> <span class="id"><a href="LDSimDefs.html#fpT2">fpT2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">FP.smile</span>' <span class="id"><a href="LDSimDefs.html#fpT1">fpT1</a></span> <span class="id"><a href="LDSimDefs.html#fpT2">fpT2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5936')">Proof.</div>
+<div class="proofscript" id="proof5936">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> [<span class="id">FPM1</span> <span class="id">fpG1</span>]. <span class="tactic">destruct</span> <span class="id">H3</span> <span class="kwd">as</span> [<span class="id">FPM2</span> <span class="id">fpG2</span>]. <span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="id">pose</span> <span class="id">proof</span> (<span class="id"><a href="LDSimDefs.html#fpG_disj_fl_intersect">fpG_disj_fl_intersect</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H1</span> <span class="id">fpG1</span> <span class="id">fpG2</span>). <span class="tactic">clear</span> <span class="id">H1</span> <span class="id">fpG1</span> <span class="id">fpG2</span> <span class="id">fl1</span> <span class="id">fl2</span>.<br/>
+&nbsp;&nbsp;<span class="id">constructor</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">smile</span>'<span class="id">_rw</span>. <span class="tactic">destruct</span> <span class="id">smile</span>'<span class="id">_cf</span> <span class="kwd">as</span> [<span class="id">c1f2</span> <span class="id">c2f1</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; [<span class="tactic">clear</span> <span class="id">c2f1</span>|<span class="tactic">clear</span> <span class="id">c1f2</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="LDSimDefs.html#fp_match_ge_cmps_match">fp_match_ge_cmps_match</a></span> <span class="kwd">in</span> <span class="id">FPM1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="LDSimDefs.html#fp_match_ge_frees_match">fp_match_ge_frees_match</a></span> <span class="kwd">in</span> <span class="id">FPM2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LDSimDefs.html#locs_smile_preservation_via_locmatch">locs_smile_preservation_via_locmatch</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span>. <span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="Blockset.html#Bset.subset">Bset.subset</a></span>, <span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span>, <span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">FP.unfolds_thrshd</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">clear</span> <span class="id">H</span>. <span class="id">Locs.unfolds</span>. <span class="tactic">destruct</span> <span class="id">H0</span>. <span class="id">exists</span> <span class="id">x</span>. <span class="id">red_boolean_true</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="LDSimDefs.html#fp_match_ge_cmps_match">fp_match_ge_cmps_match</a></span> <span class="kwd">in</span> <span class="id">FPM2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="LDSimDefs.html#fp_match_ge_frees_match">fp_match_ge_frees_match</a></span> <span class="kwd">in</span> <span class="id">FPM1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LDSimDefs.html#locs_smile_preservation_via_locmatch">locs_smile_preservation_via_locmatch</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span>. <span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="Blockset.html#Bset.subset">Bset.subset</a></span>, <span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span>, <span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">FP.unfolds_thrshd</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">clear</span> <span class="id">H</span>. <span class="id">Locs.unfolds</span>. <span class="tactic">destruct</span> <span class="id">H0</span>. <span class="id">exists</span> <span class="id">x</span>. <span class="id">red_boolean_true</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">smile</span>'<span class="id">_cf</span>. <span class="tactic">destruct</span> <span class="id">smile</span>'<span class="id">_rw</span> <span class="kwd">as</span> [<span class="id">r1w2</span> <span class="id">r2w1</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; [<span class="tactic">clear</span> <span class="id">r2w1</span>|<span class="tactic">clear</span> <span class="id">r1w2</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="LDSimDefs.html#fp_match_ge_reads_match">fp_match_ge_reads_match</a></span> <span class="kwd">in</span> <span class="id">FPM1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="LDSimDefs.html#fp_match_ge_writes_match">fp_match_ge_writes_match</a></span> <span class="kwd">in</span> <span class="id">FPM2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LDSimDefs.html#locs_smile_preservation_via_locmatch">locs_smile_preservation_via_locmatch</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span>. <span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="Blockset.html#Bset.subset">Bset.subset</a></span>, <span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span>, <span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">FP.unfolds_thrshd</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">clear</span> <span class="id">H</span>. <span class="id">Locs.unfolds</span>. <span class="tactic">destruct</span> <span class="id">H0</span>. <span class="id">exists</span> <span class="id">x</span>. <span class="id">red_boolean_true</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="LDSimDefs.html#fp_match_ge_reads_match">fp_match_ge_reads_match</a></span> <span class="kwd">in</span> <span class="id">FPM2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="LDSimDefs.html#fp_match_ge_writes_match">fp_match_ge_writes_match</a></span> <span class="kwd">in</span> <span class="id">FPM1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LDSimDefs.html#locs_smile_preservation_via_locmatch">locs_smile_preservation_via_locmatch</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">H</span>; <span class="tactic">clear</span>. <span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="Blockset.html#Bset.subset">Bset.subset</a></span>, <span class="id"><a href="Footprint.html#Locs.blocks">Locs.blocks</a></span>, <span class="id"><a href="Footprint.html#FP.locs">FP.locs</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">FP.unfolds_thrshd</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span>. <span class="tactic">clear</span> <span class="id">H</span>. <span class="id">Locs.unfolds</span>. <span class="tactic">destruct</span> <span class="id">H0</span>. <span class="id">exists</span> <span class="id">x</span>. <span class="id">red_boolean_true</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="bset_eq_G_arg">bset_eq_G_arg</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">bs1</span> <span class="id">bs2</span> <span class="id">arg</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="LDSimDefs.html#bs1">bs1</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="LDSimDefs.html#bs2">bs2</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#G_arg">G_arg</a></span> <span class="id"><a href="LDSimDefs.html#bs1">bs1</a></span> <span class="id"><a href="LDSimDefs.html#arg">arg</a></span> &lt;-&gt; <span class="id"><a href="LDSimDefs.html#G_arg">G_arg</a></span> <span class="id"><a href="LDSimDefs.html#bs2">bs2</a></span> <span class="id"><a href="LDSimDefs.html#arg">arg</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5937')">Proof.</div>
+<div class="proofscript" id="proof5937">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id"><a href="LDSimDefs.html#G_arg">G_arg</a></span>. <span class="tactic">destruct</span> <span class="id">arg</span>; <span class="tactic">auto</span>; <span class="tactic">tauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="bset_eq_G_args">bset_eq_G_args</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">bs1</span> <span class="id">bs2</span> <span class="id">args</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="LDSimDefs.html#bs1">bs1</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="LDSimDefs.html#bs2">bs2</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span>) -&gt; <span class="id"><a href="LDSimDefs.html#G_args">G_args</a></span> <span class="id"><a href="LDSimDefs.html#bs1">bs1</a></span> <span class="id"><a href="LDSimDefs.html#args">args</a></span> &lt;-&gt; <span class="id"><a href="LDSimDefs.html#G_args">G_args</a></span> <span class="id"><a href="LDSimDefs.html#bs2">bs2</a></span> <span class="id"><a href="LDSimDefs.html#args">args</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5938')">Proof.</div>
+<div class="proofscript" id="proof5938">
+&nbsp;&nbsp;<span class="tactic">clear</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="LDSimDefs.html#G_args">G_args</a></span>. <span class="tactic">induction</span> <span class="id">args</span>. <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">intro</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>. <span class="tactic">subst</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">a</span>; <span class="tactic">auto</span>. <span class="tactic">unfold</span> <span class="id"><a href="LDSimDefs.html#G_arg">G_arg</a></span> <span class="kwd">in</span> *. <span class="tactic">rewrite</span> &lt;- <span class="id">H</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">IHargs</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H0</span>. <span class="tactic">subst</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">a</span>; <span class="tactic">auto</span>. <span class="tactic">unfold</span> <span class="id"><a href="LDSimDefs.html#G_arg">G_arg</a></span> <span class="kwd">in</span> *. <span class="tactic">rewrite</span> <span class="id">H</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">IHargs</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="bset_eq_fpG">bset_eq_fpG</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fl</span> <span class="id">fp</span> <span class="id">bs1</span> <span class="id">bs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="LDSimDefs.html#bs1">bs1</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="LDSimDefs.html#bs2">bs2</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#bs1">bs1</a></span> <span class="id"><a href="LDSimDefs.html#fp">fp</a></span> &lt;-&gt; <span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span> <span class="id"><a href="LDSimDefs.html#fl">fl</a></span> <span class="id"><a href="LDSimDefs.html#bs2">bs2</a></span> <span class="id"><a href="LDSimDefs.html#fp">fp</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5939')">Proof.</div>
+<div class="proofscript" id="proof5939">
+&nbsp;&nbsp;<span class="tactic">clear</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="LDSimDefs.html#fpG">fpG</a></span>, <span class="id"><a href="Blockset.html#Bset.belongsto">Bset.belongsto</a></span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">intros</span>; [<span class="tactic">rewrite</span> &lt;- <span class="id">H</span> | <span class="tactic">rewrite</span> <span class="id">H</span>]; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<h1> Relating ges </h1>
+<div class="doc">every ident in target prog corresponds to the same ident in source prog,
+    and the datas (fun/globdef) bounded are related </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="gvar_match">gvar_match</a></span> {<span class="id">V1</span> <span class="id">V2</span>: <span class="kwd">Type</span>}: <span class="id"><a href="AST.html#globvar">AST.globvar</a></span> <span class="id">V1</span> -&gt; <span class="id"><a href="AST.html#globvar">AST.globvar</a></span> <span class="id">V2</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="gvar_match_intro">gvar_match_intro</a></span>: <span class="kwd">forall</span> <span class="id">v1</span> <span class="id">v2</span> <span class="id">initdata</span> <span class="id">fro</span> <span class="id">fvo</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#gvar_match">gvar_match</a></span> (<span class="id"><a href="AST.html#mkglobvar">AST.mkglobvar</a></span> <span class="id"><a href="LDSimDefs.html#v1">v1</a></span> <span class="id"><a href="LDSimDefs.html#initdata">initdata</a></span> <span class="id"><a href="LDSimDefs.html#fro">fro</a></span> <span class="id"><a href="LDSimDefs.html#fvo">fvo</a></span>) (<span class="id"><a href="AST.html#mkglobvar">AST.mkglobvar</a></span> <span class="id"><a href="LDSimDefs.html#v2">v2</a></span> <span class="id"><a href="LDSimDefs.html#initdata">initdata</a></span> <span class="id"><a href="LDSimDefs.html#fro">fro</a></span> <span class="id"><a href="LDSimDefs.html#fvo">fvo</a></span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="gvar_match_trans">gvar_match_trans</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">V1</span> <span class="id">V2</span> <span class="id">V3</span> <span class="id">gv1</span> <span class="id">gv2</span> <span class="id">gv3</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="LDSimDefs.html#gvar_match">gvar_match</a></span> <span class="id"><a href="LDSimDefs.html#V1">V1</a></span> <span class="id"><a href="LDSimDefs.html#V2">V2</a></span> <span class="id"><a href="LDSimDefs.html#gv1">gv1</a></span> <span class="id"><a href="LDSimDefs.html#gv2">gv2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="LDSimDefs.html#gvar_match">gvar_match</a></span> <span class="id"><a href="LDSimDefs.html#V2">V2</a></span> <span class="id"><a href="LDSimDefs.html#V3">V3</a></span> <span class="id"><a href="LDSimDefs.html#gv2">gv2</a></span> <span class="id"><a href="LDSimDefs.html#gv3">gv3</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#gvar_match">gvar_match</a></span> <span class="id"><a href="LDSimDefs.html#gv1">gv1</a></span> <span class="id"><a href="LDSimDefs.html#gv3">gv3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5940')">Proof.</div>
+<div class="proofscript" id="proof5940">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="id">constructor</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="globdef_match">globdef_match</a></span> {<span class="id">F1</span> <span class="id">V1</span> <span class="id">F2</span> <span class="id">V2</span>: <span class="kwd">Type</span>}:<br/>
+&nbsp;&nbsp;<span class="id"><a href="AST.html#globdef">AST.globdef</a></span> <span class="id">F1</span> <span class="id">V1</span> -&gt;  <span class="id"><a href="AST.html#globdef">AST.globdef</a></span> <span class="id">F2</span> <span class="id">V2</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="Gfun_match">Gfun_match</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f1</span> <span class="id">f2</span>, <span class="id"><a href="LDSimDefs.html#globdef_match">globdef_match</a></span> (<span class="id"><a href="AST.html#Gfun">AST.Gfun</a></span> <span class="id"><a href="LDSimDefs.html#f1">f1</a></span>) (<span class="id"><a href="AST.html#Gfun">AST.Gfun</a></span> <span class="id"><a href="LDSimDefs.html#f2">f2</a></span>)<br/>
+| <span class="id"><a name="Gvar_match">Gvar_match</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">gv1</span> <span class="id">gv2</span>, <span class="id"><a href="LDSimDefs.html#gvar_match">gvar_match</a></span> <span class="id"><a href="LDSimDefs.html#gv1">gv1</a></span> <span class="id"><a href="LDSimDefs.html#gv2">gv2</a></span> -&gt; <span class="id"><a href="LDSimDefs.html#globdef_match">globdef_match</a></span> (<span class="id"><a href="AST.html#Gvar">AST.Gvar</a></span> <span class="id"><a href="LDSimDefs.html#gv1">gv1</a></span>) (<span class="id"><a href="AST.html#Gvar">AST.Gvar</a></span> <span class="id"><a href="LDSimDefs.html#gv2">gv2</a></span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="globdef_match_trans">globdef_match_trans</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F1</span> <span class="id">V1</span> <span class="id">F2</span> <span class="id">V2</span> <span class="id">F3</span> <span class="id">V3</span> <span class="id">gd1</span> <span class="id">gd2</span> <span class="id">gd3</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="LDSimDefs.html#globdef_match">globdef_match</a></span> <span class="id"><a href="LDSimDefs.html#F1">F1</a></span> <span class="id"><a href="LDSimDefs.html#V1">V1</a></span> <span class="id"><a href="LDSimDefs.html#F2">F2</a></span> <span class="id"><a href="LDSimDefs.html#V2">V2</a></span> <span class="id"><a href="LDSimDefs.html#gd1">gd1</a></span> <span class="id"><a href="LDSimDefs.html#gd2">gd2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="LDSimDefs.html#globdef_match">globdef_match</a></span> <span class="id"><a href="LDSimDefs.html#F2">F2</a></span> <span class="id"><a href="LDSimDefs.html#V2">V2</a></span> <span class="id"><a href="LDSimDefs.html#F3">F3</a></span> <span class="id"><a href="LDSimDefs.html#V3">V3</a></span> <span class="id"><a href="LDSimDefs.html#gd2">gd2</a></span> <span class="id"><a href="LDSimDefs.html#gd3">gd3</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#globdef_match">globdef_match</a></span> <span class="id"><a href="LDSimDefs.html#gd1">gd1</a></span> <span class="id"><a href="LDSimDefs.html#gd3">gd3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5941')">Proof.</div>
+<div class="proofscript" id="proof5941">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H0</span>; <span class="id">constructor</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LDSimDefs.html#gvar_match_trans">gvar_match_trans</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<span class="kwd">Record</span> <span class="id"><a name="ge_match">ge_match</a></span> {<span class="id">F1</span> <span class="id">V1</span> <span class="id">F2</span> <span class="id">V2</span>: <span class="kwd">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">sge</span>:<span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="LDSimDefs.html#F1">F1</a></span> <span class="id"><a href="LDSimDefs.html#V1">V1</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">tge</span>:<span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="LDSimDefs.html#F2">F2</a></span> <span class="id"><a href="LDSimDefs.html#V2">V2</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="genv_public_eq">genv_public_eq</a></span>: <span class="kwd">forall</span> <span class="id">id</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id"><a href="LDSimDefs.html#id">id</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_public">Genv.genv_public</a></span> <span class="id"><a href="LDSimDefs.html#sge">sge</a></span>) &lt;-&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id"><a href="LDSimDefs.html#id">id</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_public">Genv.genv_public</a></span> <span class="id"><a href="LDSimDefs.html#tge">tge</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="genv_symb_eq_dom">genv_symb_eq_dom</a></span>: <span class="kwd">forall</span> <span class="id">id</span>, <span class="id"><a href="Maps.html#PTree.get">PTree.get</a></span> <span class="id"><a href="LDSimDefs.html#id">id</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_symb">Genv.genv_symb</a></span> <span class="id"><a href="LDSimDefs.html#sge">sge</a></span>) = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> &lt;-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#PTree.get">PTree.get</a></span> <span class="id"><a href="LDSimDefs.html#id">id</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_symb">Genv.genv_symb</a></span> <span class="id"><a href="LDSimDefs.html#tge">tge</a></span>) = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="genv_defs_match">genv_defs_match</a></span>: <span class="kwd">forall</span> <span class="id">id</span> <span class="id">b</span> <span class="id">b</span>', <span class="id"><a href="Maps.html#PTree.get">PTree.get</a></span> <span class="id"><a href="LDSimDefs.html#id">id</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_symb">Genv.genv_symb</a></span> <span class="id"><a href="LDSimDefs.html#sge">sge</a></span>) = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#PTree.get">PTree.get</a></span> <span class="id"><a href="LDSimDefs.html#id">id</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_symb">Genv.genv_symb</a></span> <span class="id"><a href="LDSimDefs.html#tge">tge</a></span>) = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Coqlib.html#option_rel">option_rel</a></span> (<span class="id"><a href="LDSimDefs.html#globdef_match">globdef_match</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="Maps.html#PTree.get">PTree.get</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_defs">Genv.genv_defs</a></span> <span class="id"><a href="LDSimDefs.html#sge">sge</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="Maps.html#PTree.get">PTree.get</a></span> <span class="id">b</span>' (<span class="id"><a href="Globalenvs.html#Genv.genv_defs">Genv.genv_defs</a></span> <span class="id"><a href="LDSimDefs.html#tge">tge</a></span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="genv_next_eq">genv_next_eq</a></span>: <span class="id"><a href="Globalenvs.html#Genv.genv_next">Genv.genv_next</a></span> <span class="id"><a href="LDSimDefs.html#sge">sge</a></span> = <span class="id"><a href="Globalenvs.html#Genv.genv_next">Genv.genv_next</a></span> <span class="id"><a href="LDSimDefs.html#tge">tge</a></span>;<br/>
+&nbsp;&nbsp;}.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="ge_match_trans">ge_match_trans</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F1</span> <span class="id">V1</span> <span class="id">F2</span> <span class="id">V2</span> <span class="id">F3</span> <span class="id">V3</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">ge1</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="LDSimDefs.html#F1">F1</a></span> <span class="id"><a href="LDSimDefs.html#V1">V1</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">ge2</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="LDSimDefs.html#F2">F2</a></span> <span class="id"><a href="LDSimDefs.html#V2">V2</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">ge3</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="LDSimDefs.html#F3">F3</a></span> <span class="id"><a href="LDSimDefs.html#V3">V3</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#ge_match">ge_match</a></span> <span class="id"><a href="LDSimDefs.html#ge1">ge1</a></span> <span class="id"><a href="LDSimDefs.html#ge2">ge2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#ge_match">ge_match</a></span> <span class="id"><a href="LDSimDefs.html#ge2">ge2</a></span> <span class="id"><a href="LDSimDefs.html#ge3">ge3</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#ge_match">ge_match</a></span> <span class="id"><a href="LDSimDefs.html#ge1">ge1</a></span> <span class="id"><a href="LDSimDefs.html#ge3">ge3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5942')">Proof.</div>
+<div class="proofscript" id="proof5942">
+&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id"><a href="LDSimDefs.html#genv_public_eq">genv_public_eq</a></span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> (<span class="id"><a href="LDSimDefs.html#genv_public_eq">genv_public_eq</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">H0</span>).<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id"><a href="LDSimDefs.html#genv_symb_eq_dom">genv_symb_eq_dom</a></span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> (<span class="id"><a href="LDSimDefs.html#genv_symb_eq_dom">genv_symb_eq_dom</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">H0</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> ((<span class="id"><a href="Globalenvs.html#Genv.genv_symb">Genv.genv_symb</a></span> <span class="id">ge2</span>) ! <span class="id">id</span>) <span class="id">eqn</span>:<span class="id">H3</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id"><a href="LDSimDefs.html#genv_defs_match">genv_defs_match</a></span> <span class="id">ge1</span> <span class="id">ge2</span> <span class="id">H</span> <span class="id">id</span>); <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id"><a href="LDSimDefs.html#genv_defs_match">genv_defs_match</a></span> <span class="id">ge2</span> <span class="id">ge3</span> <span class="id">H0</span> <span class="id">id</span>); <span class="tactic">eauto</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H4</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H7</span> <span class="kwd">in</span> *. <span class="id">inv</span> <span class="id">H5</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H6</span> <span class="kwd">in</span> *. <span class="id">inv</span> <span class="id">H5</span>. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="LDSimDefs.html#globdef_match_trans">globdef_match_trans</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id"><a href="LDSimDefs.html#genv_symb_eq_dom">genv_symb_eq_dom</a></span> <span class="kwd">in</span> <span class="id">H3</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H2</span> <span class="kwd">in</span> <span class="id">H3</span>; <span class="id">inv</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id"><a href="LDSimDefs.html#genv_next_eq">genv_next_eq</a></span>. <span class="tactic">eapply</span> (<span class="id"><a href="LDSimDefs.html#genv_next_eq">genv_next_eq</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">H0</span>). <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<br/>
+<h1> Relating mu and ges </h1>
+<div class="doc">should be moved to another file, or find corresponding definition in CompCert? </div>
+<span class="kwd">Inductive</span> <span class="id"><a name="inj_oblock">inj_oblock</a></span> : <span class="id"><a href="Blockset.html#Bset.inj">Bset.inj</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="Inj_block">Inj_block</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">bj</span> <span class="id">b</span> <span class="id">b</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#bj">bj</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#inj_oblock">inj_oblock</a></span> <span class="id"><a href="LDSimDefs.html#bj">bj</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span>) (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>')<br/>
+&nbsp;&nbsp;| <span class="id"><a name="Inj_none">Inj_none</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">bj</span>, <span class="id"><a href="LDSimDefs.html#inj_oblock">inj_oblock</a></span> <span class="id"><a href="LDSimDefs.html#bj">bj</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Record</span> <span class="id"><a name="ge_init_inj">ge_init_inj</a></span> {<span class="id">F1</span> <span class="id">V1</span> <span class="id">F2</span> <span class="id">V2</span>: <span class="kwd">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">sge</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="LDSimDefs.html#F1">F1</a></span> <span class="id"><a href="LDSimDefs.html#V1">V1</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">tge</span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="LDSimDefs.html#F2">F2</a></span> <span class="id"><a href="LDSimDefs.html#V2">V2</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="mu_shared_src">mu_shared_src</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> = <span class="kwd">fun</span> <span class="id">b</span> =&gt; <span class="id"><a href="Coqlib.html#Plt">Plt</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_next">Genv.genv_next</a></span> <span class="id"><a href="LDSimDefs.html#sge">sge</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="mu_shared_tgt">mu_shared_tgt</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> = <span class="kwd">fun</span> <span class="id">b</span> =&gt; <span class="id"><a href="Coqlib.html#Plt">Plt</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_next">Genv.genv_next</a></span> <span class="id"><a href="LDSimDefs.html#tge">tge</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="mu_inject">mu_inject</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Blockset.html#Bset.inject">Bset.inject</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>) (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>) (<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="senv_injected">senv_injected</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">id</span>, <span class="id"><a href="LDSimDefs.html#inj_oblock">inj_oblock</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>) (<span class="id"><a href="Globalenvs.html#Senv.find_symbol">Senv.find_symbol</a></span> <span class="id"><a href="LDSimDefs.html#sge">sge</a></span> <span class="id"><a href="LDSimDefs.html#id">id</a></span>) (<span class="id"><a href="Globalenvs.html#Senv.find_symbol">Senv.find_symbol</a></span> <span class="id"><a href="LDSimDefs.html#tge">tge</a></span> <span class="id"><a href="LDSimDefs.html#id">id</a></span>)<br/>
+&nbsp;&nbsp;}.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="ge_init_inj_SharedSrc">ge_init_inj_SharedSrc</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F1</span> <span class="id">V1</span> <span class="id">F2</span> <span class="id">V2</span> <span class="id">mu</span> <span class="id">sge</span> <span class="id">tge</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="LDSimDefs.html#ge_init_inj">ge_init_inj</a></span> <span class="id"><a href="LDSimDefs.html#F1">F1</a></span> <span class="id"><a href="LDSimDefs.html#V1">V1</a></span> <span class="id"><a href="LDSimDefs.html#F2">F2</a></span> <span class="id"><a href="LDSimDefs.html#V2">V2</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#sge">sge</a></span> <span class="id"><a href="LDSimDefs.html#tge">tge</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>) = <span class="kwd">fun</span> <span class="id">b</span> =&gt; <span class="id"><a href="Coqlib.html#Plt">Plt</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_next">Genv.genv_next</a></span> <span class="id"><a href="LDSimDefs.html#sge">sge</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5943')">Proof.</div>
+<div class="proofscript" id="proof5943">
+ <span class="tactic">inversion</span> 1; <span class="tactic">auto</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="ge_init_inj_SharedTgt">ge_init_inj_SharedTgt</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">F1</span> <span class="id">V1</span> <span class="id">F2</span> <span class="id">V2</span>  <span class="id">mu</span> <span class="id">sge</span> <span class="id">tge</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id"><a href="LDSimDefs.html#ge_init_inj">ge_init_inj</a></span> <span class="id"><a href="LDSimDefs.html#F1">F1</a></span> <span class="id"><a href="LDSimDefs.html#V1">V1</a></span> <span class="id"><a href="LDSimDefs.html#F2">F2</a></span> <span class="id"><a href="LDSimDefs.html#V2">V2</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span> <span class="id"><a href="LDSimDefs.html#sge">sge</a></span> <span class="id"><a href="LDSimDefs.html#tge">tge</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="Injections.html#SharedTgt">SharedTgt</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>) = <span class="kwd">fun</span> <span class="id">b</span> =&gt; <span class="id"><a href="Coqlib.html#Plt">Plt</a></span> <span class="id"><a href="LDSimDefs.html#b">b</a></span> (<span class="id"><a href="Globalenvs.html#Genv.genv_next">Genv.genv_next</a></span> <span class="id"><a href="LDSimDefs.html#tge">tge</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5944')">Proof.</div>
+<div class="proofscript" id="proof5944">
+ <span class="tactic">inversion</span> 1; <span class="tactic">auto</span>. Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="inj_id_arg_eq">inj_id_arg_eq</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">mu</span> <span class="id">argSrc</span> <span class="id">argTgt</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Values.html#inject_incr">inject_incr</a></span> (<span class="id"><a href="Blockset.html#Bset.inj_to_meminj">Bset.inj_to_meminj</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>)) <span class="id"><a href="Values.html#inject_id">inject_id</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#G_args">G_args</a></span> (<span class="id"><a href="Injections.html#SharedSrc">SharedSrc</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>) <span class="id"><a href="LDSimDefs.html#argSrc">argSrc</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#arg_rel">arg_rel</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="LDSimDefs.html#mu">mu</a></span>) <span class="id"><a href="LDSimDefs.html#argSrc">argSrc</a></span> <span class="id"><a href="LDSimDefs.html#argTgt">argTgt</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="LDSimDefs.html#argSrc">argSrc</a></span> = <span class="id"><a href="LDSimDefs.html#argTgt">argTgt</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5945')">Proof.</div>
+<div class="proofscript" id="proof5945">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> 1. <span class="id">revert</span> <span class="id">argSrc</span> <span class="id">argTgt</span>. <span class="tactic">induction</span> <span class="id">argSrc</span>; <span class="tactic">intros</span>; <span class="id">inv</span> <span class="id">H1</span>; <span class="id">inv</span> <span class="id">H0</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">f_equal</span>. <span class="id">inv</span> <span class="id">H4</span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id">H</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Integers.html#Ptrofs.add_zero">Integers.Ptrofs.add_zero</a></span>. <span class="tactic">auto</span>. <span class="id">inv</span> <span class="id">H3</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHargSrc</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module IS_local</title>
+<meta name="description" content="Documentation of Coq module IS_local" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module IS_local</h1>
+<div class="coq">
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Setoids.Setoid.html">Setoid</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html">List</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Errors.html">Errors</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="AST.html">AST</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Memory.html">Memory</a></span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="InteractionSemantics.html">InteractionSemantics</a></span>.<br/>
+<br/>
+<br/>
+<span class="kwd">Record</span> <span class="id"><a name="sem_local">sem_local</a></span> :=<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="F">F</a></span>: <span class="kwd">Type</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="V">V</a></span>: <span class="kwd">Type</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="G">G</a></span>: <span class="kwd">Type</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="comp_unit">comp_unit</a></span>: <span class="kwd">Type</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="core">core</a></span>: <span class="kwd">Type</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="init_genv_local">init_genv_local</a></span>: <span class="id"><a href="IS_local.html#comp_unit">comp_unit</a></span> -&gt; <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="IS_local.html#F">F</a></span> <span class="id"><a href="IS_local.html#V">V</a></span> -&gt; <span class="id"><a href="IS_local.html#G">G</a></span> -&gt; <span class="kwd">Prop</span>;<br/>
+<div class="doc">TODO: is init_mem relative to languages, since we already have Genv.t definition </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="init_mem">init_mem</a></span>: <span class="id"><a href="Globalenvs.html#Genv.t">Genv.t</a></span> <span class="id"><a href="IS_local.html#F">F</a></span> <span class="id"><a href="IS_local.html#V">V</a></span> -&gt; <span class="id"><a href="Memory.html#mem">mem</a></span> -&gt; <span class="kwd">Prop</span>;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="init_core_local">init_core_local</a></span>: <span class="id"><a href="IS_local.html#G">G</a></span> -&gt; <span class="id"><a href="AST.html#ident">ident</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="IS_local.html#core">core</a></span>;<br/>
+<div class="doc">Note: here we require halt returns a value with its type </div>
+<div class="doc">EDIT: this is not viable. CompCert languages won't expose type information at callstate </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="halt_local">halt_local</a></span>: <span class="id"><a href="IS_local.html#core">core</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Values.html#val">val</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="step_local">step_local</a></span>: <span class="id"><a href="IS_local.html#G">G</a></span> -&gt; <span class="id"><a href="IS_local.html#core">core</a></span> -&gt; <span class="id"><a href="Memory.html#mem">mem</a></span> -&gt; <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span> -&gt; <span class="id"><a href="IS_local.html#core">core</a></span> -&gt; <span class="id"><a href="Memory.html#mem">mem</a></span> -&gt; <span class="kwd">Prop</span>;<br/>
+<div class="doc">EDIT: since external function is defined as a (name: string) with its signature,
+        here we modify at_external interface to adapt string name, by providing global environment  </div>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="at_external_local">at_external_local</a></span>: <span class="id"><a href="IS_local.html#G">G</a></span> -&gt; <span class="id"><a href="IS_local.html#core">core</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> (<span class="id"><a href="AST.html#ident">ident</a></span> * <span class="id"><a href="AST.html#signature">signature</a></span> * <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#val">val</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="after_external_local">after_external_local</a></span>: <span class="id"><a href="IS_local.html#core">core</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Values.html#val">val</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="IS_local.html#core">core</a></span>;<br/>
+&nbsp;&nbsp;}.</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

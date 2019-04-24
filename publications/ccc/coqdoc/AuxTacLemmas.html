@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module AuxTacLemmas</title>
+<meta name="description" content="Documentation of Coq module AuxTacLemmas" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module AuxTacLemmas</h1>
+<div class="coq">
+<span class="id">From</span> <span class="id">mathcomp.ssreflect</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">fintype</span> <span class="id">ssrnat</span>.            <br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Maps.html">Maps</a></span> <span class="id"><a href="Axioms.html">Axioms</a></span>.  <br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AST.html">AST</a></span> <span class="id"><a href="Integers.html">Integers</a></span> <span class="id"><a href="Floats.html">Floats</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Events.html">Events</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span> <span class="id"><a href="Smallstep.html">Smallstep</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Locations.html">Locations</a></span> <span class="id"><a href="Stacklayout.html">Stacklayout</a></span> <span class="id"><a href="Conventions.html">Conventions</a></span>.<br/>
+&nbsp;<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Asm.html">Asm</a></span>. <br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="CUAST.html">CUAST</a></span> <span class="id"><a href="FMemOpFP.html">FMemOpFP</a></span> <span class="id"><a href="ValFP.html">ValFP</a></span> <span class="id"><a href="Op_fp.html">Op_fp</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html">String</a></span> <span class="id"><a href="val_casted.html">val_casted</a></span> <span class="id"><a href="helpers.html">helpers</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="FMemory.html">FMemory</a></span> <span class="id"><a href="TSOMem.html">TSOMem</a></span>. <br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="GAST.html">GAST</a></span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="ETrace.html">ETrace</a></span> <span class="id"><a href="Blockset.html">Blockset</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="loadframe.html">loadframe</a></span>. <br/>
+&nbsp;<br/>
+<span class="kwd">Require</span> <span class="id"><a href="CminorLang.html">CminorLang</a></span>. <br/>
+<span class="kwd">Require</span> <span class="id"><a href="SpecLang.html">SpecLang</a></span>. <br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="ASM_local.html">ASM_local</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AsmLang.html">AsmLang</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AsmTSO.html">AsmTSO</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html">Coq.Lists.Streams</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="RGRels.html">RGRels</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="LibTactics.html">LibTactics</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="code.html">code</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="ObjectSim.html">ObjectSim</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="InvRG.html">InvRG</a></span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">ptr_elim</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H1</span> : ?<span class="id">rs</span> ?<span class="id">PC</span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H1</span>' : ?<span class="id">rs</span> ?<span class="id">PC</span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H2</span> : <span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H2</span>' : <span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H3</span> : <span class="id"><a href="ASM_local.html#find_instr">find_instr</a></span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H3</span>' : <span class="id"><a href="ASM_local.html#find_instr">find_instr</a></span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H1</span>'; <span class="tactic">inversion</span> <span class="id">H1</span>'; <span class="tactic">subst</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H2</span> <span class="kwd">in</span> <span class="id">H2</span>'; <span class="tactic">inversion</span> <span class="id">H2</span>'; <span class="tactic">subst</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H3</span> <span class="kwd">in</span> <span class="id">H3</span>'; <span class="tactic">inversion</span> <span class="id">H3</span>'; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">external_call_elim</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H1</span> : ?<span class="id">rs</span> ?<span class="id">PC</span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H1</span>' : ?<span class="id">rs</span> ?<span class="id">PC</span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H2</span> : <span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H2</span>' : <span class="id"><a href="Globalenvs.html#Genv.find_funct_ptr">Genv.find_funct_ptr</a></span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id"><a href="AST.html#External">External</a></span> <span class="id">_</span>) |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H1</span>'; <span class="tactic">inversion</span> <span class="id">H1</span>'; <span class="tactic">subst</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H2</span> <span class="kwd">in</span> <span class="id">H2</span>'; <span class="tactic">inversion</span> <span class="id">H2</span>'; <span class="tactic">subst</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">split_and</span> <span class="id">H</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">type</span> <span class="id">of</span> <span class="id">H</span>  <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> /\ <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">H1</span> := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">H2</span> := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">H1</span> <span class="id">H2</span>];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">split_and</span> <span class="id">H1</span>; <span class="id">split_and</span> <span class="id">H2</span><br/>
+&nbsp;&nbsp;| <span class="id">exists</span> <span class="id">_</span>, <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">t</span> := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">H</span>' := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">t</span> <span class="id">H</span>'];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">split_and</span> <span class="id">H</span>'<br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">solve_ptr_ofs_range</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id">context</span> [<span class="id"><a href="Integers.html#Ptrofs.max_unsigned">Ptrofs.max_unsigned</a></span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Integers.html#Ptrofs.max_unsigned">Ptrofs.max_unsigned</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Integers.html#Ptrofs.modulus">Ptrofs.modulus</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Integers.html#Ptrofs.wordsize">Ptrofs.wordsize</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Integers.html#Wordsize_Ptrofs.wordsize">Wordsize_Ptrofs.wordsize</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id"><a href="Archi.html#ptr64">Archi.ptr64</a></span> <span class="id">eqn</span>:?; <span class="id">tryfalse</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">omega</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">clear_trivial_eq</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : ?<span class="id">A</span> = ?<span class="id">A</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">H</span>; <span class="id">clear_trivial_eq</span><br/>
+&nbsp;&nbsp;| |- <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">elim_next_intr</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : ?<span class="id">rs</span> <span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span> |- <span class="id"><a href="Asm.html#nextinstr_nf">nextinstr_nf</a></span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Asm.html#nextinstr_nf">nextinstr_nf</a></span>; <span class="tactic">unfold</span> <span class="id"><a href="Asm.html#nextinstr">nextinstr</a></span>; <span class="tactic">simpl</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">try</span> <span class="tactic">rewrite</span> <span class="id"><a href="Asm.html#Pregmap.gss">Pregmap.gss</a></span>; <span class="tactic">repeat</span> (<span class="tactic">rewrite</span> <span class="id"><a href="Asm.html#Pregmap.gso">Pregmap.gso</a></span>; <span class="tactic">try</span> (<span class="tactic">intro</span>; <span class="id">tryfalse</span>)) ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">try</span> <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">eauto</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">elim_next_intr</span>' :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : ?<span class="id">rs</span> <span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span> |- <span class="id"><a href="Asm.html#nextinstr">nextinstr</a></span> <span class="id">_</span> <span class="id">_</span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Asm.html#nextinstr">nextinstr</a></span>; <span class="tactic">simpl</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">try</span> <span class="tactic">rewrite</span> <span class="id"><a href="Asm.html#Pregmap.gss">Pregmap.gss</a></span>; <span class="tactic">repeat</span> (<span class="tactic">rewrite</span> <span class="id"><a href="Asm.html#Pregmap.gso">Pregmap.gso</a></span>; <span class="tactic">try</span> (<span class="tactic">intro</span>; <span class="id">tryfalse</span>)) ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">try</span> <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">eauto</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">find_label</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">context</span> [<span class="id"><a href="Coqlib.html#peq">peq</a></span> ?<span class="id">A</span> ?<span class="id">A</span>] |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#peq">peq</a></span> <span class="id">A</span> <span class="id">A</span>) <span class="id">eqn</span> : <span class="id">Ht</span>; <span class="id">tryfalse</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : <span class="id">context</span> [<span class="id"><a href="Coqlib.html#peq">peq</a></span> ?<span class="id">A</span> ?<span class="id">B</span>] |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">Ht</span> := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#peq">peq</a></span> <span class="id">A</span> <span class="id">B</span>) <span class="id">eqn</span> : <span class="id">Ht</span>; [<span class="id">tryfalse</span> | <span class="id">find_label</span>]<br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">trivial_inversion</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : ?<span class="id">A</span> <span class="id">_</span> = ?<span class="id">A</span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="id">trivial_inversion</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : ?<span class="id">A</span> <span class="id">_</span> <span class="id">_</span> = ?<span class="id">A</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="id">trivial_inversion</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : ?<span class="id">A</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> = ?<span class="id">A</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="id">trivial_inversion</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : ?<span class="id">A</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> = ?<span class="id">A</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="id">trivial_inversion</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : ?<span class="id">A</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> = ?<span class="id">A</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="id">trivial_inversion</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : ?<span class="id">A</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> = ?<span class="id">A</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="id">trivial_inversion</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">ret_zero_ptr_false</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H1</span> : ?<span class="id">rs</span> <span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Vptr">Vptr</a></span> <span class="id">_</span> <span class="id">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">H2</span> : ?<span class="id">rs</span> <span class="id"><a href="Asm.html#PC">PC</a></span> = <span class="id"><a href="Values.html#Vzero">Vzero</a></span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="tactic">inversion</span> <span class="id">H2</span>; <span class="id">tryfalse</span>; <span class="id">ret_zero_ptr_false</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">elim_ZMap</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id">context</span>[<span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> ?<span class="id">p</span> (<span class="id"><a href="Maps.html#ZMap.set">ZMap.set</a></span> ?<span class="id">p</span> <span class="id">_</span> <span class="id">_</span>)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#ZMap.gss">ZMap.gss</a></span>; <span class="tactic">eauto</span><br/>
+&nbsp;&nbsp;| |- <span class="id">context</span>[<span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> ?<span class="id">p1</span> (<span class="id"><a href="Maps.html#ZMap.set">ZMap.set</a></span> ?<span class="id">p2</span> <span class="id">_</span> <span class="id">_</span>)] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#ZMap.gso">ZMap.gso</a></span>; <span class="tactic">try</span> <span class="id">solve</span> [<span class="tactic">intro</span>; <span class="id">tryfalse</span>]; <span class="id">elim_ZMap</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">exec_instr_tso</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">H</span> : <span class="id"><a href="AsmTSO.html#exec_instr_TSO">exec_instr_TSO</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> = <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">subst</span>; <span class="id">clear_trivial_eq</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">Pregmap_elim</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id">context</span> [<span class="id">_</span> # ?<span class="id">i</span> &lt;- <span class="id">_</span> ?<span class="id">i</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Asm.html#Pregmap.gss">Pregmap.gss</a></span>; <span class="id">Pregmap_elim</span><br/>
+&nbsp;&nbsp;| |- <span class="id">context</span> [<span class="id">_</span> # ?<span class="id">j</span> &lt;- <span class="id">_</span> ?<span class="id">i</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Asm.html#Pregmap.gso">Pregmap.gso</a></span>; [<span class="id">Pregmap_elim</span> | <span class="tactic">intro</span>; <span class="id">tryfalse</span>]<br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">trivial_not_abort</span> :=<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>; <span class="id">econstructor</span>; <span class="tactic">eauto</span>; <span class="tactic">simpl</span>; <span class="tactic">eauto</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">spec_p_exec</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="InteractionSemantics.html#star_step">InteractionSemantics.star_step</a></span>; <span class="tactic">eauto</span>;<br/>
+&nbsp;&nbsp;[<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">try</span> <span class="id">econstructor</span>; <span class="tactic">eauto</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">try</span> <span class="id">econstructor</span>; <span class="tactic">eauto</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">try</span> <span class="id">econstructor</span>; <span class="tactic">eauto</span> | ].</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

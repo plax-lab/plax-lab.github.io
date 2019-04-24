@@ -1,0 +1,509 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module GMemory</title>
+<meta name="description" content="Documentation of Coq module GMemory" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module GMemory</h1>
+<div class="coq">
+<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Maps.html">Maps</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Archi.html">Archi</a></span> <span class="id"><a href="Integers.html">Integers</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Memdata.html">Memdata</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Blockset.html">Blockset</a></span> <span class="id"><a href="Memperm.html">Memperm</a></span>.<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Unset</span> <span class="id">Elimination</span> <span class="id">Schemes</span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Unset</span> <span class="id">Case</span> <span class="id">Analysis</span> <span class="id">Schemes</span>. <br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> "<span class="id">a</span> # <span class="id">b</span>" := (<span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id">b</span> <span class="id">a</span>) (<span class="tactic">at</span> <span class="id">level</span> 1).<br/>
+<br/>
+<h1> Global Memory </h1>
+<div class="doc">The basic definition of memory, without operations, 
+    do not deal with allocations.
+   <span class="bracket"><span class="id">forward</span></span> property is defined here </div>
+<br/>
+<div class="doc">We followed the CompCert memory definition, 
+    with the only different on the way recording valid blocks and doing allocation:
+    - CompCert: keep track of <span class="bracket"><span class="id">nextblock</span></span>, 
+    block &lt; <span class="bracket"><span class="id">nextblock</span></span> are valid, 
+    allocation takes <span class="bracket"><span class="id">nextblock</span></span> as the new block
+    - GMem in this file: keep track of <span class="bracket"><span class="id">validblocks</span></span>, 
+    a list of blocks recorded as valid,
+    allocation takes a block from thread local freelist, and add to <span class="bracket"><span class="id">validblocks</span></span>.
+    This is to support thread local allocation and avoid racing on <span class="bracket"><span class="id">nextblock</span></span>.
+</div>
+<br/>
+<br/>
+<div class="doc">There are three basic memory fields:
+    - <span class="bracket"><span class="id">content</span></span>:     contains memory contents
+    - <span class="bracket"><span class="id">access</span></span>:      records which location is accessible, i.e. <span class="bracket"><span class="id">locs</span>(<span class="id">m</span>)</span>
+    - <span class="bracket"><span class="id">validblocks</span></span>: records validity of blocks, i.e. <span class="bracket"><span class="id">dom</span>(<span class="id">m</span>)</span> 
+    Memory could be inferred as <span class="bracket"><span class="id">block</span> -&gt; <span class="id">offset</span> -&gt; <span class="id">content</span></span>
+    Others fields are assumptions on memory permissions and default memory contents,
+    as assumed by CompCert
+ </div>
+<br/>
+<span class="kwd">Module</span> <span class="id"><a name="GMem">GMem</a></span>.<br/>
+&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id">gmem</span>' : <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mk_gmem">mk_gmem</a></span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mem_contents">mem_contents</a></span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> (<span class="id"><a href="Maps.html#ZMap.t">ZMap.t</a></span> <span class="id"><a href="Memdata.html#memval">memval</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mem_access">mem_access</a></span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> -&gt; <span class="id"><a href="Memperm.html#perm_kind">perm_kind</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Memperm.html#permission">permission</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.validblocks">validblocks</a></span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="Values.html#block">block</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.access_max">access_max</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>, <span class="id">perm_order</span>'' (<span class="id"><a href="GMemory.html#mem_access">mem_access</a></span>#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span>) (<span class="id"><a href="GMemory.html#mem_access">mem_access</a></span>#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="Memperm.html#Cur">Cur</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.invalid_noaccess">invalid_noaccess</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>, ~ <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> (<span class="id"><a href="GMemory.html#validblocks">validblocks</a></span>) -&gt; <span class="id"><a href="GMemory.html#mem_access">mem_access</a></span>#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.contents_default">contents_default</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id"><a href="GMemory.html#mem_contents">mem_contents</a></span>#<span class="id"><a href="GMemory.html#b">b</a></span> = <span class="id"><a href="Memdata.html#Undef">Undef</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="GMem.valid_block">valid_block</a></span> (<span class="id">gm</span>: <span class="id">gmem</span>') (<span class="id">b</span>: <span class="id"><a href="Values.html#block">block</a></span>) : <span class="kwd">Prop</span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> (<span class="id"><a href="GMemory.html#GMem.validblocks">validblocks</a></span> <span class="id"><a href="GMemory.html#gm">gm</a></span>).<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="GMem.valid_blockb">valid_blockb</a></span> (<span class="id">gm</span>: <span class="id">gmem</span>') (<span class="id">b</span>: <span class="id"><a href="Values.html#block">block</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#bool">bool</a></span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#in_dec">in_dec</a></span> <span class="id"><a href="Values.html#eq_block">eq_block</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> (<span class="id"><a href="GMemory.html#GMem.validblocks">validblocks</a></span> <span class="id"><a href="GMemory.html#gm">gm</a></span>) <span class="kwd">then</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> <span class="kwd">else</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="GMem.valid_block_bool">valid_block_bool</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">gm</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.valid_blockb">valid_blockb</a></span> <span class="id"><a href="GMemory.html#gm">gm</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#true">true</a></span> &lt;-&gt; <span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#gm">gm</a></span> <span class="id"><a href="GMemory.html#b">b</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5687')">Proof.</div>
+<div class="proofscript" id="proof5687">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.valid_blockb">valid_blockb</a></span>; <span class="tactic">split</span>; <span class="tactic">intro</span> <span class="id">H</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#in_dec">in_dec</a></span> <span class="id"><a href="Values.html#eq_block">eq_block</a></span> <span class="id">b</span> (<span class="id"><a href="GMemory.html#GMem.validblocks">validblocks</a></span> <span class="id">gm</span>)); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id"><a name="GMem.forward">forward</a></span> (<span class="id">gm1</span> <span class="id">gm2</span>: <span class="id">gmem</span>'): <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.dom_forward">dom_forward</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> -&gt; <span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> <span class="id"><a href="GMemory.html#b">b</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.alloc_forward">alloc_forward</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span> <span class="id">p</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">perm_order</span>' (<span class="id"><a href="GMemory.html#gm2">gm2</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) <span class="id"><a href="GMemory.html#p">p</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">perm_order</span>' (<span class="id"><a href="GMemory.html#gm1">gm1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) <span class="id"><a href="GMemory.html#p">p</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="GMem.forward_refl">forward_refl</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">gm</span>, <span class="id"><a href="GMemory.html#GMem.forward">forward</a></span> <span class="id"><a href="GMemory.html#gm">gm</a></span> <span class="id"><a href="GMemory.html#gm">gm</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5688')">Proof.</div>
+<div class="proofscript" id="proof5688">
+ <span class="tactic">intro</span>; <span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">auto</span>. Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="GMem.forward_trans">forward_trans</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">gm1</span> <span class="id">gm2</span> <span class="id">gm3</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.forward">forward</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.forward">forward</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> <span class="id"><a href="GMemory.html#gm3">gm3</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.forward">forward</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#gm3">gm3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5689')">Proof.</div>
+<div class="proofscript" id="proof5689">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id"><a name="GMem.eq">eq</a></span> (<span class="id">gm1</span> <span class="id">gm2</span>: <span class="id">gmem</span>') : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.eq_contents">eq_contents</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">perm_order</span>' (<span class="id"><a href="GMemory.html#gm1">gm1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span>) <span class="id"><a href="Memperm.html#Readable">Readable</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> = <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.eq_access">eq_access</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>, <span class="id">perm_order</span>'' (<span class="id"><a href="GMemory.html#gm1">gm1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) (<span class="id"><a href="GMemory.html#gm2">gm2</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">perm_order</span>'' (<span class="id"><a href="GMemory.html#gm2">gm2</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) (<span class="id"><a href="GMemory.html#gm1">gm1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.eq_validblocks">eq_validblocks</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> <span class="id"><a href="GMemory.html#b">b</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="GMem.eq_refl">eq_refl</a></span> : <span class="kwd">forall</span> <span class="id">gm</span>, <span class="id"><a href="GMemory.html#GMem.eq">eq</a></span> <span class="id"><a href="GMemory.html#gm">gm</a></span> <span class="id"><a href="GMemory.html#gm">gm</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5690')">Proof.</div>
+<div class="proofscript" id="proof5690">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">firstorder</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">perm_order</span>'';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> ((<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span> <span class="id">_</span>) # <span class="id">_</span> <span class="id">_</span> <span class="id">_</span>); <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="GMem.eq_access_eq_perm">eq_access_eq_perm</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p1</span> <span class="id">p2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">perm_order</span>'' <span class="id"><a href="GMemory.html#p1">p1</a></span> <span class="id"><a href="GMemory.html#p2">p2</a></span> /\ <span class="id">perm_order</span>'' <span class="id"><a href="GMemory.html#p2">p2</a></span> <span class="id"><a href="GMemory.html#p1">p1</a></span> &lt;-&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#p1">p1</a></span> = <span class="id"><a href="GMemory.html#p2">p2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5691')">Proof.</div>
+<div class="proofscript" id="proof5691">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">perm_order</span>'' <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">p1</span>, <span class="id">p2</span>; <span class="tactic">try</span> <span class="tactic">congruence</span>; <span class="tactic">try</span> <span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>; <span class="tactic">try</span> <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">p1</span>. <span class="tactic">destruct</span> <span class="id">p2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">apply</span> <span class="id"><a href="Memperm.html#perm_refl">perm_refl</a></span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="GMem.eq_sym">eq_sym</a></span> : <span class="kwd">forall</span> <span class="id">gm1</span> <span class="id">gm2</span>, <span class="id"><a href="GMemory.html#GMem.eq">eq</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> -&gt; <span class="id"><a href="GMemory.html#GMem.eq">eq</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5692')">Proof.</div>
+<div class="proofscript" id="proof5692">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>; <span class="id">constructor</span>; <span class="tactic">try</span> <span class="tactic">firstorder</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_contents0</span> <span class="id">b</span> <span class="id">ofs</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">symmetry</span>; <span class="tactic">apply</span> <span class="id">eq_contents0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">eq_access0</span> <span class="id">H</span>; <span class="tactic">clear</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_access0</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id"><a href="Memperm.html#Max">Max</a></span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="GMemory.html#GMem.eq_access_eq_perm">eq_access_eq_perm</a></span> <span class="kwd">in</span> <span class="id">eq_access0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">eq_access0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="GMem.eq_trans">eq_trans</a></span> : <span class="kwd">forall</span> <span class="id">gm1</span> <span class="id">gm2</span> <span class="id">gm3</span>, <span class="id"><a href="GMemory.html#GMem.eq">eq</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> -&gt; <span class="id"><a href="GMemory.html#GMem.eq">eq</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> <span class="id"><a href="GMemory.html#gm3">gm3</a></span> -&gt; <span class="id"><a href="GMemory.html#GMem.eq">eq</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#gm3">gm3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5693')">Proof.</div>
+<div class="proofscript" id="proof5693">
+ <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>, <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">try</span> <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">unfold</span> <span class="id"><a href="Values.html#block">block</a></span>, <span class="id"><a href="Maps.html#ZIndexed.t">ZIndexed.t</a></span> <span class="kwd">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">repeat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H</span>: <span class="kwd">forall</span> (<span class="id">b</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span>), <span class="id">_</span>|-<span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H</span> <span class="id">b</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H</span>: <span class="kwd">forall</span> (<span class="id">ofs</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span>), <span class="id">_</span>|-<span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H</span> <span class="id">ofs</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H</span>: <span class="kwd">forall</span> (<span class="id">k</span>: <span class="id"><a href="Memperm.html#perm_kind">perm_kind</a></span>), <span class="id">_</span>|-<span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H</span> <span class="id">k</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">eq_contents1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">eq_contents0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_access0</span> <span class="id"><a href="Memperm.html#Max">Max</a></span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GMemory.html#GMem.eq_access_eq_perm">eq_access_eq_perm</a></span> <span class="kwd">in</span> <span class="id">eq_access0</span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>, <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="id">specialize</span> (<span class="id">H</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>); <span class="tactic">destruct</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">eapply</span> <span class="id">perm_order</span>''<span class="id">_trans</span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">rewrite</span> &lt;- <span class="id">eq_validblocks1</span>. <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id">eq</span>' (<span class="id">gm1</span> <span class="id">gm2</span>: <span class="id">gmem</span>') : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eq_contents</span>':<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">perm_order</span>' (<span class="id"><a href="GMemory.html#gm1">gm1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span>) <span class="id"><a href="Memperm.html#Readable">Readable</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> = <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eq_access</span>':<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>, <span class="id">perm_order</span>'' (<span class="id"><a href="GMemory.html#gm1">gm1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) (<span class="id"><a href="GMemory.html#gm2">gm2</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">perm_order</span>'' (<span class="id"><a href="GMemory.html#gm2">gm2</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) (<span class="id"><a href="GMemory.html#gm1">gm1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eq_validblocks</span>':<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>, <span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> <span class="id"><a href="GMemory.html#b">b</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id">eq</span>'<span class="id">_refl</span> : <span class="kwd">forall</span> <span class="id">gm</span>, <span class="id">eq</span>' <span class="id"><a href="GMemory.html#gm">gm</a></span> <span class="id"><a href="GMemory.html#gm">gm</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5694')">Proof.</div>
+<div class="proofscript" id="proof5694">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">firstorder</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">perm_order</span>'';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> ((<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span> <span class="id">_</span>) # <span class="id">_</span> <span class="id">_</span> <span class="id">_</span>); <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id">eq</span>'<span class="id">_sym</span> : <span class="kwd">forall</span> <span class="id">gm1</span> <span class="id">gm2</span>, <span class="id">eq</span>' <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> -&gt; <span class="id">eq</span>' <span class="id"><a href="GMemory.html#gm2">gm2</a></span> <span class="id"><a href="GMemory.html#gm1">gm1</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5695')">Proof.</div>
+<div class="proofscript" id="proof5695">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span>; <span class="id">constructor</span>; <span class="tactic">try</span> <span class="tactic">firstorder</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_contents</span>'0 <span class="id">b</span> <span class="id">ofs</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">symmetry</span>; <span class="tactic">apply</span> <span class="id">eq_contents</span>'0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> <span class="id">eq_access</span>'0 <span class="id">H</span>; <span class="tactic">clear</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_access</span>'0 <span class="id">b</span> <span class="id">ofs</span> <span class="id"><a href="Memperm.html#Max">Max</a></span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="GMemory.html#GMem.eq_access_eq_perm">eq_access_eq_perm</a></span> <span class="kwd">in</span> <span class="id">eq_access</span>'0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">eq_access</span>'0. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id">eq</span>'<span class="id">_trans</span> : <span class="kwd">forall</span> <span class="id">gm1</span> <span class="id">gm2</span> <span class="id">gm3</span>, <span class="id">eq</span>' <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#gm2">gm2</a></span> -&gt; <span class="id">eq</span>' <span class="id"><a href="GMemory.html#gm2">gm2</a></span> <span class="id"><a href="GMemory.html#gm3">gm3</a></span> -&gt; <span class="id">eq</span>' <span class="id"><a href="GMemory.html#gm1">gm1</a></span> <span class="id"><a href="GMemory.html#gm3">gm3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5696')">Proof.</div>
+<div class="proofscript" id="proof5696">
+ <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>, <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>; <span class="tactic">try</span> <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">unfold</span> <span class="id"><a href="Values.html#block">block</a></span>, <span class="id"><a href="Maps.html#ZIndexed.t">ZIndexed.t</a></span> <span class="kwd">in</span> *;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">repeat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H</span>: <span class="kwd">forall</span> (<span class="id">b</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span>), <span class="id">_</span>|-<span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H</span> <span class="id">b</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H</span>: <span class="kwd">forall</span> (<span class="id">ofs</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span>), <span class="id">_</span>|-<span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H</span> <span class="id">ofs</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [<span class="id">H</span>: <span class="kwd">forall</span> (<span class="id">k</span>: <span class="id"><a href="Memperm.html#perm_kind">perm_kind</a></span>), <span class="id">_</span>|-<span class="id">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">H</span> <span class="id">k</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">eq_contents</span>'1.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">eq_contents</span>'0. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">specialize</span> (<span class="id">eq_access</span>'0 <span class="id"><a href="Memperm.html#Max">Max</a></span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GMemory.html#GMem.eq_access_eq_perm">eq_access_eq_perm</a></span> <span class="kwd">in</span> <span class="id">eq_access</span>'0. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>, <span class="id">_</span> |- <span class="id">_</span> =&gt; <span class="id">specialize</span> (<span class="id">H</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span>); <span class="tactic">destruct</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">eapply</span> <span class="id">perm_order</span>''<span class="id">_trans</span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="tactic">rewrite</span> &lt;- <span class="id">eq_validblocks</span>'1. <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;Qed.</div>
+<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="GMem.perm">perm</a></span> (<span class="id">gm</span>: <span class="id">gmem</span>') <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span> <span class="id">p</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">perm_order</span>' (<span class="id"><a href="GMemory.html#gm">gm</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_access">mem_access</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span>) <span class="id"><a href="GMemory.html#p">p</a></span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Remark</span> <span class="id"><a name="GMem.perm_order_dec">perm_order_dec</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p1</span> <span class="id">p2</span>, {<span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id"><a href="GMemory.html#p1">p1</a></span> <span class="id"><a href="GMemory.html#p2">p2</a></span>} + {~<span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id"><a href="GMemory.html#p1">p1</a></span> <span class="id"><a href="GMemory.html#p2">p2</a></span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5697')">Proof.</div>
+<div class="proofscript" id="proof5697">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">p1</span>; <span class="tactic">destruct</span> <span class="id">p2</span>; (<span class="id">left</span>; <span class="id">constructor</span>) || (<span class="id">right</span>; <span class="tactic">intro</span> <span class="id">PO</span>; <span class="tactic">inversion</span> <span class="id">PO</span>).<br/>
+&nbsp;&nbsp;Defined.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Remark</span> <span class="id">perm_order</span>'<span class="id">_dec</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">op</span> <span class="id">p</span>, {<span class="id">perm_order</span>' <span class="id"><a href="GMemory.html#op">op</a></span> <span class="id"><a href="GMemory.html#p">p</a></span>} + {~<span class="id">perm_order</span>' <span class="id"><a href="GMemory.html#op">op</a></span> <span class="id"><a href="GMemory.html#p">p</a></span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5698')">Proof.</div>
+<div class="proofscript" id="proof5698">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">op</span>; <span class="tactic">unfold</span> <span class="id">perm_order</span>'.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="GMemory.html#GMem.perm_order_dec">perm_order_dec</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">right</span>; <span class="tactic">tauto</span>.<br/>
+&nbsp;&nbsp;Defined.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="GMem.perm_dec">perm_dec</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span> <span class="id">p</span>, {<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m">m</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span>} + {~ <span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m">m</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5699')">Proof.</div>
+<div class="proofscript" id="proof5699">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.perm">perm</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">perm_order</span>'<span class="id">_dec</span>.<br/>
+&nbsp;&nbsp;Defined.</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="GMem.range_perm">range_perm</a></span> (<span class="id">m</span>: <span class="id">gmem</span>') (<span class="id">b</span>: <span class="id"><a href="Values.html#block">block</a></span>) (<span class="id">lo</span> <span class="id">hi</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span>) (<span class="id">k</span>: <span class="id"><a href="Memperm.html#perm_kind">perm_kind</a></span>) (<span class="id">p</span>: <span class="id"><a href="Memperm.html#permission">permission</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ofs</span>, <span class="id"><a href="GMemory.html#lo">lo</a></span> &lt;= <span class="id"><a href="GMemory.html#ofs">ofs</a></span> &lt; <span class="id"><a href="GMemory.html#hi">hi</a></span> -&gt; <span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m">m</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span>.<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="GMem.eq_perm">eq_perm</a></span> (<span class="id">P</span>: <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> -&gt; <span class="kwd">Prop</span>) (<span class="id">m1</span> <span class="id">m2</span>: <span class="id">gmem</span>') : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span> <span class="id">p</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#P">P</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span> &lt;-&gt; <span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="GMem.eq_content">eq_content</a></span> (<span class="id">P</span>: <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> -&gt; <span class="kwd">Prop</span>) (<span class="id">m1</span> <span class="id">m2</span>: <span class="id">gmem</span>') : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#P">P</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span> = <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span>)#<span class="id"><a href="GMemory.html#b">b</a></span>.<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+&nbsp;&nbsp;<br/>
+<br/>
+<h1> Generic injections </h1>
+<br/>
+<div class="doc">A memory state <span class="bracket"><span class="id">m1</span></span> generically injects into another memory state <span class="bracket"><span class="id">m2</span></span> via the
+  memory injection <span class="bracket"><span class="id">f</span></span> if the following conditions hold:
+<ul>
+<li>
+ each access in <span class="bracket"><span class="id">m2</span></span> that corresponds to a valid access in <span class="bracket"><span class="id">m1</span></span>
+  is itself valid;
+</li>
+<li>
+ the memory value associated in <span class="bracket"><span class="id">m1</span></span> to an accessible address
+  must inject into <span class="bracket"><span class="id">m2</span></span>'s memory value at the corersponding address.
+   </li>
+</ul>
+</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id"><a name="GMem.mem_inj">mem_inj</a></span> (<span class="id">f</span>: <span class="id"><a href="Values.html#meminj">meminj</a></span>) (<span class="id">m1</span> <span class="id">m2</span>: <span class="id">gmem</span>') : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mk_mem_inj">mk_mem_inj</a></span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mi_perm">mi_perm</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b1</span> <span class="id">b2</span> <span class="id">delta</span> <span class="id">ofs</span> <span class="id">k</span> <span class="id">p</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span>(<span class="id"><a href="GMemory.html#b2">b2</a></span>, <span class="id"><a href="GMemory.html#delta">delta</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span> <span class="id"><a href="GMemory.html#b2">b2</a></span> (<span class="id"><a href="GMemory.html#ofs">ofs</a></span> + <span class="id"><a href="GMemory.html#delta">delta</a></span>) <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mi_align">mi_align</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b1</span> <span class="id">b2</span> <span class="id">delta</span> <span class="id">chunk</span> <span class="id">ofs</span> <span class="id">p</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span>(<span class="id"><a href="GMemory.html#b2">b2</a></span>, <span class="id"><a href="GMemory.html#delta">delta</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.range_perm">range_perm</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> (<span class="id"><a href="GMemory.html#ofs">ofs</a></span> + <span class="id"><a href="Memdata.html#size_chunk">size_chunk</a></span> <span class="id"><a href="GMemory.html#chunk">chunk</a></span>) <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="GMemory.html#p">p</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="Memdata.html#align_chunk">align_chunk</a></span> <span class="id"><a href="GMemory.html#chunk">chunk</a></span> | <span class="id"><a href="GMemory.html#delta">delta</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mi_memval">mi_memval</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b1</span> <span class="id">ofs</span> <span class="id">b2</span> <span class="id">delta</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span>(<span class="id"><a href="GMemory.html#b2">b2</a></span>, <span class="id"><a href="GMemory.html#delta">delta</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="Memperm.html#Readable">Readable</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Memdata.html#memval_inject">memval_inject</a></span> <span class="id"><a href="GMemory.html#f">f</a></span> (<span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span>)#<span class="id"><a href="GMemory.html#b1">b1</a></span>) (<span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> (<span class="id"><a href="GMemory.html#ofs">ofs</a></span>+<span class="id"><a href="GMemory.html#delta">delta</a></span>) <span class="id"><a href="GMemory.html#m2">m2</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span>)#<span class="id"><a href="GMemory.html#b2">b2</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="GMem.meminj_no_overlap">meminj_no_overlap</a></span> (<span class="id">f</span>: <span class="id"><a href="Values.html#meminj">meminj</a></span>) (<span class="id">m</span>: <span class="id">gmem</span>') : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b1</span> <span class="id">b1</span>' <span class="id">delta1</span> <span class="id">b2</span> <span class="id">b2</span>' <span class="id">delta2</span> <span class="id">ofs1</span> <span class="id">ofs2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#b1">b1</a></span> &lt;&gt; <span class="id"><a href="GMemory.html#b2">b2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id">b1</span>', <span class="id"><a href="GMemory.html#delta1">delta1</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#b2">b2</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> (<span class="id">b2</span>', <span class="id"><a href="GMemory.html#delta2">delta2</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m">m</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> <span class="id"><a href="GMemory.html#ofs1">ofs1</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="Memperm.html#Nonempty">Nonempty</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m">m</a></span> <span class="id"><a href="GMemory.html#b2">b2</a></span> <span class="id"><a href="GMemory.html#ofs2">ofs2</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="Memperm.html#Nonempty">Nonempty</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">b1</span>' &lt;&gt; <span class="id">b2</span>' \/ <span class="id"><a href="GMemory.html#ofs1">ofs1</a></span> + <span class="id"><a href="GMemory.html#delta1">delta1</a></span> &lt;&gt; <span class="id"><a href="GMemory.html#ofs2">ofs2</a></span> + <span class="id"><a href="GMemory.html#delta2">delta2</a></span>.<br/>
+&nbsp;&nbsp;<br/>
+<h1> Memory injections </h1>
+<br/>
+<div class="doc">A memory state <span class="bracket"><span class="id">m1</span></span> injects into another memory state <span class="bracket"><span class="id">m2</span></span> via the
+  memory injection <span class="bracket"><span class="id">f</span></span> if the following conditions hold:
+<ul>
+<li>
+ each access in <span class="bracket"><span class="id">m2</span></span> that corresponds to a valid access in <span class="bracket"><span class="id">m1</span></span>
+  is itself valid;
+</li>
+<li>
+ the memory value associated in <span class="bracket"><span class="id">m1</span></span> to an accessible address
+  must inject into <span class="bracket"><span class="id">m2</span></span>'s memory value at the corersponding address;
+</li>
+<li>
+ unallocated blocks in <span class="bracket"><span class="id">m1</span></span> must be mapped to <span class="bracket"><span class="id">None</span></span> by <span class="bracket"><span class="id">f</span></span>;
+</li>
+<li>
+ if <span class="bracket"><span class="id">f</span> <span class="id">b</span> = <span class="id">Some</span>(<span class="id">b</span>', <span class="id">delta</span>)</span>, <span class="bracket"><span class="id">b</span>'</span> must be valid in <span class="bracket"><span class="id">m2</span></span>;
+</li>
+<li>
+ distinct blocks in <span class="bracket"><span class="id">m1</span></span> are mapped to non-overlapping sub-blocks in <span class="bracket"><span class="id">m2</span></span>;
+</li>
+<li>
+ the sizes of <span class="bracket"><span class="id">m2</span></span>'s blocks are representable with unsigned machine integers;
+</li>
+<li>
+ pointers that could be represented using unsigned machine integers remain
+  representable after the injection.
+   </li>
+</ul>
+</div>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id">inject</span>' (<span class="id">f</span>: <span class="id"><a href="Values.html#meminj">meminj</a></span>) (<span class="id">m1</span> <span class="id">m2</span>: <span class="id">gmem</span>') : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mk_inject">mk_inject</a></span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mi_inj">mi_inj</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.mem_inj">mem_inj</a></span> <span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mi_freeblocks">mi_freeblocks</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>, ~(<span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b">b</a></span>) -&gt; <span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mi_mappedblocks">mi_mappedblocks</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">b</span>' <span class="id">delta</span>, <span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span>(<span class="id">b</span>', <span class="id"><a href="GMemory.html#delta">delta</a></span>) -&gt; <span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span> <span class="id">b</span>';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mi_no_overlap">mi_no_overlap</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.meminj_no_overlap">meminj_no_overlap</a></span> <span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mi_representable">mi_representable</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">b</span>' <span class="id">delta</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span>(<span class="id">b</span>', <span class="id"><a href="GMemory.html#delta">delta</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> (<span class="id"><a href="Integers.html#Ptrofs.unsigned">Ptrofs.unsigned</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span>) <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="Memperm.html#Nonempty">Nonempty</a></span> \/ <span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> (<span class="id"><a href="Integers.html#Ptrofs.unsigned">Ptrofs.unsigned</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> - 1) <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="Memperm.html#Nonempty">Nonempty</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#delta">delta</a></span> &gt;= 0 /\ 0 &lt;= <span class="id"><a href="Integers.html#Ptrofs.unsigned">Ptrofs.unsigned</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> + <span class="id"><a href="GMemory.html#delta">delta</a></span> &lt;= <span class="id"><a href="Integers.html#Ptrofs.max_unsigned">Ptrofs.max_unsigned</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mi_perm_inv">mi_perm_inv</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b1</span> <span class="id">ofs</span> <span class="id">b2</span> <span class="id">delta</span> <span class="id">k</span> <span class="id">p</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span>(<span class="id"><a href="GMemory.html#b2">b2</a></span>, <span class="id"><a href="GMemory.html#delta">delta</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span> <span class="id"><a href="GMemory.html#b2">b2</a></span> (<span class="id"><a href="GMemory.html#ofs">ofs</a></span> + <span class="id"><a href="GMemory.html#delta">delta</a></span>) <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span> \/ ~<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="Memperm.html#Nonempty">Nonempty</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;<span class="kwd">Definition</span> <span class="id"><a name="GMem.inject">inject</a></span> := <span class="id">inject</span>'.<br/>
+<br/>
+<h1> Blockwise injection </h1>
+<div class="doc">A special form of memory injection, where f b = Some (b, 0) if b in dom(f).</div>
+&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id"><a name="GMem.Binject_weak">Binject_weak</a></span> (<span class="id">phi</span>: <span class="id"><a href="Blockset.html#Bset.inj">Bset.inj</a></span>) (<span class="id">m1</span> <span class="id">m2</span>: <span class="id">gmem</span>') : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mk_binj_weak">mk_binj_weak</a></span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.bmiw_inject">bmiw_inject</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inject</span>' (<span class="id"><a href="Blockset.html#Bset.inj_to_meminj">Bset.inj_to_meminj</a></span> <span class="id"><a href="GMemory.html#phi">phi</a></span>) <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+<div class="doc">A stronger blockwise injection, it also require domains and locs are equal w.r.t. f. </div>
+&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id"><a name="GMem.Binject">Binject</a></span> (<span class="id">phi</span>: <span class="id"><a href="Blockset.html#Bset.inj">Bset.inj</a></span>) (<span class="id">m1</span> <span class="id">m2</span>: <span class="id">gmem</span>') : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mk_binject">mk_binject</a></span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.bmi_weak">bmi_weak</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.Binject_weak">Binject_weak</a></span> <span class="id"><a href="GMemory.html#phi">phi</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.bmi_dom_inj_1">bmi_dom_inj_1</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> -&gt; <span class="id">exists</span> <span class="id">b</span>', <span class="id"><a href="GMemory.html#phi">phi</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.bmi_dom_inj_2">bmi_dom_inj_2</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span> <span class="id">b</span>' -&gt; <span class="id">exists</span> <span class="id">b</span>, <span class="id"><a href="GMemory.html#phi">phi</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">b</span>';<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.bmi_perm_eq">bmi_perm_eq</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b2</span> <span class="id">ofs</span> <span class="id">k</span> <span class="id">p</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span> <span class="id"><a href="GMemory.html#b2">b2</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">b1</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#phi">phi</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="GMemory.html#b2">b2</a></span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#b1">b1</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="GMem.Binject_Binject_weak">Binject_Binject_weak</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">f</span> <span class="id">m1</span> <span class="id">m2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.Binject">Binject</a></span> <span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span> -&gt; <span class="id"><a href="GMemory.html#GMem.Binject_weak">Binject_weak</a></span> <span class="id"><a href="GMemory.html#f">f</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5700')">Proof.</div>
+<div class="proofscript" id="proof5700">
+ <span class="tactic">intros</span> <span class="id">f</span> <span class="id">m1</span> <span class="id">m2</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">auto</span>. Qed.</div>
+<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">Section</span> <span class="id"><a name="GMem.UNCHANGED_ON">UNCHANGED_ON</a></span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">Variable</span> <span class="id"><a name="GMem.UNCHANGED_ON.P">P</a></span>: <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> -&gt; <span class="kwd">Prop</span>.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">Record</span> <span class="id"><a name="GMem.unchanged_on">unchanged_on</a></span> (<span class="id">m_before</span> <span class="id">m_after</span>: <span class="id">gmem</span>') : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.mk_unchanged_on">mk_unchanged_on</a></span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.unchanged_on_validity">unchanged_on_validity</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.UNCHANGED_ON.P">P</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#m_before">m_before</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> &lt;-&gt; <span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#m_after">m_after</a></span> <span class="id"><a href="GMemory.html#b">b</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.unchanged_on_perm">unchanged_on_perm</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id">k</span> <span class="id">p</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.UNCHANGED_ON.P">P</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> -&gt; <span class="id"><a href="GMemory.html#GMem.valid_block">valid_block</a></span> <span class="id"><a href="GMemory.html#m_before">m_before</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m_before">m_before</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span> &lt;-&gt; <span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m_after">m_after</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="GMemory.html#k">k</a></span> <span class="id"><a href="GMemory.html#p">p</a></span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="GMem.unchanged_on_contents">unchanged_on_contents</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.UNCHANGED_ON.P">P</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> -&gt; <span class="id"><a href="GMemory.html#GMem.perm">perm</a></span> <span class="id"><a href="GMemory.html#m_before">m_before</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> <span class="id"><a href="Memperm.html#Max">Max</a></span> <span class="id"><a href="Memperm.html#Readable">Readable</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> (<span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#m_after">m_after</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span>)) =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> (<span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#m_before">m_before</a></span>.(<span class="id"><a href="GMemory.html#GMem.mem_contents">mem_contents</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="GMem.unchanged_on_refl">unchanged_on_refl</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m</span>, <span class="id"><a href="GMemory.html#GMem.unchanged_on">unchanged_on</a></span> <span class="id"><a href="GMemory.html#m">m</a></span> <span class="id"><a href="GMemory.html#m">m</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5701')">Proof.</div>
+<div class="proofscript" id="proof5701">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">constructor</span>; <span class="tactic">firstorder</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">Theorem</span> <span class="id"><a name="GMem.unchanged_on_trans">unchanged_on_trans</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">m1</span> <span class="id">m2</span> <span class="id">m3</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.unchanged_on">unchanged_on</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.unchanged_on">unchanged_on</a></span> <span class="id"><a href="GMemory.html#m2">m2</a></span> <span class="id"><a href="GMemory.html#m3">m3</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.unchanged_on">unchanged_on</a></span> <span class="id"><a href="GMemory.html#m1">m1</a></span> <span class="id"><a href="GMemory.html#m3">m3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5702')">Proof.</div>
+<div class="proofscript" id="proof5702">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">inversion</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">unchanged_on_validity0</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">unchanged_on_perm0</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">unchanged_on_perm1</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">unchanged_on_validity0</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">erewrite</span> &lt;- <span class="id">unchanged_on_contents0</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">unchanged_on_contents1</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">unchanged_on_perm0</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#in_dec">in_dec</a></span> <span class="id"><a href="Values.html#eq_block">eq_block</a></span> <span class="id">b</span> (<span class="id"><a href="GMemory.html#GMem.validblocks">validblocks</a></span> <span class="id">m1</span>)); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> (<span class="id"><a href="GMemory.html#GMem.invalid_noaccess">invalid_noaccess</a></span> <span class="id">m1</span> <span class="id">b</span> <span class="id">ofs</span> <span class="id"><a href="Memperm.html#Max">Max</a></span>) <span class="kwd">in</span> <span class="id">n</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="GMemory.html#GMem.perm">perm</a></span>, <span class="id">perm_order</span>' <span class="kwd">in</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">n</span> <span class="kwd">in</span> <span class="id">H2</span>. <span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;<span class="kwd">End</span> <span class="id"><a href="GMemory.html#GMem.UNCHANGED_ON">UNCHANGED_ON</a></span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="kwd">Lemma</span> <span class="id"><a name="GMem.unchanged_on_implies">unchanged_on_implies</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">P</span> <span class="id">Q</span>: <span class="id"><a href="Values.html#block">block</a></span> -&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> -&gt; <span class="kwd">Prop</span>) <span class="id">m</span> <span class="id">m</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.unchanged_on">unchanged_on</a></span> <span class="id"><a href="GMemory.html#P">P</a></span> <span class="id"><a href="GMemory.html#m">m</a></span> <span class="id">m</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">b</span> <span class="id">ofs</span>, <span class="id"><a href="GMemory.html#Q">Q</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span> -&gt; <span class="id"><a href="GMemory.html#P">P</a></span> <span class="id"><a href="GMemory.html#b">b</a></span> <span class="id"><a href="GMemory.html#ofs">ofs</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="GMemory.html#GMem.unchanged_on">unchanged_on</a></span> <span class="id"><a href="GMemory.html#Q">Q</a></span> <span class="id"><a href="GMemory.html#m">m</a></span> <span class="id">m</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5703')">Proof.</div>
+<div class="proofscript" id="proof5703">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">constructor</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">eapply</span> <span class="id">unchanged_on_validity0</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">apply</span> <span class="id">unchanged_on_perm0</span>; <span class="tactic">auto</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">apply</span> <span class="id">unchanged_on_contents0</span>; <span class="tactic">auto</span>. <br/>
+&nbsp;&nbsp;Qed.</div>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+<span class="kwd">End</span> <span class="id"><a href="GMemory.html#GMem">GMem</a></span>.<br/>
+<br/>
+<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="gmem">gmem</a></span> := <span class="id">GMem.gmem</span>'.<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

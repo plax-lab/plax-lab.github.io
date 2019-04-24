@@ -1,0 +1,255 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Initializers</title>
+<meta name="description" content="Documentation of Coq module Initializers" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Initializers</h1>
+<div class="coq">
+<br/>
+<div class="doc">Compile-time evaluation of initializers for global C variables. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span> <span class="id">Maps</span> <span class="id">Errors</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Integers</span> <span class="id">Floats</span> <span class="id">Values</span> <span class="id">AST</span> <span class="id">Memory</span> <span class="id">Globalenvs</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Ctypes</span> <span class="id">Cop</span> <span class="id">Csyntax</span>.<br/>
+<br/>
+<span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">error_monad_scope</span>.<br/>
+<br/>
+<h1> Evaluation of compile-time constant expressions </h1>
+<br/>
+<div class="doc">To evaluate constant expressions at compile-time, we use the same <span class="bracket"><span class="id">value</span></span>
+  type and the same <span class="bracket"><span class="id">sem_</span>*</span> functions that are used in CompCert C's semantics
+  (module <span class="bracket"><span class="id">Csem</span></span>).  However, we interpret pointer values symbolically:
+  <span class="bracket"><span class="id">Vptr</span> <span class="id">id</span> <span class="id">ofs</span></span> represents the address of global variable <span class="bracket"><span class="id">id</span></span>
+  plus byte offset <span class="bracket"><span class="id">ofs</span></span>. </div>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">constval</span> <span class="id">a</span></span> evaluates the constant expression <span class="bracket"><span class="id">a</span></span>.
+If <span class="bracket"><span class="id">a</span></span> is a r-value, the returned value denotes:
+<ul>
+<li>
+ <span class="bracket"><span class="id">Vint</span> <span class="id">n</span></span>, <span class="bracket"><span class="id">Vlong</span> <span class="id">n</span></span>, <span class="bracket"><span class="id">Vfloat</span> <span class="id">f</span></span>, <span class="bracket"><span class="id">Vsingle</span> <span class="id">f</span></span>: the corresponding number
+</li>
+<li>
+ <span class="bracket"><span class="id">Vptr</span> <span class="id">id</span> <span class="id">ofs</span></span>: address of global variable <span class="bracket"><span class="id">id</span></span> plus byte offset <span class="bracket"><span class="id">ofs</span></span>
+</li>
+<li>
+ <span class="bracket"><span class="id">Vundef</span></span>: erroneous expression
+</li>
+</ul>
+If <span class="bracket"><span class="id">a</span></span> is a l-value, the returned value denotes:
+<ul>
+<li>
+ <span class="bracket"><span class="id">Vptr</span> <span class="id">id</span> <span class="id">ofs</span></span>: global variable <span class="bracket"><span class="id">id</span></span> plus byte offset <span class="bracket"><span class="id">ofs</span></span>
+</li>
+</ul>
+</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">do_cast</span> (<span class="id">v</span>: <span class="id">val</span>) (<span class="id">t1</span> <span class="id">t2</span>: <span class="id">type</span>) : <span class="id">res</span> <span class="id">val</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">sem_cast</span> <span class="id">v</span> <span class="id">t1</span> <span class="id">t2</span> <span class="id">Mem.empty</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">v</span>' =&gt; <span class="id">OK</span> <span class="id">v</span>'<br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">Error</span>(<span class="id">msg</span> "<span class="id">undefined</span> <span class="id">cast</span>")<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">lookup_composite</span> (<span class="id">ce</span>: <span class="id">composite_env</span>) (<span class="id">id</span>: <span class="id">ident</span>) : <span class="id">res</span> <span class="id">composite</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">ce</span>!<span class="id">id</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">co</span> =&gt; <span class="id">OK</span> <span class="id">co</span><br/>
+&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">Error</span> (<span class="id">MSG</span> "<span class="id">Undefined</span> <span class="kwd">struct</span> <span class="id">or</span> <span class="id">union</span> " :: <span class="id">CTX</span> <span class="id">id</span> :: <span class="id">nil</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">constval</span> (<span class="id">ce</span>: <span class="id">composite_env</span>) (<span class="id">a</span>: <span class="id">expr</span>) : <span class="id">res</span> <span class="id">val</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">a</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="kwd">Eval</span> <span class="id">v</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">v</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Vint</span> <span class="id">_</span> | <span class="id">Vfloat</span> <span class="id">_</span> | <span class="id">Vsingle</span> <span class="id">_</span> | <span class="id">Vlong</span> <span class="id">_</span> =&gt; <span class="id">OK</span> <span class="id">v</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Vptr</span> <span class="id">_</span> <span class="id">_</span> | <span class="id">Vundef</span> =&gt; <span class="id">Error</span>(<span class="id">msg</span> "<span class="id">illegal</span> <span class="id">constant</span>")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Evalof</span> <span class="id">l</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">access_mode</span> <span class="id">ty</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">By_reference</span> | <span class="id">By_copy</span> =&gt; <span class="id">constval</span> <span class="id">ce</span> <span class="id">l</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">Error</span>(<span class="id">msg</span> "<span class="id">dereferencing</span> <span class="id">of</span> <span class="id">an</span> <span class="id">l</span>-<span class="id">value</span>")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Eaddrof</span> <span class="id">l</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constval</span> <span class="id">ce</span> <span class="id">l</span><br/>
+&nbsp;&nbsp;| <span class="id">Eunop</span> <span class="id">op</span> <span class="id">r1</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v1</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">sem_unary_operation</span> <span class="id">op</span> <span class="id">v1</span> (<span class="id">typeof</span> <span class="id">r1</span>) <span class="id">Mem.empty</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">v</span> =&gt; <span class="id">OK</span> <span class="id">v</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">Error</span>(<span class="id">msg</span> "<span class="id">undefined</span> <span class="id">unary</span> <span class="id">operation</span>")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Ebinop</span> <span class="id">op</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v1</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v2</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">sem_binary_operation</span> <span class="id">ce</span> <span class="id">op</span> <span class="id">v1</span> (<span class="id">typeof</span> <span class="id">r1</span>) <span class="id">v2</span> (<span class="id">typeof</span> <span class="id">r2</span>) <span class="id">Mem.empty</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">v</span> =&gt; <span class="id">OK</span> <span class="id">v</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">Error</span>(<span class="id">msg</span> "<span class="id">undefined</span> <span class="id">binary</span> <span class="id">operation</span>")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Ecast</span> <span class="id">r</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v1</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r</span>; <span class="id">do_cast</span> <span class="id">v1</span> (<span class="id">typeof</span> <span class="id">r</span>) <span class="id">ty</span><br/>
+&nbsp;&nbsp;| <span class="id">Esizeof</span> <span class="id">ty1</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Vptrofs</span> (<span class="id">Ptrofs.repr</span> (<span class="id">sizeof</span> <span class="id">ce</span> <span class="id">ty1</span>)))<br/>
+&nbsp;&nbsp;| <span class="id">Ealignof</span> <span class="id">ty1</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">Vptrofs</span> (<span class="id">Ptrofs.repr</span> (<span class="id">alignof</span> <span class="id">ce</span> <span class="id">ty1</span>)))<br/>
+&nbsp;&nbsp;| <span class="id">Eseqand</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v1</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v2</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">bool_val</span> <span class="id">v1</span> (<span class="id">typeof</span> <span class="id">r1</span>) <span class="id">Mem.empty</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">true</span> =&gt; <span class="id">do_cast</span> <span class="id">v2</span> (<span class="id">typeof</span> <span class="id">r2</span>) <span class="id">type_bool</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">false</span> =&gt; <span class="id">OK</span> (<span class="id">Vint</span> <span class="id">Int.zero</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">Error</span>(<span class="id">msg</span> "<span class="id">undefined</span> &amp;&amp; <span class="id">operation</span>")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Eseqor</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v1</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v2</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">bool_val</span> <span class="id">v1</span> (<span class="id">typeof</span> <span class="id">r1</span>) <span class="id">Mem.empty</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">false</span> =&gt; <span class="id">do_cast</span> <span class="id">v2</span> (<span class="id">typeof</span> <span class="id">r2</span>) <span class="id">type_bool</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">true</span> =&gt; <span class="id">OK</span> (<span class="id">Vint</span> <span class="id">Int.one</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">Error</span>(<span class="id">msg</span> "<span class="id">undefined</span> || <span class="id">operation</span>")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Econdition</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">r3</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v1</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v2</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v3</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r3</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">bool_val</span> <span class="id">v1</span> (<span class="id">typeof</span> <span class="id">r1</span>) <span class="id">Mem.empty</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">true</span> =&gt; <span class="id">do_cast</span> <span class="id">v2</span> (<span class="id">typeof</span> <span class="id">r2</span>) <span class="id">ty</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Some</span> <span class="id">false</span> =&gt; <span class="id">do_cast</span> <span class="id">v3</span> (<span class="id">typeof</span> <span class="id">r3</span>) <span class="id">ty</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">None</span> =&gt; <span class="id">Error</span>(<span class="id">msg</span> "<span class="id">condition</span> <span class="id">is</span> <span class="id">undefined</span>")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Ecomma</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v1</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r1</span>; <span class="id">constval</span> <span class="id">ce</span> <span class="id">r2</span><br/>
+&nbsp;&nbsp;| <span class="id">Evar</span> <span class="id">x</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span>(<span class="id">Vptr</span> <span class="id">x</span> <span class="id">Ptrofs.zero</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Ederef</span> <span class="id">r</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constval</span> <span class="id">ce</span> <span class="id">r</span><br/>
+&nbsp;&nbsp;| <span class="id">Efield</span> <span class="id">l</span> <span class="id">f</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">typeof</span> <span class="id">l</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Tstruct</span> <span class="id">id</span> <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">co</span> &lt;- <span class="id">lookup_composite</span> <span class="id">ce</span> <span class="id">id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">delta</span> &lt;- <span class="id">field_offset</span> <span class="id">ce</span> <span class="id">f</span> (<span class="id">co_members</span> <span class="id">co</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">l</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="kwd">if</span> <span class="id">Archi.ptr64</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">then</span> <span class="id">Val.addl</span> <span class="id">v</span> (<span class="id">Vlong</span> (<span class="id">Int64.repr</span> <span class="id">delta</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">Val.add</span> <span class="id">v</span> (<span class="id">Vint</span> (<span class="id">Int.repr</span> <span class="id">delta</span>)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Tunion</span> <span class="id">id</span> <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constval</span> <span class="id">ce</span> <span class="id">l</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Error</span>(<span class="id">msg</span> "<span class="id">ill</span>-<span class="id">typed</span> <span class="id">field</span> <span class="id">access</span>")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Eparen</span> <span class="id">r</span> <span class="id">tycast</span> <span class="id">ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">r</span>; <span class="id">do_cast</span> <span class="id">v</span> (<span class="id">typeof</span> <span class="id">r</span>) <span class="id">tycast</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Error</span>(<span class="id">msg</span> "<span class="id">not</span> <span class="id">a</span> <span class="id">compile</span>-<span class="id">time</span> <span class="id">constant</span>")<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc"><span class="bracket"><span class="id">constval_cast</span> <span class="id">ce</span> <span class="id">a</span> <span class="id">ty</span></span> evaluates <span class="bracket"><span class="id">a</span></span> then converts its value to type <span class="bracket"><span class="id">ty</span></span>. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">constval_cast</span> (<span class="id">ce</span>: <span class="id">composite_env</span>) (<span class="id">a</span>: <span class="id">expr</span>) (<span class="id">ty</span>: <span class="id">type</span>): <span class="id">res</span> <span class="id">val</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v</span> &lt;- <span class="id">constval</span> <span class="id">ce</span> <span class="id">a</span>; <span class="id">do_cast</span> <span class="id">v</span> (<span class="id">typeof</span> <span class="id">a</span>) <span class="id">ty</span>.<br/>
+<br/>
+<h1> Translation of initializers </h1>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">initializer</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Init_single</span> (<span class="id">a</span>: <span class="id">expr</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Init_array</span> (<span class="id">il</span>: <span class="id">initializer_list</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Init_struct</span> (<span class="id">il</span>: <span class="id">initializer_list</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Init_union</span> (<span class="id">f</span>: <span class="id">ident</span>) (<span class="id">i</span>: <span class="id">initializer</span>)<br/>
+<span class="kwd">with</span> <span class="id">initializer_list</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Init_nil</span><br/>
+&nbsp;&nbsp;| <span class="id">Init_cons</span> (<span class="id">i</span>: <span class="id">initializer</span>) (<span class="id">il</span>: <span class="id">initializer_list</span>).<br/>
+<br/>
+<div class="doc">Translate an initializing expression <span class="bracket"><span class="id">a</span></span> for a scalar variable
+  of type <span class="bracket"><span class="id">ty</span></span>.  Return the corresponding initialization datum. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transl_init_single</span> (<span class="id">ce</span>: <span class="id">composite_env</span>) (<span class="id">ty</span>: <span class="id">type</span>) (<span class="id">a</span>: <span class="id">expr</span>) : <span class="id">res</span> <span class="id">init_data</span> :=<br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">v</span> &lt;- <span class="id">constval_cast</span> <span class="id">ce</span> <span class="id">a</span> <span class="id">ty</span>;<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">v</span>, <span class="id">ty</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Vint</span> <span class="id">n</span>, <span class="id">Tint</span> (<span class="id">I8</span>|<span class="id">IBool</span>) <span class="id">sg</span> <span class="id">_</span> =&gt; <span class="id">OK</span>(<span class="id">Init_int8</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vint</span> <span class="id">n</span>, <span class="id">Tint</span> <span class="id">I16</span> <span class="id">sg</span> <span class="id">_</span> =&gt; <span class="id">OK</span>(<span class="id">Init_int16</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vint</span> <span class="id">n</span>, <span class="id">Tint</span> <span class="id">I32</span> <span class="id">sg</span> <span class="id">_</span> =&gt; <span class="id">OK</span>(<span class="id">Init_int32</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vint</span> <span class="id">n</span>, <span class="id">Tpointer</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">assertion</span> (<span class="id">negb</span> <span class="id">Archi.ptr64</span>); <span class="id">OK</span>(<span class="id">Init_int32</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vlong</span> <span class="id">n</span>, <span class="id">Tlong</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">OK</span>(<span class="id">Init_int64</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vlong</span> <span class="id">n</span>, <span class="id">Tpointer</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">assertion</span> (<span class="id">Archi.ptr64</span>); <span class="id">OK</span>(<span class="id">Init_int64</span> <span class="id">n</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vsingle</span> <span class="id">f</span>, <span class="id">Tfloat</span> <span class="id">F32</span> <span class="id">_</span> =&gt; <span class="id">OK</span>(<span class="id">Init_float32</span> <span class="id">f</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vfloat</span> <span class="id">f</span>, <span class="id">Tfloat</span> <span class="id">F64</span> <span class="id">_</span> =&gt; <span class="id">OK</span>(<span class="id">Init_float64</span> <span class="id">f</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vptr</span> <span class="id">id</span> <span class="id">ofs</span>, <span class="id">Tint</span> <span class="id">I32</span> <span class="id">sg</span> <span class="id">_</span> =&gt; <span class="id">assertion</span> (<span class="id">negb</span> <span class="id">Archi.ptr64</span>); <span class="id">OK</span>(<span class="id">Init_addrof</span> <span class="id">id</span> <span class="id">ofs</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vptr</span> <span class="id">id</span> <span class="id">ofs</span>, <span class="id">Tlong</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">assertion</span> (<span class="id">Archi.ptr64</span>); <span class="id">OK</span>(<span class="id">Init_addrof</span> <span class="id">id</span> <span class="id">ofs</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vptr</span> <span class="id">id</span> <span class="id">ofs</span>, <span class="id">Tpointer</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">OK</span>(<span class="id">Init_addrof</span> <span class="id">id</span> <span class="id">ofs</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Vundef</span>, <span class="id">_</span> =&gt; <span class="id">Error</span>(<span class="id">msg</span> "<span class="id">undefined</span> <span class="id">operation</span> <span class="kwd">in</span> <span class="id">initializer</span>")<br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt; <span class="id">Error</span> (<span class="id">msg</span> "<span class="id">type</span> <span class="id">mismatch</span> <span class="kwd">in</span> <span class="id">initializer</span>")<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<div class="doc">Translate an initializer <span class="bracket"><span class="id">i</span></span> for a variable of type <span class="bracket"><span class="id">ty</span></span>.
+  <span class="bracket"><span class="id">transl_init</span> <span class="id">ce</span> <span class="id">ty</span> <span class="id">i</span></span> returns the appropriate list of initialization data.
+  The intermediate functions <span class="bracket"><span class="id">transl_init_rec</span></span>, <span class="bracket"><span class="id">transl_init_array</span></span>
+  and <span class="bracket"><span class="id">transl_init_struct</span></span> append initialization data to the given
+  list <span class="bracket"><span class="id">k</span></span>, and build the list of initialization data in reverse order,
+  so as to remain tail-recursive. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">padding</span> (<span class="id">frm</span> <span class="id">to</span>: <span class="id">Z</span>) (<span class="id">k</span>: <span class="id">list</span> <span class="id">init_data</span>) : <span class="id">list</span> <span class="id">init_data</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">zlt</span> <span class="id">frm</span> <span class="id">to</span> <span class="kwd">then</span> <span class="id">Init_space</span> (<span class="id">to</span> - <span class="id">frm</span>) :: <span class="id">k</span> <span class="kwd">else</span> <span class="id">k</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id">transl_init_rec</span> (<span class="id">ce</span>: <span class="id">composite_env</span>) (<span class="id">ty</span>: <span class="id">type</span>) (<span class="id">i</span>: <span class="id">initializer</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">k</span>: <span class="id">list</span> <span class="id">init_data</span>) {<span class="kwd">struct</span> <span class="id">i</span>} : <span class="id">res</span> (<span class="id">list</span> <span class="id">init_data</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">i</span>, <span class="id">ty</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Init_single</span> <span class="id">a</span>, <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">d</span> &lt;- <span class="id">transl_init_single</span> <span class="id">ce</span> <span class="id">ty</span> <span class="id">a</span>; <span class="id">OK</span> (<span class="id">d</span> :: <span class="id">k</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Init_array</span> <span class="id">il</span>, <span class="id">Tarray</span> <span class="id">tyelt</span> <span class="id">nelt</span> <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">transl_init_array</span> <span class="id">ce</span> <span class="id">tyelt</span> <span class="id">il</span> (<span class="id">Zmax</span> 0 <span class="id">nelt</span>) <span class="id">k</span><br/>
+&nbsp;&nbsp;| <span class="id">Init_struct</span> <span class="id">il</span>, <span class="id">Tstruct</span> <span class="id">id</span> <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">co</span> &lt;- <span class="id">lookup_composite</span> <span class="id">ce</span> <span class="id">id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">co_su</span> <span class="id">co</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Struct</span> =&gt; <span class="id">transl_init_struct</span> <span class="id">ce</span> <span class="id">ty</span> (<span class="id">co_members</span> <span class="id">co</span>) <span class="id">il</span> 0 <span class="id">k</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Union</span>  =&gt; <span class="id">Error</span> (<span class="id">MSG</span> "<span class="kwd">struct</span>/<span class="id">union</span> <span class="id">mismatch</span> <span class="id">on</span> " :: <span class="id">CTX</span> <span class="id">id</span> :: <span class="id">nil</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">Init_union</span> <span class="id">f</span> <span class="id">i1</span>, <span class="id">Tunion</span> <span class="id">id</span> <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">co</span> &lt;- <span class="id">lookup_composite</span> <span class="id">ce</span> <span class="id">id</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">co_su</span> <span class="id">co</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Struct</span> =&gt; <span class="id">Error</span> (<span class="id">MSG</span> "<span class="id">union</span>/<span class="kwd">struct</span> <span class="id">mismatch</span> <span class="id">on</span> " :: <span class="id">CTX</span> <span class="id">id</span> :: <span class="id">nil</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">Union</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">ty1</span> &lt;- <span class="id">field_type</span> <span class="id">f</span> (<span class="id">co_members</span> <span class="id">co</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">k1</span>  &lt;- <span class="id">transl_init_rec</span> <span class="id">ce</span> <span class="id">ty1</span> <span class="id">i1</span> <span class="id">k</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">padding</span> (<span class="id">sizeof</span> <span class="id">ce</span> <span class="id">ty1</span>) (<span class="id">sizeof</span> <span class="id">ce</span> <span class="id">ty</span>) <span class="id">k1</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Error</span> (<span class="id">msg</span> "<span class="id">wrong</span> <span class="id">type</span> <span class="kwd">for</span> <span class="id">compound</span> <span class="id">initializer</span>")<br/>
+&nbsp;&nbsp;<span class="kwd">end</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">transl_init_array</span> (<span class="id">ce</span>: <span class="id">composite_env</span>) (<span class="id">ty</span>: <span class="id">type</span>) (<span class="id">il</span>: <span class="id">initializer_list</span>) (<span class="id">sz</span>: <span class="id">Z</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">k</span>: <span class="id">list</span> <span class="id">init_data</span>) {<span class="kwd">struct</span> <span class="id">il</span>} : <span class="id">res</span> (<span class="id">list</span> <span class="id">init_data</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">il</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Init_nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">zeq</span> <span class="id">sz</span> 0 <span class="kwd">then</span> <span class="id">OK</span> <span class="id">k</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="kwd">if</span> <span class="id">zle</span> 0 <span class="id">sz</span> <span class="kwd">then</span> <span class="id">OK</span> (<span class="id">Init_space</span> (<span class="id">sz</span> * <span class="id">sizeof</span> <span class="id">ce</span> <span class="id">ty</span>) :: <span class="id">k</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">else</span> <span class="id">Error</span> (<span class="id">msg</span> "<span class="id">wrong</span> <span class="id">number</span> <span class="id">of</span> <span class="id">elements</span> <span class="kwd">in</span> <span class="id">array</span> <span class="id">initializer</span>")<br/>
+&nbsp;&nbsp;| <span class="id">Init_cons</span> <span class="id">i1</span> <span class="id">il</span>' =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">k1</span> &lt;- <span class="id">transl_init_rec</span> <span class="id">ce</span> <span class="id">ty</span> <span class="id">i1</span> <span class="id">k</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">transl_init_array</span> <span class="id">ce</span> <span class="id">ty</span> <span class="id">il</span>' (<span class="id">sz</span> - 1) <span class="id">k1</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span><br/>
+<br/>
+<span class="kwd">with</span> <span class="id">transl_init_struct</span> (<span class="id">ce</span>: <span class="id">composite_env</span>) (<span class="id">ty</span>: <span class="id">type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">fl</span>: <span class="id">members</span>) (<span class="id">il</span>: <span class="id">initializer_list</span>) (<span class="id">pos</span>: <span class="id">Z</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">k</span>: <span class="id">list</span> <span class="id">init_data</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="kwd">struct</span> <span class="id">il</span>} : <span class="id">res</span> (<span class="id">list</span> <span class="id">init_data</span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">il</span>, <span class="id">fl</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Init_nil</span>, <span class="id">nil</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">OK</span> (<span class="id">padding</span> <span class="id">pos</span> (<span class="id">sizeof</span> <span class="id">ce</span> <span class="id">ty</span>) <span class="id">k</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Init_cons</span> <span class="id">i1</span> <span class="id">il</span>', (<span class="id">_</span>, <span class="id">ty1</span>) :: <span class="id">fl</span>' =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">pos1</span> := <span class="id">align</span> <span class="id">pos</span> (<span class="id">alignof</span> <span class="id">ce</span> <span class="id">ty1</span>) <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">k1</span> &lt;- <span class="id">transl_init_rec</span> <span class="id">ce</span> <span class="id">ty1</span> <span class="id">i1</span> (<span class="id">padding</span> <span class="id">pos</span> <span class="id">pos1</span> <span class="id">k</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">transl_init_struct</span> <span class="id">ce</span> <span class="id">ty</span> <span class="id">fl</span>' <span class="id">il</span>' (<span class="id">pos1</span> + <span class="id">sizeof</span> <span class="id">ce</span> <span class="id">ty1</span>) <span class="id">k1</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Error</span> (<span class="id">msg</span> "<span class="id">wrong</span> <span class="id">number</span> <span class="id">of</span> <span class="id">elements</span> <span class="kwd">in</span> <span class="kwd">struct</span> <span class="id">initializer</span>")<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transl_init</span> (<span class="id">ce</span>: <span class="id">composite_env</span>) (<span class="id">ty</span>: <span class="id">type</span>) (<span class="id">i</span>: <span class="id">initializer</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span class="id">res</span> (<span class="id">list</span> <span class="id">init_data</span>) :=<br/>
+&nbsp;&nbsp;<span class="tactic">do</span> <span class="id">k</span> &lt;- <span class="id">transl_init_rec</span> <span class="id">ce</span> <span class="id">ty</span> <span class="id">i</span> <span class="id">nil</span>; <span class="id">OK</span> (<span class="id">List.rev</span>' <span class="id">k</span>).<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

@@ -1,0 +1,507 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Compiler</title>
+<meta name="description" content="Documentation of Coq module Compiler" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Compiler</h1>
+<div class="coq">
+<br/>
+<div class="doc">The whole compiler and its proof of semantic preservation </div>
+<br/>
+<div class="doc">Libraries. </div>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">String</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span> <span class="id">Errors</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">AST</span> <span class="id">Linking</span> <span class="id">Smallstep</span>.<br/>
+<div class="doc">Languages (syntax and semantics). </div>
+<span class="kwd">Require</span> <span class="id">Ctypes</span> <span class="id">Csyntax</span> <span class="id">Csem</span> <span class="id">Cstrategy</span> <span class="id">Cexec</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Clight</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Csharpminor</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Cminor</span>.<br/>
+<span class="kwd">Require</span> <span class="id">CminorSel</span>.<br/>
+<span class="kwd">Require</span> <span class="id">RTL</span>.<br/>
+<span class="kwd">Require</span> <span class="id">LTL</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Linear</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Mach</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Asm</span>.<br/>
+<div class="doc">Translation passes. </div>
+<span class="kwd">Require</span> <span class="id">Initializers</span>.<br/>
+<span class="kwd">Require</span> <span class="id">SimplExpr</span>.<br/>
+<span class="kwd">Require</span> <span class="id">SimplLocals</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Cshmgen</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Cminorgen</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Selection</span>.<br/>
+<span class="kwd">Require</span> <span class="id">RTLgen</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Tailcall</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Inlining</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Renumber</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Constprop</span>.<br/>
+<span class="kwd">Require</span> <span class="id">CSE</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Deadcode</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Unusedglob</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Allocation</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Tunneling</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Linearize</span>.<br/>
+<span class="kwd">Require</span> <span class="id">CleanupLabels</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Debugvar</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Stacking</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Asmgen</span>.<br/>
+<div class="doc">Proofs of semantic preservation. </div>
+<span class="kwd">Require</span> <span class="id">SimplExprproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">SimplLocalsproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Cshmgenproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Cminorgenproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Selectionproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">RTLgenproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Tailcallproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Inliningproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Renumberproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Constpropproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">CSEproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Deadcodeproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Unusedglobproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Allocproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Tunnelingproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Linearizeproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">CleanupLabelsproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Debugvarproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Stackingproof</span>.<br/>
+<span class="kwd">Require</span> <span class="id">Asmgenproof</span>.<br/>
+<div class="doc">Command-line flags. </div>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Compopts</span>.<br/>
+<br/>
+<div class="doc">Pretty-printers (defined in Caml). </div>
+<span class="kwd">Parameter</span> <span class="id">print_Clight</span>: <span class="id">Clight.program</span> -&gt; <span class="id">unit</span>.<br/>
+<span class="kwd">Parameter</span> <span class="id">print_Cminor</span>: <span class="id">Cminor.program</span> -&gt; <span class="id">unit</span>.<br/>
+<span class="kwd">Parameter</span> <span class="id">print_RTL</span>: <span class="id">Z</span> -&gt; <span class="id">RTL.program</span> -&gt; <span class="id">unit</span>.<br/>
+<span class="kwd">Parameter</span> <span class="id">print_LTL</span>: <span class="id">LTL.program</span> -&gt; <span class="id">unit</span>.<br/>
+<span class="kwd">Parameter</span> <span class="id">print_Mach</span>: <span class="id">Mach.program</span> -&gt; <span class="id">unit</span>.<br/>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">string_scope</span>.<br/>
+<br/>
+<h1> Composing the translation passes </h1>
+<br/>
+<div class="doc">We first define useful monadic composition operators,
+    along with funny (but convenient) notations. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">apply_total</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>) (<span class="id">x</span>: <span class="id">res</span> <span class="id">A</span>) (<span class="id">f</span>: <span class="id">A</span> -&gt; <span class="id">B</span>) : <span class="id">res</span> <span class="id">B</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">x</span> <span class="kwd">with</span> <span class="id">Error</span> <span class="id">msg</span> =&gt; <span class="id">Error</span> <span class="id">msg</span> | <span class="id">OK</span> <span class="id">x1</span> =&gt; <span class="id">OK</span> (<span class="id">f</span> <span class="id">x1</span>) <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">apply_partial</span> (<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">x</span>: <span class="id">res</span> <span class="id">A</span>) (<span class="id">f</span>: <span class="id">A</span> -&gt; <span class="id">res</span> <span class="id">B</span>) : <span class="id">res</span> <span class="id">B</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">x</span> <span class="kwd">with</span> <span class="id">Error</span> <span class="id">msg</span> =&gt; <span class="id">Error</span> <span class="id">msg</span> | <span class="id">OK</span> <span class="id">x1</span> =&gt; <span class="id">f</span> <span class="id">x1</span> <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Notation</span> "<span class="id">a</span> @@@ <span class="id">b</span>" :=<br/>
+&nbsp;&nbsp;&nbsp;(<span class="id">apply_partial</span> <span class="id">_</span> <span class="id">_</span> <span class="id">a</span> <span class="id">b</span>) (<span class="tactic">at</span> <span class="id">level</span> 50, <span class="id">left</span> <span class="id">associativity</span>).<br/>
+<span class="kwd">Notation</span> "<span class="id">a</span> @@ <span class="id">b</span>" :=<br/>
+&nbsp;&nbsp;&nbsp;(<span class="id">apply_total</span> <span class="id">_</span> <span class="id">_</span> <span class="id">a</span> <span class="id">b</span>) (<span class="tactic">at</span> <span class="id">level</span> 50, <span class="id">left</span> <span class="id">associativity</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">print</span> {<span class="id">A</span>: <span class="kwd">Type</span>} (<span class="id">printer</span>: <span class="id">A</span> -&gt; <span class="id">unit</span>) (<span class="id">prog</span>: <span class="id">A</span>) : <span class="id">A</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">unused</span> := <span class="id">printer</span> <span class="id">prog</span> <span class="kwd">in</span> <span class="id">prog</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">time</span> {<span class="id">A</span> <span class="id">B</span>: <span class="kwd">Type</span>} (<span class="id">name</span>: <span class="id">string</span>) (<span class="id">f</span>: <span class="id">A</span> -&gt; <span class="id">B</span>) : <span class="id">A</span> -&gt; <span class="id">B</span> := <span class="id">f</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">total_if</span> {<span class="id">A</span>: <span class="kwd">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">flag</span>: <span class="id">unit</span> -&gt; <span class="id">bool</span>) (<span class="id">f</span>: <span class="id">A</span> -&gt; <span class="id">A</span>) (<span class="id">prog</span>: <span class="id">A</span>) : <span class="id">A</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">flag</span> <span class="id">tt</span> <span class="kwd">then</span> <span class="id">f</span> <span class="id">prog</span> <span class="kwd">else</span> <span class="id">prog</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">partial_if</span> {<span class="id">A</span>: <span class="kwd">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">flag</span>: <span class="id">unit</span> -&gt; <span class="id">bool</span>) (<span class="id">f</span>: <span class="id">A</span> -&gt; <span class="id">res</span> <span class="id">A</span>) (<span class="id">prog</span>: <span class="id">A</span>) : <span class="id">res</span> <span class="id">A</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">flag</span> <span class="id">tt</span> <span class="kwd">then</span> <span class="id">f</span> <span class="id">prog</span> <span class="kwd">else</span> <span class="id">OK</span> <span class="id">prog</span>.<br/>
+<br/>
+<div class="doc">We define three translation functions for whole programs: one
+  starting with a C program, one with a Cminor program, one with an
+  RTL program.  The three translations produce Asm programs ready for
+  pretty-printing and assembling. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_rtl_program</span> (<span class="id">f</span>: <span class="id">RTL.program</span>) : <span class="id">res</span> <span class="id">Asm.program</span> :=<br/>
+&nbsp;&nbsp;&nbsp;<span class="id">OK</span> <span class="id">f</span><br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> (<span class="id">print_RTL</span> 0)<br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">total_if</span> <span class="id">Compopts.optim_tailcalls</span> (<span class="id">time</span> "<span class="id">Tail</span> <span class="id">calls</span>" <span class="id">Tailcall.transf_program</span>)<br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> (<span class="id">print_RTL</span> 1)<br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">Inlining</span>" <span class="id">Inlining.transf_program</span><br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> (<span class="id">print_RTL</span> 2)<br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">time</span> "<span class="id">Renumbering</span>" <span class="id">Renumber.transf_program</span><br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> (<span class="id">print_RTL</span> 3)<br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">total_if</span> <span class="id">Compopts.optim_constprop</span> (<span class="id">time</span> "<span class="id">Constant</span> <span class="id">propagation</span>" <span class="id">Constprop.transf_program</span>)<br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> (<span class="id">print_RTL</span> 4)<br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">total_if</span> <span class="id">Compopts.optim_constprop</span> (<span class="id">time</span> "<span class="id">Renumbering</span>" <span class="id">Renumber.transf_program</span>)<br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> (<span class="id">print_RTL</span> 5)<br/>
+&nbsp;&nbsp;@@@ <span class="id">partial_if</span> <span class="id">Compopts.optim_CSE</span> (<span class="id">time</span> "<span class="id">CSE</span>" <span class="id">CSE.transf_program</span>)<br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> (<span class="id">print_RTL</span> 6)<br/>
+&nbsp;&nbsp;@@@ <span class="id">partial_if</span> <span class="id">Compopts.optim_redundancy</span> (<span class="id">time</span> "<span class="id">Redundancy</span> <span class="id">elimination</span>" <span class="id">Deadcode.transf_program</span>)<br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> (<span class="id">print_RTL</span> 7)<br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">Unused</span> <span class="id">globals</span>" <span class="id">Unusedglob.transform_program</span><br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> (<span class="id">print_RTL</span> 8)<br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">Register</span> <span class="id">allocation</span>" <span class="id">Allocation.transf_program</span><br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> <span class="id">print_LTL</span><br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">time</span> "<span class="id">Branch</span> <span class="id">tunneling</span>" <span class="id">Tunneling.tunnel_program</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">CFG</span> <span class="id">linearization</span>" <span class="id">Linearize.transf_program</span><br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">time</span> "<span class="id">Label</span> <span class="id">cleanup</span>" <span class="id">CleanupLabels.transf_program</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">partial_if</span> <span class="id">Compopts.debug</span> (<span class="id">time</span> "<span class="id">Debugging</span> <span class="id">info</span> <span class="kwd">for</span> <span class="id">local</span> <span class="id">variables</span>" <span class="id">Debugvar.transf_program</span>)<br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">Mach</span> <span class="id">generation</span>" <span class="id">Stacking.transf_program</span><br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> <span class="id">print_Mach</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">Asm</span> <span class="id">generation</span>" <span class="id">Asmgen.transf_program</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_cminor_program</span> (<span class="id">p</span>: <span class="id">Cminor.program</span>) : <span class="id">res</span> <span class="id">Asm.program</span> :=<br/>
+&nbsp;&nbsp;&nbsp;<span class="id">OK</span> <span class="id">p</span><br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> <span class="id">print_Cminor</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">Instruction</span> <span class="id">selection</span>" <span class="id">Selection.sel_program</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">RTL</span> <span class="id">generation</span>" <span class="id">RTLgen.transl_program</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">transf_rtl_program</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_clight_program</span> (<span class="id">p</span>: <span class="id">Clight.program</span>) : <span class="id">res</span> <span class="id">Asm.program</span> :=<br/>
+&nbsp;&nbsp;<span class="id">OK</span> <span class="id">p</span><br/>
+&nbsp;&nbsp;&nbsp;@@ <span class="id">print</span> <span class="id">print_Clight</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">Simplification</span> <span class="id">of</span> <span class="id">locals</span>" <span class="id">SimplLocals.transf_program</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">C</span>#<span class="id">minor</span> <span class="id">generation</span>" <span class="id">Cshmgen.transl_program</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">Cminor</span> <span class="id">generation</span>" <span class="id">Cminorgen.transl_program</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">transf_cminor_program</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transf_c_program</span> (<span class="id">p</span>: <span class="id">Csyntax.program</span>) : <span class="id">res</span> <span class="id">Asm.program</span> :=<br/>
+&nbsp;&nbsp;<span class="id">OK</span> <span class="id">p</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">time</span> "<span class="id">Clight</span> <span class="id">generation</span>" <span class="id">SimplExpr.transl_program</span><br/>
+&nbsp;&nbsp;@@@ <span class="id">transf_clight_program</span>.<br/>
+<br/>
+<div class="doc">Force <span class="bracket"><span class="id">Initializers</span></span> and <span class="bracket"><span class="id">Cexec</span></span> to be extracted as well. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">transl_init</span> := <span class="id">Initializers.transl_init</span>.<br/>
+<span class="kwd">Definition</span> <span class="id">cexec_do_step</span> := <span class="id">Cexec.do_step</span>.<br/>
+<br/>
+<div class="doc">The following lemmas help reason over compositions of passes. </div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">print_identity</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">printer</span>: <span class="id">A</span> -&gt; <span class="id">unit</span>) (<span class="id">prog</span>: <span class="id">A</span>),<br/>
+&nbsp;&nbsp;<span class="id">print</span> <span class="id">printer</span> <span class="id">prog</span> = <span class="id">prog</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4629')">Proof.</div>
+<div class="proofscript" id="proof4629">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">print</span>. <span class="tactic">destruct</span> (<span class="id">printer</span> <span class="id">prog</span>); <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">compose_print_identity</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">x</span>: <span class="id">res</span> <span class="id">A</span>) (<span class="id">f</span>: <span class="id">A</span> -&gt; <span class="id">unit</span>),<br/>
+&nbsp;&nbsp;<span class="id">x</span> @@ <span class="id">print</span> <span class="id">f</span> = <span class="id">x</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4630')">Proof.</div>
+<div class="proofscript" id="proof4630">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">x</span>; <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">print_identity</span>. <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<h1> Relational specification of compilation </h1>
+<br/>
+<span class="kwd">Definition</span> <span class="id">match_if</span> {<span class="id">A</span>: <span class="kwd">Type</span>} (<span class="id">flag</span>: <span class="id">unit</span> -&gt; <span class="id">bool</span>) (<span class="id">R</span>: <span class="id">A</span> -&gt; <span class="id">A</span> -&gt; <span class="kwd">Prop</span>): <span class="id">A</span> -&gt; <span class="id">A</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">if</span> <span class="id">flag</span> <span class="id">tt</span> <span class="kwd">then</span> <span class="id">R</span> <span class="kwd">else</span> <span class="id">eq</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">total_if_match</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">flag</span>: <span class="id">unit</span> -&gt; <span class="id">bool</span>) (<span class="id">f</span>: <span class="id">A</span> -&gt; <span class="id">A</span>) (<span class="id">rel</span>: <span class="id">A</span> -&gt; <span class="id">A</span> -&gt; <span class="kwd">Prop</span>) (<span class="id">prog</span>: <span class="id">A</span>),<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">p</span>, <span class="id">rel</span> <span class="id">p</span> (<span class="id">f</span> <span class="id">p</span>)) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">match_if</span> <span class="id">flag</span> <span class="id">rel</span> <span class="id">prog</span> (<span class="id">total_if</span> <span class="id">flag</span> <span class="id">f</span> <span class="id">prog</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4631')">Proof.</div>
+<div class="proofscript" id="proof4631">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id">match_if</span>, <span class="id">total_if</span>. <span class="tactic">destruct</span> (<span class="id">flag</span> <span class="id">tt</span>); <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">partial_if_match</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">flag</span>: <span class="id">unit</span> -&gt; <span class="id">bool</span>) (<span class="id">f</span>: <span class="id">A</span> -&gt; <span class="id">res</span> <span class="id">A</span>) (<span class="id">rel</span>: <span class="id">A</span> -&gt; <span class="id">A</span> -&gt; <span class="kwd">Prop</span>) (<span class="id">prog</span> <span class="id">tprog</span>: <span class="id">A</span>),<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">p</span> <span class="id">tp</span>, <span class="id">f</span> <span class="id">p</span> = <span class="id">OK</span> <span class="id">tp</span> -&gt; <span class="id">rel</span> <span class="id">p</span> <span class="id">tp</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">partial_if</span> <span class="id">flag</span> <span class="id">f</span> <span class="id">prog</span> = <span class="id">OK</span> <span class="id">tprog</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">match_if</span> <span class="id">flag</span> <span class="id">rel</span> <span class="id">prog</span> <span class="id">tprog</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4632')">Proof.</div>
+<div class="proofscript" id="proof4632">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id">match_if</span>, <span class="id">partial_if</span> <span class="kwd">in</span> *. <span class="tactic">destruct</span> (<span class="id">flag</span> <span class="id">tt</span>). <span class="tactic">auto</span>. <span class="tactic">congruence</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Instance</span> <span class="id">TransfIfLink</span> {<span class="id">A</span>: <span class="kwd">Type</span>} {<span class="id">LA</span>: <span class="id">Linker</span> <span class="id">A</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">flag</span>: <span class="id">unit</span> -&gt; <span class="id">bool</span>) (<span class="id">transf</span>: <span class="id">A</span> -&gt; <span class="id">A</span> -&gt; <span class="kwd">Prop</span>) (<span class="id">TL</span>: <span class="id">TransfLink</span> <span class="id">transf</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: <span class="id">TransfLink</span> (<span class="id">match_if</span> <span class="id">flag</span> <span class="id">transf</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4633')">Proof.</div>
+<div class="proofscript" id="proof4633">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">match_if</span>. <span class="tactic">destruct</span> (<span class="id">flag</span> <span class="id">tt</span>).<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span> <span class="id">tp1</span> <span class="id">tp2</span>. <span class="id">exists</span> <span class="id">p</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">This is the list of compilation passes of CompCert in relational style.
+  Each pass is characterized by a <span class="bracket"><span class="id">match_prog</span></span> relation between its
+  input code and its output code.  The <span class="bracket"><span class="id">mkpass</span></span> and <span class="bracket">:::</span> combinators,
+  defined in module <span class="bracket"><span class="id">Linking</span></span>, ensure that the passes are composable
+  (the output language of a pass is the input language of the next pass)
+  and that they commute with linking (property <span class="bracket"><span class="id">TransfLink</span></span>, inferred
+  by the type class mechanism of Coq). </div>
+<br/>
+<span class="kwd">Local</span> <span class="kwd">Open</span> <span class="kwd">Scope</span> <span class="id">linking_scope</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">CompCert</span>'<span class="id">s_passes</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">mkpass</span> <span class="id">SimplExprproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">SimplLocalsproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Cshmgenproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Cminorgenproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Selectionproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">RTLgenproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> (<span class="id">match_if</span> <span class="id">Compopts.optim_tailcalls</span> <span class="id">Tailcallproof.match_prog</span>)<br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Inliningproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Renumberproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> (<span class="id">match_if</span> <span class="id">Compopts.optim_constprop</span> <span class="id">Constpropproof.match_prog</span>)<br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> (<span class="id">match_if</span> <span class="id">Compopts.optim_constprop</span> <span class="id">Renumberproof.match_prog</span>)<br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> (<span class="id">match_if</span> <span class="id">Compopts.optim_CSE</span> <span class="id">CSEproof.match_prog</span>)<br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> (<span class="id">match_if</span> <span class="id">Compopts.optim_redundancy</span> <span class="id">Deadcodeproof.match_prog</span>)<br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Unusedglobproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Allocproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Tunnelingproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Linearizeproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">CleanupLabelsproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> (<span class="id">match_if</span> <span class="id">Compopts.debug</span> <span class="id">Debugvarproof.match_prog</span>)<br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Stackingproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">mkpass</span> <span class="id">Asmgenproof.match_prog</span><br/>
+&nbsp;&nbsp;::: <span class="id">pass_nil</span> <span class="id">_</span>.<br/>
+<br/>
+<div class="doc">Composing the <span class="bracket"><span class="id">match_prog</span></span> relations above, we obtain the relation
+  between CompCert C sources and Asm code that characterize CompCert's
+  compilation. </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">match_prog</span>: <span class="id">Csyntax.program</span> -&gt; <span class="id">Asm.program</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id">pass_match</span> (<span class="id">compose_passes</span> <span class="id">CompCert</span>'<span class="id">s_passes</span>).<br/>
+<br/>
+<div class="doc">The <span class="bracket"><span class="id">transf_c_program</span></span> function, when successful, produces
+  assembly code that is in the <span class="bracket"><span class="id">match_prog</span></span> relation with the source C program. </div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">transf_c_program_match</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p</span> <span class="id">tp</span>,<br/>
+&nbsp;&nbsp;<span class="id">transf_c_program</span> <span class="id">p</span> = <span class="id">OK</span> <span class="id">tp</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">match_prog</span> <span class="id">p</span> <span class="id">tp</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4634')">Proof.</div>
+<div class="proofscript" id="proof4634">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">p</span> <span class="id">tp</span> <span class="id">T</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">transf_c_program</span>, <span class="id">time</span> <span class="kwd">in</span> <span class="id">T</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">SimplExpr.transl_program</span> <span class="id">p</span>) <span class="kwd">as</span> [<span class="id">p1</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P1</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">transf_clight_program</span>, <span class="id">time</span> <span class="kwd">in</span> <span class="id">T</span>. <span class="tactic">rewrite</span> ! <span class="id">compose_print_identity</span> <span class="kwd">in</span> <span class="id">T</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">SimplLocals.transf_program</span> <span class="id">p1</span>) <span class="kwd">as</span> [<span class="id">p2</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P2</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Cshmgen.transl_program</span> <span class="id">p2</span>) <span class="kwd">as</span> [<span class="id">p3</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P3</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Cminorgen.transl_program</span> <span class="id">p3</span>) <span class="kwd">as</span> [<span class="id">p4</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P4</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">transf_cminor_program</span>, <span class="id">time</span> <span class="kwd">in</span> <span class="id">T</span>. <span class="tactic">rewrite</span> ! <span class="id">compose_print_identity</span> <span class="kwd">in</span> <span class="id">T</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Selection.sel_program</span> <span class="id">p4</span>) <span class="kwd">as</span> [<span class="id">p5</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P5</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">RTLgen.transl_program</span> <span class="id">p5</span>) <span class="kwd">as</span> [<span class="id">p6</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P6</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">transf_rtl_program</span>, <span class="id">time</span> <span class="kwd">in</span> <span class="id">T</span>. <span class="tactic">rewrite</span> ! <span class="id">compose_print_identity</span> <span class="kwd">in</span> <span class="id">T</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">p7</span> := <span class="id">total_if</span> <span class="id">optim_tailcalls</span> <span class="id">Tailcall.transf_program</span> <span class="id">p6</span>) <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Inlining.transf_program</span> <span class="id">p7</span>) <span class="kwd">as</span> [<span class="id">p8</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P8</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">p9</span> := <span class="id">Renumber.transf_program</span> <span class="id">p8</span>) <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">p10</span> := <span class="id">total_if</span> <span class="id">optim_constprop</span> <span class="id">Constprop.transf_program</span> <span class="id">p9</span>) <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">p11</span> := <span class="id">total_if</span> <span class="id">optim_constprop</span> <span class="id">Renumber.transf_program</span> <span class="id">p10</span>) <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">partial_if</span> <span class="id">optim_CSE</span> <span class="id">CSE.transf_program</span> <span class="id">p11</span>) <span class="kwd">as</span> [<span class="id">p12</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P12</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">partial_if</span> <span class="id">optim_redundancy</span> <span class="id">Deadcode.transf_program</span> <span class="id">p12</span>) <span class="kwd">as</span> [<span class="id">p13</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P13</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Unusedglob.transform_program</span> <span class="id">p13</span>) <span class="kwd">as</span> [<span class="id">p14</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P14</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Allocation.transf_program</span> <span class="id">p14</span>) <span class="kwd">as</span> [<span class="id">p15</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P15</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">p16</span> := <span class="id">Tunneling.tunnel_program</span> <span class="id">p15</span>) <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Linearize.transf_program</span> <span class="id">p16</span>) <span class="kwd">as</span> [<span class="id">p17</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P17</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">p18</span> := <span class="id">CleanupLabels.transf_program</span> <span class="id">p17</span>) <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">partial_if</span> <span class="id">debug</span> <span class="id">Debugvar.transf_program</span> <span class="id">p18</span>) <span class="kwd">as</span> [<span class="id">p19</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P19</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Stacking.transf_program</span> <span class="id">p19</span>) <span class="kwd">as</span> [<span class="id">p20</span>|<span class="id">e</span>] <span class="id">eqn</span>:<span class="id">P20</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">T</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">match_prog</span>; <span class="tactic">simpl</span>. <br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p1</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">SimplExprproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p2</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">SimplLocalsproof.match_transf_program</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p3</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Cshmgenproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p4</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Cminorgenproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p5</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Selectionproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p6</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">RTLgenproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p7</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">total_if_match</span>. <span class="tactic">apply</span> <span class="id">Tailcallproof.transf_program_match</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p8</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Inliningproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p9</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Renumberproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p10</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">total_if_match</span>. <span class="tactic">apply</span> <span class="id">Constpropproof.transf_program_match</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p11</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">total_if_match</span>. <span class="tactic">apply</span> <span class="id">Renumberproof.transf_program_match</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p12</span>; <span class="tactic">split</span>. <span class="tactic">eapply</span> <span class="id">partial_if_match</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">CSEproof.transf_program_match</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p13</span>; <span class="tactic">split</span>. <span class="tactic">eapply</span> <span class="id">partial_if_match</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">Deadcodeproof.transf_program_match</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p14</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Unusedglobproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p15</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Allocproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p16</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Tunnelingproof.transf_program_match</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p17</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Linearizeproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p18</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">CleanupLabelsproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p19</span>; <span class="tactic">split</span>. <span class="tactic">eapply</span> <span class="id">partial_if_match</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">Debugvarproof.transf_program_match</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p20</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Stackingproof.transf_program_match</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">tp</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">Asmgenproof.transf_program_match</span>; <span class="tactic">auto</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">reflexivity</span>.<br/>
+Qed.</div>
+<br/>
+<h1> Semantic preservation </h1>
+<br/>
+<div class="doc">We now prove that the whole CompCert compiler (as characterized by the
+  <span class="bracket"><span class="id">match_prog</span></span> relation) preserves semantics by constructing 
+  the following simulations:
+<ul>
+<li>
+ Forward simulations from <span class="bracket"><span class="id">Cstrategy</span></span> to <span class="bracket"><span class="id">Asm</span></span>
+  (composition of the forward simulations for each pass).
+</li>
+<li>
+ Backward simulations for the same languages
+  (derived from the forward simulation, using receptiveness of the source
+  language and determinacy of <span class="bracket"><span class="id">Asm</span></span>).
+</li>
+<li>
+ Backward simulation from <span class="bracket"><span class="id">Csem</span></span> to <span class="bracket"><span class="id">Asm</span></span>
+  (composition of two backward simulations).
+</li>
+</ul>
+</div>
+<br/>
+<span class="kwd">Remark</span> <span class="id">forward_simulation_identity</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">sem</span>, <span class="id">forward_simulation</span> <span class="id">sem</span> <span class="id">sem</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4635')">Proof.</div>
+<div class="proofscript" id="proof4635">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">forward_simulation_step</span> <span class="kwd">with</span> (<span class="kwd">fun</span> <span class="id">s1</span> <span class="id">s2</span> =&gt; <span class="id">s2</span> = <span class="id">s1</span>); <span class="tactic">intros</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="id">exists</span> <span class="id">s1</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">subst</span> <span class="id">s2</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">subst</span> <span class="id">s2</span>. <span class="id">exists</span> <span class="id">s1</span>'; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">match_if_simulation</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">A</span>: <span class="kwd">Type</span>) (<span class="id">sem</span>: <span class="id">A</span> -&gt; <span class="id">semantics</span>) (<span class="id">flag</span>: <span class="id">unit</span> -&gt; <span class="id">bool</span>) (<span class="id">transf</span>: <span class="id">A</span> -&gt; <span class="id">A</span> -&gt; <span class="kwd">Prop</span>) (<span class="id">prog</span> <span class="id">tprog</span>: <span class="id">A</span>),<br/>
+&nbsp;&nbsp;<span class="id">match_if</span> <span class="id">flag</span> <span class="id">transf</span> <span class="id">prog</span> <span class="id">tprog</span> -&gt;<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">p</span> <span class="id">tp</span>, <span class="id">transf</span> <span class="id">p</span> <span class="id">tp</span> -&gt; <span class="id">forward_simulation</span> (<span class="id">sem</span> <span class="id">p</span>) (<span class="id">sem</span> <span class="id">tp</span>)) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">forward_simulation</span> (<span class="id">sem</span> <span class="id">prog</span>) (<span class="id">sem</span> <span class="id">tprog</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4636')">Proof.</div>
+<div class="proofscript" id="proof4636">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id">match_if</span> <span class="kwd">in</span> *. <span class="tactic">destruct</span> (<span class="id">flag</span> <span class="id">tt</span>). <span class="tactic">eauto</span>. <span class="tactic">subst</span>. <span class="tactic">apply</span> <span class="id">forward_simulation_identity</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">cstrategy_semantic_preservation</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p</span> <span class="id">tp</span>,<br/>
+&nbsp;&nbsp;<span class="id">match_prog</span> <span class="id">p</span> <span class="id">tp</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">forward_simulation</span> (<span class="id">Cstrategy.semantics</span> <span class="id">p</span>) (<span class="id">Asm.semantics</span> <span class="id">tp</span>)<br/>
+&nbsp;&nbsp;/\ <span class="id">backward_simulation</span> (<span class="id">atomic</span> (<span class="id">Cstrategy.semantics</span> <span class="id">p</span>)) (<span class="id">Asm.semantics</span> <span class="id">tp</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4637')">Proof.</div>
+<div class="proofscript" id="proof4637">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">p</span> <span class="id">tp</span> <span class="id">M</span>. <span class="tactic">unfold</span> <span class="id">match_prog</span>, <span class="id">pass_match</span> <span class="kwd">in</span> <span class="id">M</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">M</span>.<br/>
+<span class="kwd">Ltac</span> <span class="id">DestructM</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[ <span class="id">H</span>: <span class="id">exists</span> <span class="id">p</span>, <span class="id">_</span> /\ <span class="id">_</span> |- <span class="id">_</span> ] =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">p</span> := <span class="tactic">fresh</span> "<span class="id">p</span>" <span class="kwd">in</span> <span class="kwd">let</span> <span class="id">M</span> := <span class="tactic">fresh</span> "<span class="id">M</span>" <span class="kwd">in</span> <span class="kwd">let</span> <span class="id">MM</span> := <span class="tactic">fresh</span> "<span class="id">MM</span>" <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> (<span class="id">p</span> &amp; <span class="id">M</span> &amp; <span class="id">MM</span>); <span class="tactic">clear</span> <span class="id">H</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="id">DestructM</span>. <span class="tactic">subst</span> <span class="id">tp</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">F</span>: <span class="id">forward_simulation</span> (<span class="id">Cstrategy.semantics</span> <span class="id">p</span>) (<span class="id">Asm.semantics</span> <span class="id">p21</span>)).<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">SimplExprproof.transl_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">SimplLocalsproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Cshmgenproof.transl_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Cminorgenproof.transl_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Selectionproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">RTLgenproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">match_if_simulation</span>. <span class="id">eassumption</span>. <span class="tactic">exact</span> <span class="id">Tailcallproof.transf_program_correct</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Inliningproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>. <span class="tactic">eapply</span> <span class="id">Renumberproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">match_if_simulation</span>. <span class="id">eassumption</span>. <span class="tactic">exact</span> <span class="id">Constpropproof.transf_program_correct</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">match_if_simulation</span>. <span class="id">eassumption</span>. <span class="tactic">exact</span> <span class="id">Renumberproof.transf_program_correct</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">match_if_simulation</span>. <span class="id">eassumption</span>. <span class="tactic">exact</span> <span class="id">CSEproof.transf_program_correct</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">match_if_simulation</span>. <span class="id">eassumption</span>. <span class="tactic">exact</span> <span class="id">Deadcodeproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Unusedglobproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Allocproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Tunnelingproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Linearizeproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">CleanupLabelsproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">match_if_simulation</span>. <span class="id">eassumption</span>. <span class="tactic">exact</span> <span class="id">Debugvarproof.transf_program_correct</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">compose_forward_simulations</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Stackingproof.transf_program_correct</span> <span class="kwd">with</span> (<span class="id">return_address_offset</span> := <span class="id">Asmgenproof0.return_address_offset</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">exact</span> <span class="id">Asmgenproof.return_address_exists</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Asmgenproof.transf_program_correct</span>; <span class="id">eassumption</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">forward_to_backward_simulation</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">factor_forward_simulation</span>. <span class="tactic">auto</span>. <span class="tactic">eapply</span> <span class="id">sd_traces</span>. <span class="tactic">eapply</span> <span class="id">Asm.semantics_determinate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">atomic_receptive</span>. <span class="tactic">apply</span> <span class="id">Cstrategy.semantics_strongly_receptive</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Asm.semantics_determinate</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">c_semantic_preservation</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p</span> <span class="id">tp</span>,<br/>
+&nbsp;&nbsp;<span class="id">match_prog</span> <span class="id">p</span> <span class="id">tp</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">backward_simulation</span> (<span class="id">Csem.semantics</span> <span class="id">p</span>) (<span class="id">Asm.semantics</span> <span class="id">tp</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4638')">Proof.</div>
+<div class="proofscript" id="proof4638">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">compose_backward_simulation</span> <span class="kwd">with</span> (<span class="id">atomic</span> (<span class="id">Cstrategy.semantics</span> <span class="id">p</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">sd_traces</span>; <span class="tactic">eapply</span> <span class="id">Asm.semantics_determinate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">factor_backward_simulation</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Cstrategy.strategy_simulation</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Csem.semantics_single_events</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">ssr_well_behaved</span>; <span class="tactic">eapply</span> <span class="id">Cstrategy.semantics_strongly_receptive</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">exact</span> (<span class="id">proj2</span> (<span class="id">cstrategy_semantic_preservation</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span>)).<br/>
+Qed.</div>
+<br/>
+<h1> Correctness of the CompCert compiler </h1>
+<br/>
+<div class="doc">Combining the results above, we obtain semantic preservation for two
+  usage scenarios of CompCert: compilation of a single monolithic program,
+  and separate compilation of multiple source files followed by linking.
+  In the monolithic case, we have a whole C program <span class="bracket"><span class="id">p</span></span> that is
+  compiled in one run of CompCert to a whole Asm program <span class="bracket"><span class="id">tp</span></span>.
+  Then, <span class="bracket"><span class="id">tp</span></span> preserves the semantics of <span class="bracket"><span class="id">p</span></span>, in the sense that there
+  exists a backward simulation of the dynamic semantics of <span class="bracket"><span class="id">p</span></span>
+  by the dynamic semantics of <span class="bracket"><span class="id">tp</span></span>. </div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">transf_c_program_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p</span> <span class="id">tp</span>,<br/>
+&nbsp;&nbsp;<span class="id">transf_c_program</span> <span class="id">p</span> = <span class="id">OK</span> <span class="id">tp</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">backward_simulation</span> (<span class="id">Csem.semantics</span> <span class="id">p</span>) (<span class="id">Asm.semantics</span> <span class="id">tp</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4639')">Proof.</div>
+<div class="proofscript" id="proof4639">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">c_semantic_preservation</span>. <span class="tactic">apply</span> <span class="id">transf_c_program_match</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Here is the separate compilation case.  Consider a nonempty list <span class="bracket"><span class="id">c_units</span></span>
+  of C source files (compilation units), <span class="bracket"><span class="id">C1</span> ,,, <span class="id">Cn</span></span>.  Assume that every
+  C compilation unit <span class="bracket"><span class="id">Ci</span></span> is successfully compiled by CompCert, obtaining
+  an Asm compilation unit <span class="bracket"><span class="id">Ai</span></span>.  Let <span class="bracket"><span class="id">asm_unit</span></span> be the nonempty list
+  <span class="bracket"><span class="id">A1</span> ... <span class="id">An</span></span>.  Further assume that the C units <span class="bracket"><span class="id">C1</span> ... <span class="id">Cn</span></span> can be linked
+  together to produce a whole C program <span class="bracket"><span class="id">c_program</span></span>.  Then, the generated
+  Asm units can be linked together, producing a whole Asm program
+  <span class="bracket"><span class="id">asm_program</span></span>.  Moreover, <span class="bracket"><span class="id">asm_program</span></span> preserves the semantics of
+  <span class="bracket"><span class="id">c_program</span></span>, in the sense that there exists a backward simulation of
+  the dynamic semantics of <span class="bracket"><span class="id">asm_program</span></span> by the dynamic semantics of <span class="bracket"><span class="id">c_program</span></span>.
+</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">separate_transf_c_program_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c_units</span> <span class="id">asm_units</span> <span class="id">c_program</span>,<br/>
+&nbsp;&nbsp;<span class="id">nlist_forall2</span> (<span class="kwd">fun</span> <span class="id">cu</span> <span class="id">tcu</span> =&gt; <span class="id">transf_c_program</span> <span class="id">cu</span> = <span class="id">OK</span> <span class="id">tcu</span>) <span class="id">c_units</span> <span class="id">asm_units</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">link_list</span> <span class="id">c_units</span> = <span class="id">Some</span> <span class="id">c_program</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">asm_program</span>, <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">link_list</span> <span class="id">asm_units</span> = <span class="id">Some</span> <span class="id">asm_program</span><br/>
+&nbsp;&nbsp;&nbsp;/\ <span class="id">backward_simulation</span> (<span class="id">Csem.semantics</span> <span class="id">c_program</span>) (<span class="id">Asm.semantics</span> <span class="id">asm_program</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof4640')">Proof.</div>
+<div class="proofscript" id="proof4640">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">nlist_forall2</span> <span class="id">match_prog</span> <span class="id">c_units</span> <span class="id">asm_units</span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id">nlist_forall2_imply</span>. <span class="tactic">eauto</span>. <span class="tactic">simpl</span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">transf_c_program_match</span>; <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">exists</span> <span class="id">asm_program</span>, <span class="id">link_list</span> <span class="id">asm_units</span> = <span class="id">Some</span> <span class="id">asm_program</span> /\ <span class="id">match_prog</span> <span class="id">c_program</span> <span class="id">asm_program</span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id">link_list_compose_passes</span>; <span class="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> (<span class="id">asm_program</span> &amp; <span class="id">P</span> &amp; <span class="id">Q</span>).<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">asm_program</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id">c_semantic_preservation</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

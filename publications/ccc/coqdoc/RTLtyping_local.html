@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module RTLtyping_local</title>
+<meta name="description" content="Documentation of Coq module RTLtyping_local" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module RTLtyping_local</h1>
+<div class="coq">
+<br/>
+<br/>
+<br/>
+<div class="doc">Typing rules and a type inference algorithm for RTL. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Errors.html">Errors</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Unityping.html">Unityping</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Maps.html">Maps</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AST.html">AST</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Op.html">Op</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Registers.html">Registers</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Values.html">Values</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Integers.html">Integers</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Memory.html">Memory</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Events.html">Events</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="RTL.html">RTL</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Conventions.html">Conventions</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="RTLtyping.html">RTLtyping</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="CUAST.html">CUAST</a></span> <span class="id"><a href="IS_local.html">IS_local</a></span> <span class="id"><a href="RTL_local.html">RTL_local</a></span>.<br/>
+<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="wt_cu">wt_cu</a></span> (<span class="id">cu</span>: <span class="id"><a href="RTL_local.html#RTL_comp_unit">RTL_comp_unit</a></span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">f</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id"><a href="RTLtyping_local.html#i">i</a></span>, <span class="id"><a href="AST.html#Gfun">Gfun</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span>) (<span class="id"><a href="CUAST.html#cu_defs">cu_defs</a></span> <span class="id"><a href="RTLtyping_local.html#cu">cu</a></span>) -&gt; <span class="id"><a href="RTLtyping.html#wt_fundef">wt_fundef</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span>.<br/>
+<br/>
+<h1> Type preservation during evaluation </h1>
+<span class="kwd">Inductive</span> <span class="id"><a name="wt_stackframes">wt_stackframes</a></span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> <span class="id"><a href="RTL.html#stackframe">stackframe</a></span> -&gt; <span class="id"><a href="AST.html#signature">signature</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="wt_stackframes_nil">wt_stackframes_nil</a></span>: <span class="kwd">forall</span> <span class="id">sg</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_stackframes">wt_stackframes</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="RTLtyping_local.html#sg">sg</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="wt_stackframes_cons">wt_stackframes_cons</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">res</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">pc</span> <span class="id">rs</span> <span class="id">env</span> <span class="id">sg</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping.html#wt_function">wt_function</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span> <span class="id"><a href="RTLtyping_local.html#env">env</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping.html#wt_regset">wt_regset</a></span> <span class="id"><a href="RTLtyping_local.html#env">env</a></span> <span class="id"><a href="RTLtyping_local.html#rs">rs</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#env">env</a></span> <span class="id"><a href="RTLtyping_local.html#res">res</a></span> = <span class="id"><a href="AST.html#proj_sig_res">proj_sig_res</a></span> <span class="id"><a href="RTLtyping_local.html#sg">sg</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_stackframes">wt_stackframes</a></span> <span class="id"><a href="RTLtyping_local.html#s">s</a></span> (<span class="id"><a href="RTL.html#fn_sig">fn_sig</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_stackframes">wt_stackframes</a></span> (<span class="id"><a href="RTL.html#Stackframe">Stackframe</a></span> <span class="id"><a href="RTLtyping_local.html#res">res</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span> <span class="id"><a href="RTLtyping_local.html#sp">sp</a></span> <span class="id"><a href="RTLtyping_local.html#pc">pc</a></span> <span class="id"><a href="RTLtyping_local.html#rs">rs</a></span> :: <span class="id"><a href="RTLtyping_local.html#s">s</a></span>) <span class="id"><a href="RTLtyping_local.html#sg">sg</a></span>.<br/>
+<br/>
+<span class="kwd">Remark</span> <span class="id"><a name="wt_stackframes_change_sig">wt_stackframes_change_sig</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">sg1</span> <span class="id">sg2</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#sg1">sg1</a></span>.(<span class="id"><a href="AST.html#sig_res">sig_res</a></span>) = <span class="id"><a href="RTLtyping_local.html#sg2">sg2</a></span>.(<span class="id"><a href="AST.html#sig_res">sig_res</a></span>) -&gt; <span class="id"><a href="RTLtyping_local.html#wt_stackframes">wt_stackframes</a></span> <span class="id"><a href="RTLtyping_local.html#s">s</a></span> <span class="id"><a href="RTLtyping_local.html#sg1">sg1</a></span> -&gt; <span class="id"><a href="RTLtyping_local.html#wt_stackframes">wt_stackframes</a></span> <span class="id"><a href="RTLtyping_local.html#s">s</a></span> <span class="id"><a href="RTLtyping_local.html#sg2">sg2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7326')">Proof.</div>
+<div class="proofscript" id="proof7326">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>.<br/>
+- <span class="id">constructor</span>; <span class="tactic">congruence</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H3</span>. <span class="tactic">unfold</span> <span class="id"><a href="AST.html#proj_sig_res">proj_sig_res</a></span>. <span class="tactic">rewrite</span> <span class="id">H</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="wt_core">wt_core</a></span>: <span class="id"><a href="RTL_local.html#core">core</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+| <span class="id"><a name="wt_core_intro">wt_core_intro</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">pc</span> <span class="id">rs</span> <span class="id">env</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WT_STK</span>: <span class="id"><a href="RTLtyping_local.html#wt_stackframes">wt_stackframes</a></span> <span class="id"><a href="RTLtyping_local.html#s">s</a></span> (<span class="id"><a href="RTL.html#fn_sig">fn_sig</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WT_FN</span>: <span class="id"><a href="RTLtyping.html#wt_function">wt_function</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span> <span class="id"><a href="RTLtyping_local.html#env">env</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">WT_RS</span>: <span class="id"><a href="RTLtyping.html#wt_regset">wt_regset</a></span> <span class="id"><a href="RTLtyping_local.html#env">env</a></span> <span class="id"><a href="RTLtyping_local.html#rs">rs</a></span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="RTL_local.html#Core_State">Core_State</a></span> <span class="id"><a href="RTLtyping_local.html#s">s</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span> <span class="id"><a href="RTLtyping_local.html#sp">sp</a></span> <span class="id"><a href="RTLtyping_local.html#pc">pc</a></span> <span class="id"><a href="RTLtyping_local.html#rs">rs</a></span>)<br/>
+| <span class="id"><a name="wt_core_call">wt_core_call</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">args</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_stackframes">wt_stackframes</a></span> <span class="id"><a href="RTLtyping_local.html#s">s</a></span> (<span class="id"><a href="RTL.html#funsig">funsig</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping.html#wt_fundef">wt_fundef</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Values.html#Val.has_type_list">Val.has_type_list</a></span> <span class="id"><a href="RTLtyping_local.html#args">args</a></span> (<span class="id"><a href="AST.html#sig_args">sig_args</a></span> (<span class="id"><a href="RTL.html#funsig">funsig</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span>)) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="RTL_local.html#Core_Callstate">Core_Callstate</a></span> <span class="id"><a href="RTLtyping_local.html#s">s</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span> <span class="id"><a href="RTLtyping_local.html#args">args</a></span>)<br/>
+| <span class="id"><a name="wt_core_return">wt_core_return</a></span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">v</span> <span class="id">sg</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_stackframes">wt_stackframes</a></span> <span class="id"><a href="RTLtyping_local.html#s">s</a></span> <span class="id"><a href="RTLtyping_local.html#sg">sg</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Values.html#Val.has_type">Val.has_type</a></span> <span class="id"><a href="RTLtyping_local.html#v">v</a></span> (<span class="id"><a href="AST.html#proj_sig_res">proj_sig_res</a></span> <span class="id"><a href="RTLtyping_local.html#sg">sg</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="RTL_local.html#Core_Returnstate">Core_Returnstate</a></span> <span class="id"><a href="RTLtyping_local.html#s">s</a></span> <span class="id"><a href="RTLtyping_local.html#v">v</a></span>).<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="SUBJECT_REDUCTION">SUBJECT_REDUCTION</a></span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="SUBJECT_REDUCTION.cu">cu</a></span>: <span class="id"><a href="RTL_local.html#RTL_comp_unit">RTL_comp_unit</a></span>.<br/>
+<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="SUBJECT_REDUCTION.wt_p">wt_p</a></span>: <span class="id"><a href="RTLtyping_local.html#wt_cu">wt_cu</a></span> <span class="id"><a href="RTLtyping_local.html#SUBJECT_REDUCTION.cu">cu</a></span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="SUBJECT_REDUCTION.ge">ge</a></span>: <span class="id"><a href="RTL.html#genv">genv</a></span>.<br/>
+<br/>
+<span class="kwd">Hypothesis</span> <span class="id"><a name="SUBJECT_REDUCTION.HGE">HGE</a></span>: <span class="id"><a href="CUAST.html#globalenv_generic">globalenv_generic</a></span> <span class="id"><a href="RTLtyping_local.html#SUBJECT_REDUCTION.cu">cu</a></span> <span class="id"><a href="RTLtyping_local.html#SUBJECT_REDUCTION.ge">ge</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="subject_reduction">subject_reduction</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">st1</span> <span class="id">m1</span> <span class="id">fp</span> <span class="id">st2</span> <span class="id">m2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTL_local.html#step">step</a></span> <span class="id"><a href="RTLtyping_local.html#SUBJECT_REDUCTION.ge">ge</a></span> <span class="id"><a href="RTLtyping_local.html#st1">st1</a></span> <span class="id"><a href="RTLtyping_local.html#m1">m1</a></span> <span class="id"><a href="RTLtyping_local.html#fp">fp</a></span> <span class="id"><a href="RTLtyping_local.html#st2">st2</a></span> <span class="id"><a href="RTLtyping_local.html#m2">m2</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">WT</span>: <span class="id"><a href="RTLtyping_local.html#wt_core">wt_core</a></span> <span class="id"><a href="RTLtyping_local.html#st1">st1</a></span>), <span class="id"><a href="RTLtyping_local.html#wt_core">wt_core</a></span> <span class="id"><a href="RTLtyping_local.html#st2">st2</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7327')">Proof.</div>
+<div class="proofscript" id="proof7327">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>; <span class="id">inv</span> <span class="id">WT</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">try</span> (<span class="tactic">generalize</span> (<span class="id"><a href="RTLtyping.html#wt_instrs">wt_instrs</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">WT_FN</span> <span class="id">pc</span> <span class="id">_</span> <span class="id">H</span>); <span class="tactic">intros</span> <span class="id">WTI</span>).<br/>
+&nbsp;Inop&nbsp;*)</span>&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Iop&nbsp;*)</span>&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id"><a href="RTLtyping.html#wt_exec_Iop">wt_exec_Iop</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Iload&nbsp;*)</span>&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id"><a href="RTLtyping.html#wt_exec_Iload">wt_exec_Iload</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Istore&nbsp;*)</span>&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Icall&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id"><a href="RTLtyping.html#wt_fundef">wt_fundef</a></span> <span class="id">fd</span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">destruct</span> <span class="id">ros</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">pattern</span> <span class="id">fd</span>. <span class="tactic">eapply</span> <span class="id"><a href="CUAST.html#find_funct_prop">find_funct_prop</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Globalenvs.html#Genv.find_symbol">Genv.find_symbol</a></span> <span class="id"><a href="RTLtyping_local.html#SUBJECT_REDUCTION.ge">ge</a></span> <span class="id">i</span>); <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">pattern</span> <span class="id">fd</span>. <span class="tactic">eapply</span> <span class="id"><a href="CUAST.html#find_funct_ptr_prop">find_funct_ptr_prop</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="id">inv</span> <span class="id">WTI</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">WTI</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H8</span>. <span class="tactic">apply</span> <span class="id"><a href="RTLtyping.html#wt_regset_list">wt_regset_list</a></span>. <span class="tactic">auto</span>.<br/>
+&nbsp;Itailcall&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id"><a href="RTLtyping.html#wt_fundef">wt_fundef</a></span> <span class="id">fd</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">ros</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">pattern</span> <span class="id">fd</span>. <span class="tactic">eapply</span> <span class="id"><a href="CUAST.html#find_funct_prop">find_funct_prop</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">caseEq</span> (<span class="id"><a href="Globalenvs.html#Genv.find_symbol">Genv.find_symbol</a></span> <span class="id"><a href="RTLtyping_local.html#SUBJECT_REDUCTION.ge">ge</a></span> <span class="id">i</span>); <span class="tactic">intros</span>; <span class="tactic">rewrite</span> <span class="id">H1</span> <span class="kwd">in</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">pattern</span> <span class="id">fd</span>. <span class="tactic">eapply</span> <span class="id"><a href="CUAST.html#find_funct_ptr_prop">find_funct_ptr_prop</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">WTI</span>. <span class="tactic">apply</span> <span class="id"><a href="RTLtyping_local.html#wt_stackframes_change_sig">wt_stackframes_change_sig</a></span> <span class="kwd">with</span> (<span class="id"><a href="RTL.html#fn_sig">fn_sig</a></span> <span class="id">f</span>); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">WTI</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H7</span>. <span class="tactic">apply</span> <span class="id"><a href="RTLtyping.html#wt_regset_list">wt_regset_list</a></span>. <span class="tactic">auto</span>.<br/>
+&nbsp;Ibuiltin&nbsp;*)</span>&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id"><a href="RTLtyping.html#wt_exec_Ibuiltin">wt_exec_Ibuiltin</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Icond&nbsp;*)</span>&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Ijumptable&nbsp;*)</span>&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;Ireturn&nbsp;*)</span>&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">WTI</span>; <span class="tactic">simpl</span>. <span class="tactic">auto</span>. <span class="tactic">unfold</span> <span class="id"><a href="AST.html#proj_sig_res">proj_sig_res</a></span>; <span class="tactic">rewrite</span> <span class="id">H2</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;internal&nbsp;function&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="id">inv</span> <span class="id">H5</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H1</span>. <span class="tactic">apply</span> <span class="id"><a href="RTLtyping.html#wt_init_regs">wt_init_regs</a></span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">wt_params</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;external&nbsp;function&nbsp;*)</span>&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="Events.html#external_call_well_typed">external_call_well_typed</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;return&nbsp;*)</span>&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H1</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="RTLtyping.html#wt_regset_assign">wt_regset_assign</a></span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H10</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_initial_core">wt_initial_core</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">fid</span> <span class="id">args</span> <span class="id">c</span>, <span class="id"><a href="RTL_local.html#init_core">init_core</a></span> <span class="id"><a href="RTLtyping_local.html#SUBJECT_REDUCTION.ge">ge</a></span> <span class="id"><a href="RTLtyping_local.html#fid">fid</a></span> <span class="id"><a href="RTLtyping_local.html#args">args</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="RTLtyping_local.html#c">c</a></span> -&gt; <span class="id"><a href="RTLtyping_local.html#wt_core">wt_core</a></span> <span class="id"><a href="RTLtyping_local.html#c">c</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7328')">Proof.</div>
+<div class="proofscript" id="proof7328">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="RTL_local.html#init_core">init_core</a></span>, <span class="id"><a href="CUAST.html#generic_init_core">generic_init_core</a></span>, <span class="id"><a href="RTL_local.html#fundef_init">fundef_init</a></span>, <span class="id"><a href="val_casted.html#wd_args">val_casted.wd_args</a></span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">H</span>: <span class="kwd">match</span> ?<span class="id">x</span> <span class="kwd">with</span> <span class="id">_</span> =&gt; <span class="id">_</span> <span class="kwd">end</span> = <span class="id">_</span> |- <span class="id">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">x</span> <span class="id">eqn</span>:?; <span class="tactic">try</span> <span class="tactic">discriminate</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>. <span class="id">constructor</span>. <span class="id">constructor</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">pattern</span> (<span class="id"><a href="AST.html#Internal">Internal</a></span> <span class="id">f0</span>). <span class="tactic">eapply</span> <span class="id"><a href="CUAST.html#find_funct_ptr_prop">find_funct_ptr_prop</a></span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">repeat</span> <span class="tactic">rewrite</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Bool.Bool.html#andb_true_iff">andb_true_iff</a></span> <span class="kwd">in</span> <span class="id">Heqb0</span>. <span class="tactic">destruct</span> <span class="id">Heqb0</span>. <span class="tactic">destruct</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id"><a href="val_casted.html#val_has_type_list_func_charact">val_casted.val_has_type_list_func_charact</a></span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_after_external">wt_after_external</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">ores</span> <span class="id">c</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_core">wt_core</a></span> <span class="id"><a href="RTLtyping_local.html#c">c</a></span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTL_local.html#after_external">after_external</a></span> <span class="id"><a href="RTLtyping_local.html#c">c</a></span> <span class="id"><a href="RTLtyping_local.html#ores">ores</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">c</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_core">wt_core</a></span> <span class="id">c</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7329')">Proof.</div>
+<div class="proofscript" id="proof7329">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="RTL_local.html#after_external">after_external</a></span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">c</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">f</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">e</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">ores</span>, (<span class="id"><a href="AST.html#sig_res">sig_res</a></span> <span class="id">sg</span>) <span class="id">eqn</span>:?; <span class="tactic">try</span> <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="val_casted.html#val_has_type_func">val_casted.val_has_type_func</a></span> <span class="id">v</span> <span class="id">t</span>) <span class="id">eqn</span>:?; <span class="id">inv</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id"><a href="val_casted.html#val_has_type_funcP">val_casted.val_has_type_funcP</a></span>. <span class="tactic">unfold</span> <span class="id"><a href="AST.html#proj_sig_res">proj_sig_res</a></span>; <span class="tactic">simpl</span>; <span class="tactic">rewrite</span> <span class="id">Heqo</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">simpl</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+&nbsp;&nbsp;<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="wt_instr_inv">wt_instr_inv</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">f</span> <span class="id">sp</span> <span class="id">pc</span> <span class="id">rs</span> <span class="id">i</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#wt_core">wt_core</a></span> (<span class="id"><a href="RTL_local.html#Core_State">Core_State</a></span> <span class="id"><a href="RTLtyping_local.html#s">s</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span> <span class="id"><a href="RTLtyping_local.html#sp">sp</a></span> <span class="id"><a href="RTLtyping_local.html#pc">pc</a></span> <span class="id"><a href="RTLtyping_local.html#rs">rs</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="RTLtyping_local.html#f">f</a></span>.(<span class="id"><a href="RTL.html#fn_code">fn_code</a></span>)!<span class="id"><a href="RTLtyping_local.html#pc">pc</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="RTLtyping_local.html#i">i</a></span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">env</span>, <span class="id"><a href="RTLtyping.html#wt_instr">wt_instr</a></span> <span class="id"><a href="RTLtyping_local.html#f">f</a></span> <span class="id"><a href="RTLtyping_local.html#env">env</a></span> <span class="id"><a href="RTLtyping_local.html#i">i</a></span> /\ <span class="id"><a href="RTLtyping.html#wt_regset">wt_regset</a></span> <span class="id"><a href="RTLtyping_local.html#env">env</a></span> <span class="id"><a href="RTLtyping_local.html#rs">rs</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof7330')">Proof.</div>
+<div class="proofscript" id="proof7330">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="id">exists</span> <span class="id">env</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">WT_FN</span>. <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="RTLtyping_local.html#SUBJECT_REDUCTION">SUBJECT_REDUCTION</a></span>.<br/>
+<br/>
+<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

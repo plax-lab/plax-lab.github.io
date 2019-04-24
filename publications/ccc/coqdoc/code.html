@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module code</title>
+<meta name="description" content="Documentation of Coq module code" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module code</h1>
+<div class="coq">
+<div class="doc">This file gives the specification of spin-lock, 
+and it's implementation in x86-tso. 
+(Corresponding to the code shown in Figure 10 
+in submission #115 supplemental text) </div>
+<span class="id">From</span> <span class="id">mathcomp.ssreflect</span> <span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">fintype</span> <span class="id">ssrnat</span>. <br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span> <span class="id"><a href="Maps.html">Maps</a></span> <span class="id"><a href="Axioms.html">Axioms</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AST.html">AST</a></span> <span class="id"><a href="Integers.html">Integers</a></span> <span class="id"><a href="Floats.html">Floats</a></span> <span class="id"><a href="Values.html">Values</a></span> <span class="id"><a href="Events.html">Events</a></span> <span class="id"><a href="Globalenvs.html">Globalenvs</a></span> <span class="id"><a href="Smallstep.html">Smallstep</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Locations.html">Locations</a></span> <span class="id"><a href="Stacklayout.html">Stacklayout</a></span> <span class="id"><a href="Conventions.html">Conventions</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Asm.html">Asm</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="CUAST.html">CUAST</a></span> <span class="id"><a href="FMemOpFP.html">FMemOpFP</a></span> <span class="id"><a href="ValFP.html">ValFP</a></span> <span class="id"><a href="Op_fp.html">Op_fp</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Strings.String.html">String</a></span> <span class="id"><a href="val_casted.html">val_casted</a></span> <span class="id"><a href="helpers.html">helpers</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Footprint.html">Footprint</a></span> <span class="id"><a href="GMemory.html">GMemory</a></span> <span class="id"><a href="FMemory.html">FMemory</a></span> <span class="id"><a href="TSOMem.html">TSOMem</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="GAST.html">GAST</a></span> <span class="id"><a href="GlobDefs.html">GlobDefs</a></span> <span class="id"><a href="ETrace.html">ETrace</a></span> <span class="id"><a href="Blockset.html">Blockset</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="loadframe.html">loadframe</a></span>.<br/>
+&nbsp;<br/>
+<span class="kwd">Require</span> <span class="id"><a href="CminorLang.html">CminorLang</a></span>.<br/>
+<span class="kwd">Require</span> <span class="id"><a href="SpecLang.html">SpecLang</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="ASM_local.html">ASM_local</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AsmLang.html">AsmLang</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="AsmTSO.html">AsmTSO</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.Streams.html">Coq.Lists.Streams</a></span>.<br/>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="RGRels.html">RGRels</a></span>.<br/>
+<br/>
+<h1> Implementation of the lock specification </h1>
+<div class="doc">Lock variable </div>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_L">lock_L</a></span>: <span class="id"><a href="AST.html#globdef">globdef</a></span> <span class="id"><a href="SpecLang.html#fundef">SpecLang.fundef</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#unit">unit</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="AST.html#Gvar">Gvar</a></span> (<span class="id"><a href="AST.html#mkglobvar">mkglobvar</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#tt">tt</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="AST.html#Init_int32">Init_int32</a></span> <span class="id"><a href="Integers.html#Int.one">Int.one</a></span> :: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span>).<br/>
+<br/>
+<div class="doc">Lock variable ident </div>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_L_ident">lock_L_ident</a></span>: <span class="id"><a href="AST.html#ident">ident</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.of_nat">Pos.of_nat</a></span> 1.<br/>
+&nbsp;&nbsp;<br/>
+<div class="doc">Lock acquire function </div>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> <span class="id"><a name="Sskip">Sskip</a></span> := <span class="id"><a href="SpecLang.html#Sskip">SpecLang.Sskip</a></span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> <span class="id"><a name="Sassign">Sassign</a></span> := <span class="id"><a href="SpecLang.html#Sassign">SpecLang.Sassign</a></span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> <span class="id"><a name="Sloadv">Sloadv</a></span> := <span class="id"><a href="SpecLang.html#Sloadv">SpecLang.Sloadv</a></span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> <span class="id"><a name="Sstorev">Sstorev</a></span> := <span class="id"><a href="SpecLang.html#Sstorev">SpecLang.Sstorev</a></span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> <span class="id"><a name="Sseq">Sseq</a></span> := <span class="id"><a href="SpecLang.html#Sseq">SpecLang.Sseq</a></span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> <span class="id"><a name="Swhile">Swhile</a></span> := <span class="id"><a href="SpecLang.html#Swhile">SpecLang.Swhile</a></span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> <span class="id"><a name="Satom">Satom</a></span> := <span class="id"><a href="SpecLang.html#Satom">SpecLang.Satom</a></span>.<br/>
+<span class="kwd">Local</span> <span class="kwd">Notation</span> <span class="id"><a name="Sassert">Sassert</a></span> := <span class="id"><a href="SpecLang.html#Sassert">SpecLang.Sassert</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="r">r</a></span> : <span class="id"><a href="AST.html#ident">ident</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.of_nat">Pos.of_nat</a></span> 1.<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="x">x</a></span> : <span class="id"><a href="AST.html#ident">ident</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.of_nat">Pos.of_nat</a></span> 2.<br/>
+<br/>
+<div class="doc">
+lock_acquire_fnbody :
+The specification of the function lock of spain-lock,
+corresponding to the function lock in Figure 10(a) 
+in submission #115 supplemental text.
+</div>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_acquire_fnbody">lock_acquire_fnbody</a></span> : <span class="id"><a href="SpecLang.html#function">SpecLang.function</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="SpecLang.html#Build_function">SpecLang.Build_function</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="AST.html#mksignature">mksignature</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> (<span class="id"><a href="AST.html#mkcallconv">mkcallconv</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#Sseq">Sseq</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="code.html#Sseq">Sseq</a></span> (<span class="id"><a href="code.html#Sassign">Sassign</a></span> <span class="id"><a href="code.html#r">r</a></span> <span class="id"><a href="Integers.html#Int.zero">Int.zero</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="code.html#Sseq">Sseq</a></span> (<span class="id"><a href="code.html#Sassign">Sassign</a></span> <span class="id"><a href="code.html#x">x</a></span> <span class="id"><a href="Integers.html#Int.zero">Int.zero</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="code.html#Sseq">Sseq</a></span> (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#Swhile">Swhile</a></span> (<span class="id"><a href="SpecLang.html#BEq">SpecLang.BEq</a></span> <span class="id"><a href="code.html#r">r</a></span> <span class="id"><a href="Integers.html#Int.zero">Int.zero</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="code.html#Satom">Satom</a></span> (<span class="id"><a href="code.html#Sseq">Sseq</a></span> (<span class="id"><a href="code.html#Sloadv">Sloadv</a></span> <span class="id"><a href="code.html#r">r</a></span> <span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span>) (<span class="id"><a href="code.html#Sstorev">Sstorev</a></span> <span class="id"><a href="code.html#x">x</a></span> <span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span>)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;) <span class="id"><a href="code.html#Sskip">Sskip</a></span>))) <span class="id"><a href="code.html#Sskip">Sskip</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_acquire_ident">lock_acquire_ident</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.of_nat">Pos.of_nat</a></span> 2.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_acquire">lock_acquire</a></span> : <span class="id"><a href="AST.html#globdef">globdef</a></span> <span class="id"><a href="SpecLang.html#fundef">SpecLang.fundef</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#unit">unit</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="AST.html#Gfun">Gfun</a></span> (<span class="id"><a href="AST.html#Internal">Internal</a></span> <span class="id"><a href="code.html#lock_acquire_fnbody">lock_acquire_fnbody</a></span>).<br/>
+<br/>
+<div class="doc">Lock release function </div>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_release_fnbody">lock_release_fnbody</a></span> : <span class="id"><a href="SpecLang.html#function">SpecLang.function</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="SpecLang.html#Build_function">SpecLang.Build_function</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="AST.html#mksignature">mksignature</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> (<span class="id"><a href="AST.html#mkcallconv">mkcallconv</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#Sseq">Sseq</a></span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="code.html#Satom">Satom</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="code.html#Sseq">Sseq</a></span> (<span class="id"><a href="code.html#Sloadv">Sloadv</a></span> <span class="id"><a href="code.html#r">r</a></span> <span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="code.html#Sseq">Sseq</a></span> (<span class="id"><a href="code.html#Sassign">Sassign</a></span> <span class="id"><a href="code.html#x">x</a></span> (<span class="id"><a href="Integers.html#Int.one">Int.one</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="code.html#Sseq">Sseq</a></span> (<span class="id"><a href="code.html#Sassert">Sassert</a></span> (<span class="id"><a href="SpecLang.html#BEq">SpecLang.BEq</a></span> <span class="id"><a href="code.html#r">r</a></span> <span class="id"><a href="Integers.html#Int.zero">Int.zero</a></span>)) (<span class="id"><a href="code.html#Sstorev">Sstorev</a></span> <span class="id"><a href="code.html#x">x</a></span> <span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)) <span class="id"><a href="code.html#Sskip">Sskip</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_release_ident">lock_release_ident</a></span> := <span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.of_nat">Pos.of_nat</a></span> 3.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_release">lock_release</a></span> : <span class="id"><a href="AST.html#globdef">globdef</a></span> <span class="id"><a href="SpecLang.html#fundef">SpecLang.fundef</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#unit">unit</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="AST.html#Gfun">Gfun</a></span> (<span class="id"><a href="AST.html#Internal">Internal</a></span> <span class="id"><a href="code.html#lock_release_fnbody">lock_release_fnbody</a></span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_comp_unit">lock_comp_unit</a></span> : <span class="id"><a href="InteractionSemantics.html#comp_unit">InteractionSemantics.comp_unit</a></span> <span class="id"><a href="SpecLang.html#speclang">SpecLang.speclang</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="CUAST.html#Build_comp_unit_generic">Build_comp_unit_generic</a></span> <span class="id"><a href="SpecLang.html#fundef">SpecLang.fundef</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#unit">unit</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((<span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span>, <span class="id"><a href="code.html#lock_L">lock_L</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: (<span class="id"><a href="code.html#lock_acquire_ident">lock_acquire_ident</a></span>, <span class="id"><a href="code.html#lock_acquire">lock_acquire</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: (<span class="id"><a href="code.html#lock_release_ident">lock_release_ident</a></span>, <span class="id"><a href="code.html#lock_release">lock_release</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span> :: <span class="id"><a href="code.html#lock_acquire_ident">lock_acquire_ident</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="code.html#lock_release_ident">lock_release_ident</a></span> :: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>).<br/>
+<br/>
+<h1> Implementation of the lock x86-TSO </h1>
+<div class="doc">Lock variable </div>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_L_tso">lock_L_tso</a></span>: <span class="id"><a href="AST.html#globdef">globdef</a></span> <span class="id"><a href="ASM_local.html#fundef">fundef</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#unit">unit</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="AST.html#Gvar">Gvar</a></span> (<span class="id"><a href="AST.html#mkglobvar">mkglobvar</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#tt">tt</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="AST.html#Init_int32">Init_int32</a></span> <span class="id"><a href="Integers.html#Int.one">Int.one</a></span> :: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span>).<br/>
+<br/>
+<div class="doc">Lock acquire function </div>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_lbl">lock_lbl</a></span> := (<span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.of_nat">Pos.of_nat</a></span> 1).<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="spin_lbl">spin_lbl</a></span> := (<span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.of_nat">Pos.of_nat</a></span> 2). <br/>
+<span class="kwd">Definition</span> <span class="id"><a name="enter_lbl">enter_lbl</a></span> := (<span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.of_nat">Pos.of_nat</a></span> 3).<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_acquire_lbl">lock_acquire_lbl</a></span> := (<span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.of_nat">Pos.of_nat</a></span> 4).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_acquire_tso_fnbody">lock_acquire_tso_fnbody</a></span> : <span class="id"><a href="ASM_local.html#function">function</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#mkfunction">mkfunction</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="AST.html#mksignature">mksignature</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> (<span class="id"><a href="AST.html#mkcallconv">mkcallconv</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#Plabel">Plabel</a></span> <span class="id"><a href="code.html#lock_lbl">lock_lbl</a></span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pmov_rs">Pmov_rs</a></span> <span class="id"><a href="Asm.html#RCX">RCX</a></span> <span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pmovl_ri">Pmovl_ri</a></span> <span class="id"><a href="Asm.html#RDX">RDX</a></span> <span class="id"><a href="Integers.html#Int.zero">Int.zero</a></span> ::<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#Plabel">Plabel</a></span> <span class="id"><a href="code.html#lock_acquire_lbl">lock_acquire_lbl</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pmovl_ri">Pmovl_ri</a></span> <span class="id"><a href="Asm.html#RAX">RAX</a></span> <span class="id"><a href="Integers.html#Int.one">Int.one</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Plock_cmpxchg">Plock_cmpxchg</a></span> (<span class="id"><a href="Asm.html#Addrmode">Addrmode</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="Asm.html#RCX">RCX</a></span>) <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#inl">inl</a></span> 0%<span class="id">Z</span>)) <span class="id"><a href="Asm.html#RDX">RDX</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pjcc">Pjcc</a></span> <span class="id"><a href="Asm.html#Cond_e">Cond_e</a></span> <span class="id"><a href="code.html#enter_lbl">enter_lbl</a></span> ::<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#Plabel">Plabel</a></span> <span class="id"><a href="code.html#spin_lbl">spin_lbl</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pmovl_rm">Pmovl_rm</a></span> <span class="id"><a href="Asm.html#RBX">RBX</a></span> (<span class="id"><a href="Asm.html#Addrmode">Addrmode</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="Asm.html#RCX">RCX</a></span>) <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#inl">inl</a></span> 0%<span class="id">Z</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pcmpl_ri">Pcmpl_ri</a></span> <span class="id"><a href="Asm.html#RBX">RBX</a></span> (<span class="id"><a href="Integers.html#Int.zero">Int.zero</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pjcc">Pjcc</a></span> <span class="id"><a href="Asm.html#Cond_e">Cond_e</a></span> <span class="id"><a href="code.html#spin_lbl">spin_lbl</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pjmp_l">Pjmp_l</a></span> <span class="id"><a href="code.html#lock_acquire_lbl">lock_acquire_lbl</a></span> :: <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#Plabel">Plabel</a></span> <span class="id"><a href="code.html#enter_lbl">enter_lbl</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pmovl_ri">Pmovl_ri</a></span> <span class="id"><a href="Asm.html#RAX">RAX</a></span> (<span class="id"><a href="Integers.html#Int.zero">Int.zero</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pret">Pret</a></span> :: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_acquire_tso">lock_acquire_tso</a></span> : <span class="id"><a href="AST.html#globdef">globdef</a></span> <span class="id"><a href="ASM_local.html#fundef">fundef</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#unit">unit</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="AST.html#Gfun">Gfun</a></span> (<span class="id"><a href="AST.html#Internal">Internal</a></span> <span class="id"><a href="code.html#lock_acquire_tso_fnbody">lock_acquire_tso_fnbody</a></span>).<br/>
+<br/>
+<div class="doc">Lock release function </div>
+<span class="kwd">Definition</span> <span class="id"><a name="unlock_lbl">unlock_lbl</a></span> := (<span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.of_nat">Pos.of_nat</a></span> 4).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_release_tso_fnbody">lock_release_tso_fnbody</a></span> : <span class="id"><a href="ASM_local.html#function">function</a></span> :=<br/>
+&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#mkfunction">mkfunction</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="AST.html#mksignature">mksignature</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> (<span class="id"><a href="AST.html#mkcallconv">mkcallconv</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#false">false</a></span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="ASM_local.html#Plabel">Plabel</a></span> <span class="id"><a href="code.html#unlock_lbl">unlock_lbl</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pmov_rs">Pmov_rs</a></span> <span class="id"><a href="Asm.html#RCX">RCX</a></span> <span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pmovl_ri">Pmovl_ri</a></span> <span class="id"><a href="Asm.html#RDX">RDX</a></span> (<span class="id"><a href="Integers.html#Int.one">Int.one</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pmovl_mr">Pmovl_mr</a></span> (<span class="id"><a href="Asm.html#Addrmode">Addrmode</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id"><a href="Asm.html#RCX">RCX</a></span>) <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#inl">inl</a></span> 0%<span class="id">Z</span>)) <span class="id"><a href="Asm.html#RDX">RDX</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pmovl_ri">Pmovl_ri</a></span> <span class="id"><a href="Asm.html#RAX">RAX</a></span> (<span class="id"><a href="Integers.html#Int.zero">Int.zero</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="ASM_local.html#Pret">Pret</a></span> :: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_release_tso">lock_release_tso</a></span> : <span class="id"><a href="AST.html#globdef">globdef</a></span> <span class="id"><a href="ASM_local.html#fundef">fundef</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#unit">unit</a></span> :=<br/>
+&nbsp;&nbsp;<span class="id"><a href="AST.html#Gfun">Gfun</a></span> (<span class="id"><a href="AST.html#Internal">Internal</a></span> <span class="id"><a href="code.html#lock_release_tso_fnbody">lock_release_tso_fnbody</a></span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="lock_comp_tso_unit">lock_comp_tso_unit</a></span> : <span class="id"><a href="AsmTSO.html#comp_unit">AsmTSO.comp_unit</a></span> := <br/>
+&nbsp;&nbsp;<span class="id"><a href="CUAST.html#Build_comp_unit_generic">Build_comp_unit_generic</a></span> <span class="id"><a href="ASM_local.html#fundef">fundef</a></span> <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#unit">unit</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;((<span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span>, <span class="id"><a href="code.html#lock_L_tso">lock_L_tso</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: (<span class="id"><a href="code.html#lock_acquire_ident">lock_acquire_ident</a></span>, <span class="id"><a href="code.html#lock_acquire_tso">lock_acquire_tso</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: (<span class="id"><a href="code.html#lock_release_ident">lock_release_ident</a></span>, <span class="id"><a href="code.html#lock_release_tso">lock_release_tso</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id"><a href="code.html#lock_L_ident">lock_L_ident</a></span> :: <span class="id"><a href="code.html#lock_acquire_ident">lock_acquire_ident</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id"><a href="code.html#lock_release_ident">lock_release_ident</a></span> :: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#nil">nil</a></span>).<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

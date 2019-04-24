@@ -1,0 +1,916 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module ConstpropOpproof</title>
+<meta name="description" content="Documentation of Coq module ConstpropOpproof" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module ConstpropOpproof</h1>
+<div class="coq">
+<br/>
+<div class="doc">Correctness proof for operator strength reduction. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span> <span class="id">Compopts</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Integers</span> <span class="id">Floats</span> <span class="id">Values</span> <span class="id">Memory</span> <span class="id">Globalenvs</span> <span class="id">Events</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Op</span> <span class="id">Registers</span> <span class="id">RTL</span> <span class="id">ValueDomain</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">ConstpropOp</span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id">STRENGTH_REDUCTION</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">bc</span>: <span class="id">block_classification</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">ge</span>: <span class="id">genv</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id">GENV</span>: <span class="id">genv_match</span> <span class="id">bc</span> <span class="id">ge</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">sp</span>: <span class="id">block</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id">STACK</span>: <span class="id">bc</span> <span class="id">sp</span> = <span class="id">BCstack</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">ae</span>: <span class="id">AE.t</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">e</span>: <span class="id">regset</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">m</span>: <span class="id">mem</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id">MATCH</span>: <span class="id">ematch</span> <span class="id">bc</span> <span class="id">e</span> <span class="id">ae</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">match_G</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">r</span> <span class="id">id</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;<span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span> = <span class="id">Ptr</span>(<span class="id">Gl</span> <span class="id">id</span> <span class="id">ofs</span>) -&gt; <span class="id">Val.lessdef</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Genv.symbol_address</span> <span class="id">ge</span> <span class="id">id</span> <span class="id">ofs</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3064')">Proof.</div>
+<div class="proofscript" id="proof3064">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">vmatch_ptr_gl</span> <span class="kwd">with</span> <span class="id">bc</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H</span>. <span class="tactic">apply</span> <span class="id">MATCH</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">match_S</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">r</span> <span class="id">ofs</span>,<br/>
+&nbsp;&nbsp;<span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span> = <span class="id">Ptr</span>(<span class="id">Stk</span> <span class="id">ofs</span>) -&gt; <span class="id">Val.lessdef</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">ofs</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3065')">Proof.</div>
+<div class="proofscript" id="proof3065">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">vmatch_ptr_stk</span> <span class="kwd">with</span> <span class="id">bc</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H</span>. <span class="tactic">apply</span> <span class="id">MATCH</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">InvApproxRegs</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id">_</span> :: <span class="id">_</span> = <span class="id">_</span> :: <span class="id">_</span> |- <span class="id">_</span> ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">injection</span> <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span>; <span class="tactic">intros</span>; <span class="id">InvApproxRegs</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: ?<span class="id">v</span> = <span class="id">AE.get</span> ?<span class="id">r</span> <span class="id">ae</span> |- <span class="id">_</span> ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">MATCH</span> <span class="id">r</span>); <span class="tactic">rewrite</span> &lt;- <span class="id">H</span>; <span class="tactic">clear</span> <span class="id">H</span>; <span class="tactic">intro</span>; <span class="id">InvApproxRegs</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Ltac</span> <span class="id">SimplVM</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">goal</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id">vmatch</span> <span class="id">_</span> ?<span class="id">v</span> (<span class="id">I</span> ?<span class="id">n</span>) |- <span class="id">_</span> ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">E</span> := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">E</span>: <span class="id">v</span> = <span class="id">Vint</span> <span class="id">n</span>) <span class="tactic">by</span> (<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">auto</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">E</span> <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">H</span>; <span class="id">SimplVM</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id">vmatch</span> <span class="id">_</span> ?<span class="id">v</span> (<span class="id">L</span> ?<span class="id">n</span>) |- <span class="id">_</span> ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">E</span> := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">E</span>: <span class="id">v</span> = <span class="id">Vlong</span> <span class="id">n</span>) <span class="tactic">by</span> (<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">auto</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">E</span> <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">H</span>; <span class="id">SimplVM</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id">vmatch</span> <span class="id">_</span> ?<span class="id">v</span> (<span class="id">F</span> ?<span class="id">n</span>) |- <span class="id">_</span> ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">E</span> := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">E</span>: <span class="id">v</span> = <span class="id">Vfloat</span> <span class="id">n</span>) <span class="tactic">by</span> (<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">auto</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">E</span> <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">H</span>; <span class="id">SimplVM</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id">vmatch</span> <span class="id">_</span> ?<span class="id">v</span> (<span class="id">FS</span> ?<span class="id">n</span>) |- <span class="id">_</span> ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">E</span> := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">E</span>: <span class="id">v</span> = <span class="id">Vsingle</span> <span class="id">n</span>) <span class="tactic">by</span> (<span class="tactic">inversion</span> <span class="id">H</span>; <span class="tactic">auto</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">E</span> <span class="kwd">in</span> *; <span class="tactic">clear</span> <span class="id">H</span>; <span class="id">SimplVM</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id">vmatch</span> <span class="id">_</span> ?<span class="id">v</span> (<span class="id">Ptr</span>(<span class="id">Gl</span> ?<span class="id">id</span> ?<span class="id">ofs</span>)) |- <span class="id">_</span> ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">E</span> := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">E</span>: <span class="id">Val.lessdef</span> <span class="id">v</span> (<span class="id">Genv.symbol_address</span> <span class="id">ge</span> <span class="id">id</span> <span class="id">ofs</span>)) <span class="tactic">by</span> (<span class="tactic">eapply</span> <span class="id">vmatch_ptr_gl</span>; <span class="tactic">eauto</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">H</span>; <span class="id">SimplVM</span><br/>
+&nbsp;&nbsp;| [ <span class="id">H</span>: <span class="id">vmatch</span> <span class="id">_</span> ?<span class="id">v</span> (<span class="id">Ptr</span>(<span class="id">Stk</span> ?<span class="id">ofs</span>)) |- <span class="id">_</span> ] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">let</span> <span class="id">E</span> := <span class="tactic">fresh</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">E</span>: <span class="id">Val.lessdef</span> <span class="id">v</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">ofs</span>)) <span class="tactic">by</span> (<span class="tactic">eapply</span> <span class="id">vmatch_ptr_stk</span>; <span class="tactic">eauto</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">clear</span> <span class="id">H</span>; <span class="id">SimplVM</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">idtac</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">eval_Olea_ptr</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">a</span> <span class="id">el</span>,<br/>
+&nbsp;&nbsp;<span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) (<span class="id">Olea_ptr</span> <span class="id">a</span>) <span class="id">el</span> <span class="id">m</span> = <span class="id">eval_addressing</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">a</span> <span class="id">el</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3066')">Proof.</div>
+<div class="proofscript" id="proof3066">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Olea_ptr</span>, <span class="id">eval_addressing</span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">Archi.ptr64</span>; <span class="tactic">auto</span>. <br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">const_for_result_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">a</span> <span class="id">op</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id">const_for_result</span> <span class="id">a</span> = <span class="id">Some</span> <span class="id">op</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> <span class="id">v</span> <span class="id">a</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>', <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">nil</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span>' /\ <span class="id">Val.lessdef</span> <span class="id">v</span> <span class="id">v</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3067')">Proof.</div>
+<div class="proofscript" id="proof3067">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">const_for_result</span>. <span class="tactic">generalize</span> <span class="id">Archi.ptr64</span>; <span class="tactic">intros</span> <span class="id">ptr64</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">a</span>; <span class="id">inv</span> <span class="id">H</span>; <span class="id">SimplVM</span>.<br/>
+- <span class="comment">(*&nbsp;integer&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Vint</span> <span class="id">n</span>); <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;long&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">ptr64</span>; <span class="id">inv</span> <span class="id">H2</span>. <span class="id">exists</span> (<span class="id">Vlong</span> <span class="id">n</span>); <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;float&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Compopts.generate_float_constants</span> <span class="id">tt</span>); <span class="id">inv</span> <span class="id">H2</span>. <span class="id">exists</span> (<span class="id">Vfloat</span> <span class="id">f</span>); <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;single&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Compopts.generate_float_constants</span> <span class="id">tt</span>); <span class="id">inv</span> <span class="id">H2</span>. <span class="id">exists</span> (<span class="id">Vsingle</span> <span class="id">f</span>); <span class="tactic">auto</span>.<br/>
+- <span class="comment">(*&nbsp;pointer&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">p</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>; <span class="id">SimplVM</span>.<br/>
+&nbsp;&nbsp;+ <span class="comment">(*&nbsp;global&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">symbol_is_external</span> <span class="id">id</span>).<br/>
+&nbsp;&nbsp;* <span class="id">revert</span> <span class="id">H2</span>; <span class="id">predSpec</span> <span class="id">Ptrofs.eq</span> <span class="id">Ptrofs.eq_spec</span> <span class="id">ofs</span> <span class="id">Ptrofs.zero</span>; <span class="tactic">intros</span> <span class="id">EQ</span>; <span class="id">inv</span> <span class="id">EQ</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Genv.symbol_address</span> <span class="id">ge</span> <span class="id">id</span> <span class="id">Ptrofs.zero</span>); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;* <span class="id">inv</span> <span class="id">H2</span>. <span class="id">exists</span> (<span class="id">Genv.symbol_address</span> <span class="id">ge</span> <span class="id">id</span> <span class="id">ofs</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">eval_Olea_ptr</span>. <span class="tactic">apply</span> <span class="id">eval_addressing_Aglobal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">auto</span>.  <br/>
+&nbsp;&nbsp;+ <span class="comment">(*&nbsp;stack&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H2</span>. <span class="id">exists</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">ofs</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">eval_Olea_ptr</span>. <span class="tactic">rewrite</span> <span class="id">eval_addressing_Ainstack</span>.  <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_zero_l</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">auto</span>.  <br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">cond_strength_reduction_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">vl</span>,<br/>
+&nbsp;&nbsp;<span class="id">vl</span> = <span class="id">map</span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span>) <span class="id">args</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">cond</span>', <span class="id">args</span>') := <span class="id">cond_strength_reduction</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">vl</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">cond</span>' <span class="id">e</span>##<span class="id">args</span>' <span class="id">m</span> = <span class="id">eval_condition</span> <span class="id">cond</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3068')">Proof.</div>
+<div class="proofscript" id="proof3068">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">vl</span>. <span class="tactic">unfold</span> <span class="id">cond_strength_reduction</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">case</span> (<span class="id">cond_strength_reduction_match</span> <span class="id">cond</span> <span class="id">args</span> <span class="id">vl</span>); <span class="tactic">simpl</span>; <span class="tactic">intros</span>; <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">Val.swap_cmp_bool</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">Val.swap_cmpu_bool</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">Val.swap_cmpl_bool</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">Val.swap_cmplu_bool</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+- <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">addr_strength_reduction_32_generic_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span> <span class="id">res</span>,<br/>
+&nbsp;&nbsp;<span class="id">vl</span> = <span class="id">map</span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span>) <span class="id">args</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing32</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span> <span class="id">e</span>##<span class="id">args</span> = <span class="id">Some</span> <span class="id">res</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">addr</span>', <span class="id">args</span>') := <span class="id">addr_strength_reduction_32_generic</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">res</span>', <span class="id">eval_addressing32</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span>' <span class="id">e</span>##<span class="id">args</span>' = <span class="id">Some</span> <span class="id">res</span>' /\ <span class="id">Val.lessdef</span> <span class="id">res</span> <span class="id">res</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3069')">Proof.</div>
+<div class="proofscript" id="proof3069">
+<span class="kwd">Local</span> <span class="id">Opaque</span> <span class="id">Val.add</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">A</span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id">Int.repr</span> (<span class="id">Int.signed</span> <span class="id">x</span> + <span class="id">y</span>) = <span class="id">Int.add</span> <span class="id">x</span> (<span class="id">Int.repr</span> <span class="id">y</span>)).<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span>; <span class="tactic">apply</span> <span class="id">Int.eqm_samerepr</span>; <span class="tactic">auto</span> <span class="kwd">using</span> <span class="id">Int.eqm_signed_unsigned</span> <span class="kwd">with</span> <span class="id">ints</span>. }<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">B</span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span> <span class="id">z</span>, <span class="id">Int.repr</span> (<span class="id">Int.signed</span> <span class="id">x</span> * <span class="id">y</span> + <span class="id">z</span>) = <span class="id">Int.add</span> (<span class="id">Int.mul</span> <span class="id">x</span> (<span class="id">Int.repr</span> <span class="id">y</span>)) (<span class="id">Int.repr</span> <span class="id">z</span>)).<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span>; <span class="tactic">apply</span> <span class="id">Int.eqm_samerepr</span>; <span class="tactic">apply</span> <span class="id">Int.eqm_add</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">ints</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Int.mul</span>; <span class="tactic">auto</span> <span class="kwd">using</span> <span class="id">Int.eqm_signed_unsigned</span> <span class="kwd">with</span> <span class="id">ints</span>. }<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">res</span>; <span class="tactic">intros</span> <span class="id">VL</span> <span class="id">EA</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">addr_strength_reduction_32_generic</span>; <span class="tactic">destruct</span> (<span class="id">addr_strength_reduction_32_generic_match</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span>); <br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="tactic">try</span> (<span class="id">inv</span> <span class="id">EA</span>).<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">A</span>, <span class="id">Val.add_assoc</span>, <span class="id">Val.add_permut</span>. <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">A</span>, <span class="id">Val.add_assoc</span>. <span class="tactic">auto</span>.<br/>
+- <span class="kwd">Local</span> <span class="id">Transparent</span> <span class="id">Val.add</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">A</span>, <span class="id">Val.add_permut</span>. <span class="tactic">auto</span>.<br/>
+- <span class="id">exists</span> <span class="id">res</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">addr_strength_reduction_32_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span> <span class="id">res</span>,<br/>
+&nbsp;&nbsp;<span class="id">vl</span> = <span class="id">map</span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span>) <span class="id">args</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing32</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span> <span class="id">e</span>##<span class="id">args</span> = <span class="id">Some</span> <span class="id">res</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">addr</span>', <span class="id">args</span>') := <span class="id">addr_strength_reduction_32</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">res</span>', <span class="id">eval_addressing32</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span>' <span class="id">e</span>##<span class="id">args</span>' = <span class="id">Some</span> <span class="id">res</span>' /\ <span class="id">Val.lessdef</span> <span class="id">res</span> <span class="id">res</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3070')">Proof.</div>
+<div class="proofscript" id="proof3070">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">res</span>; <span class="tactic">intros</span> <span class="id">VL</span> <span class="id">EA</span>. <span class="tactic">unfold</span> <span class="id">addr_strength_reduction_32</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">Archi.ptr64</span> <span class="id">eqn</span>:<span class="id">SF</span>. <span class="tactic">apply</span> <span class="id">addr_strength_reduction_32_generic_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">A</span>: <span class="kwd">forall</span> <span class="id">n</span>, <span class="id">Ptrofs.of_int</span> (<span class="id">Int.repr</span> <span class="id">n</span>) = <span class="id">Ptrofs.repr</span> <span class="id">n</span>) <span class="tactic">by</span> <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">ptrofs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">B</span>: <span class="kwd">forall</span> <span class="id">symb</span> <span class="id">ofs</span> <span class="id">n</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Genv.symbol_address</span> <span class="id">ge</span> <span class="id">symb</span> (<span class="id">Ptrofs.add</span> <span class="id">ofs</span> (<span class="id">Ptrofs.repr</span> <span class="id">n</span>)) =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Val.add</span> (<span class="id">Genv.symbol_address</span> <span class="id">ge</span> <span class="id">symb</span> <span class="id">ofs</span>) (<span class="id">Vint</span> (<span class="id">Int.repr</span> <span class="id">n</span>))).<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">A</span>. <span class="tactic">apply</span> <span class="id">Genv.shift_symbol_address_32</span>; <span class="tactic">auto</span>. }<br/>
+<span class="kwd">Local</span> <span class="id">Opaque</span> <span class="id">Val.add</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">addr_strength_reduction_32_match</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span>); <br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">FuncInv</span>; <span class="tactic">subst</span>; <span class="tactic">rewrite</span> ?<span class="id">SF</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="tactic">apply</span> <span class="id">Val.add_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_zero_l</span>.<br/>
+<span class="kwd">Local</span> <span class="id">Transparent</span> <span class="id">Val.add</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H2</span>. <span class="tactic">simpl</span>; <span class="tactic">rewrite</span> <span class="id">SF</span>, <span class="id">A</span>. <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Ptrofs.add</span> <span class="tactic">at</span> 2. <span class="tactic">rewrite</span> <span class="id">B</span>. <br/>
+&nbsp;&nbsp;<span class="id">fold</span> (<span class="id">Ptrofs.add</span> <span class="id">n1</span> (<span class="id">Ptrofs.of_int</span> <span class="id">n2</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Genv.shift_symbol_address_32</span> <span class="tactic">by</span> <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> ! <span class="id">Val.add_assoc</span>. <span class="tactic">apply</span> <span class="id">Val.add_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Ptrofs.add</span> <span class="tactic">at</span> 2. <span class="tactic">rewrite</span> <span class="id">B</span>. <br/>
+&nbsp;&nbsp;<span class="id">fold</span> (<span class="id">Ptrofs.add</span> <span class="id">n2</span> (<span class="id">Ptrofs.of_int</span> <span class="id">n1</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Genv.shift_symbol_address_32</span> <span class="tactic">by</span> <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> ! <span class="id">Val.add_assoc</span>. <span class="tactic">rewrite</span> <span class="id">Val.add_permut</span>. <span class="tactic">apply</span> <span class="id">Val.add_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_zero_l</span>. <span class="tactic">rewrite</span> <span class="id">Val.add_assoc</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Val.lessdef_trans</span>. <span class="tactic">apply</span> <span class="id">Val.add_lessdef</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">SF</span>. <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_assoc</span>. <span class="tactic">apply</span> <span class="id">Val.lessdef_same</span>; <span class="tactic">do</span> 3 <span class="tactic">f_equal</span>. <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">ptrofs</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_zero_l</span>. <span class="tactic">rewrite</span> <span class="id">Val.add_assoc</span>, <span class="id">Val.add_permut</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Val.lessdef_trans</span>. <span class="tactic">apply</span> <span class="id">Val.add_lessdef</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">SF</span>. <span class="tactic">rewrite</span> &lt;- (<span class="id">Ptrofs.add_commut</span> <span class="id">n2</span>). <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_assoc</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Val.lessdef_same</span>; <span class="tactic">do</span> 3 <span class="tactic">f_equal</span>. <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">ptrofs</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="tactic">rewrite</span> ! <span class="id">Val.add_assoc</span>. <span class="tactic">rewrite</span> (<span class="id">Val.add_commut</span> (<span class="id">Vint</span> (<span class="id">Int.repr</span> <span class="id">ofs</span>))).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Val.add_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="tactic">rewrite</span> (<span class="id">Val.add_commut</span> <span class="id">e</span>#<span class="id">r1</span>). <span class="tactic">rewrite</span> ! <span class="id">Val.add_assoc</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> (<span class="id">Val.add_commut</span> (<span class="id">Vint</span> (<span class="id">Int.repr</span> <span class="id">ofs</span>))). <span class="tactic">apply</span> <span class="id">Val.add_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="tactic">rewrite</span> <span class="id">Genv.shift_symbol_address_32</span> <span class="tactic">by</span> <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> ! <span class="id">Val.add_assoc</span>. <span class="tactic">apply</span> <span class="id">Val.add_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="tactic">rewrite</span> ! <span class="id">Val.add_assoc</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> (<span class="id">Val.add_commut</span> (<span class="id">Vint</span> (<span class="id">Int.repr</span> <span class="id">ofs</span>))). <span class="tactic">apply</span> <span class="id">Val.add_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Genv.shift_symbol_address_32</span> <span class="tactic">by</span> <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Genv.shift_symbol_address_32</span> <span class="tactic">by</span> <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">addr_strength_reduction_32_generic_correct</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">addr_strength_reduction_64_generic_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span> <span class="id">res</span>,<br/>
+&nbsp;&nbsp;<span class="id">vl</span> = <span class="id">map</span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span>) <span class="id">args</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing64</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span> <span class="id">e</span>##<span class="id">args</span> = <span class="id">Some</span> <span class="id">res</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">addr</span>', <span class="id">args</span>') := <span class="id">addr_strength_reduction_64_generic</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">res</span>', <span class="id">eval_addressing64</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span>' <span class="id">e</span>##<span class="id">args</span>' = <span class="id">Some</span> <span class="id">res</span>' /\ <span class="id">Val.lessdef</span> <span class="id">res</span> <span class="id">res</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3071')">Proof.</div>
+<div class="proofscript" id="proof3071">
+<span class="kwd">Local</span> <span class="id">Opaque</span> <span class="id">Val.addl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">A</span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span>, <span class="id">Int64.repr</span> (<span class="id">Int64.signed</span> <span class="id">x</span> + <span class="id">y</span>) = <span class="id">Int64.add</span> <span class="id">x</span> (<span class="id">Int64.repr</span> <span class="id">y</span>)).<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span>; <span class="tactic">apply</span> <span class="id">Int64.eqm_samerepr</span>; <span class="tactic">auto</span> <span class="kwd">using</span> <span class="id">Int64.eqm_signed_unsigned</span> <span class="kwd">with</span> <span class="id">ints</span>. }<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">B</span>: <span class="kwd">forall</span> <span class="id">x</span> <span class="id">y</span> <span class="id">z</span>, <span class="id">Int64.repr</span> (<span class="id">Int64.signed</span> <span class="id">x</span> * <span class="id">y</span> + <span class="id">z</span>) = <span class="id">Int64.add</span> (<span class="id">Int64.mul</span> <span class="id">x</span> (<span class="id">Int64.repr</span> <span class="id">y</span>)) (<span class="id">Int64.repr</span> <span class="id">z</span>)).<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span>; <span class="tactic">apply</span> <span class="id">Int64.eqm_samerepr</span>; <span class="tactic">apply</span> <span class="id">Int64.eqm_add</span>; <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">ints</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Int64.mul</span>; <span class="tactic">auto</span> <span class="kwd">using</span> <span class="id">Int64.eqm_signed_unsigned</span> <span class="kwd">with</span> <span class="id">ints</span>. }<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">res</span>; <span class="tactic">intros</span> <span class="id">VL</span> <span class="id">EA</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">addr_strength_reduction_64_generic</span>; <span class="tactic">destruct</span> (<span class="id">addr_strength_reduction_64_generic_match</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span>); <br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="tactic">try</span> (<span class="id">inv</span> <span class="id">EA</span>).<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">A</span>, <span class="id">Val.addl_assoc</span>, <span class="id">Val.addl_permut</span>. <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">A</span>, <span class="id">Val.addl_assoc</span>. <span class="tactic">auto</span>.<br/>
+- <span class="kwd">Local</span> <span class="id">Transparent</span> <span class="id">Val.addl</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">A</span>, <span class="id">Val.addl_permut</span>. <span class="tactic">auto</span>.<br/>
+- <span class="id">exists</span> <span class="id">res</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">addr_strength_reduction_64_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span> <span class="id">res</span>,<br/>
+&nbsp;&nbsp;<span class="id">vl</span> = <span class="id">map</span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span>) <span class="id">args</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing64</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span> <span class="id">e</span>##<span class="id">args</span> = <span class="id">Some</span> <span class="id">res</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">addr</span>', <span class="id">args</span>') := <span class="id">addr_strength_reduction_64</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">res</span>', <span class="id">eval_addressing64</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span>' <span class="id">e</span>##<span class="id">args</span>' = <span class="id">Some</span> <span class="id">res</span>' /\ <span class="id">Val.lessdef</span> <span class="id">res</span> <span class="id">res</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3072')">Proof.</div>
+<div class="proofscript" id="proof3072">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">res</span>; <span class="tactic">intros</span> <span class="id">VL</span> <span class="id">EA</span>. <span class="tactic">unfold</span> <span class="id">addr_strength_reduction_64</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">negb</span> <span class="id">Archi.ptr64</span>) <span class="id">eqn</span>:<span class="id">SF</span>. <span class="tactic">apply</span> <span class="id">addr_strength_reduction_64_generic_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">negb_false_iff</span> <span class="kwd">in</span> <span class="id">SF</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">A</span>: <span class="kwd">forall</span> <span class="id">n</span>, <span class="id">Ptrofs.of_int64</span> (<span class="id">Int64.repr</span> <span class="id">n</span>) = <span class="id">Ptrofs.repr</span> <span class="id">n</span>) <span class="tactic">by</span> <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">ptrofs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">B</span>: <span class="kwd">forall</span> <span class="id">symb</span> <span class="id">ofs</span> <span class="id">n</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Genv.symbol_address</span> <span class="id">ge</span> <span class="id">symb</span> (<span class="id">Ptrofs.add</span> <span class="id">ofs</span> (<span class="id">Ptrofs.repr</span> <span class="id">n</span>)) =<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Val.addl</span> (<span class="id">Genv.symbol_address</span> <span class="id">ge</span> <span class="id">symb</span> <span class="id">ofs</span>) (<span class="id">Vlong</span> (<span class="id">Int64.repr</span> <span class="id">n</span>))).<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">A</span>. <span class="tactic">apply</span> <span class="id">Genv.shift_symbol_address_64</span>; <span class="tactic">auto</span>. }<br/>
+<span class="kwd">Local</span> <span class="id">Opaque</span> <span class="id">Val.addl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">addr_strength_reduction_64_match</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span>); <br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">FuncInv</span>; <span class="tactic">subst</span>; <span class="tactic">rewrite</span> ?<span class="id">SF</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="tactic">apply</span> <span class="id">Val.addl_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_zero_l</span>.<br/>
+<span class="kwd">Local</span> <span class="id">Transparent</span> <span class="id">Val.addl</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H2</span>. <span class="tactic">simpl</span>; <span class="tactic">rewrite</span> <span class="id">SF</span>, <span class="id">A</span>. <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Ptrofs.add</span> <span class="tactic">at</span> 2. <span class="tactic">rewrite</span> <span class="id">B</span>. <br/>
+&nbsp;&nbsp;<span class="id">fold</span> (<span class="id">Ptrofs.add</span> <span class="id">n1</span> (<span class="id">Ptrofs.of_int64</span> <span class="id">n2</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Genv.shift_symbol_address_64</span> <span class="tactic">by</span> <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> ! <span class="id">Val.addl_assoc</span>. <span class="tactic">apply</span> <span class="id">Val.addl_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Ptrofs.add</span> <span class="tactic">at</span> 2. <span class="tactic">rewrite</span> <span class="id">B</span>. <br/>
+&nbsp;&nbsp;<span class="id">fold</span> (<span class="id">Ptrofs.add</span> <span class="id">n2</span> (<span class="id">Ptrofs.of_int64</span> <span class="id">n1</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Genv.shift_symbol_address_64</span> <span class="tactic">by</span> <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> ! <span class="id">Val.addl_assoc</span>. <span class="tactic">rewrite</span> <span class="id">Val.addl_permut</span>. <span class="tactic">apply</span> <span class="id">Val.addl_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_zero_l</span>. <span class="tactic">rewrite</span> <span class="id">Val.addl_assoc</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Val.lessdef_trans</span>. <span class="tactic">apply</span> <span class="id">Val.addl_lessdef</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">SF</span>. <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_assoc</span>. <span class="tactic">apply</span> <span class="id">Val.lessdef_same</span>; <span class="tactic">do</span> 3 <span class="tactic">f_equal</span>. <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">ptrofs</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_zero_l</span>. <span class="tactic">rewrite</span> <span class="id">Val.addl_assoc</span>, <span class="id">Val.addl_permut</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">Val.lessdef_trans</span>. <span class="tactic">apply</span> <span class="id">Val.addl_lessdef</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">SF</span>. <span class="tactic">rewrite</span> &lt;- (<span class="id">Ptrofs.add_commut</span> <span class="id">n2</span>). <span class="tactic">rewrite</span> <span class="id">Ptrofs.add_assoc</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">Val.lessdef_same</span>; <span class="tactic">do</span> 3 <span class="tactic">f_equal</span>. <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">ptrofs</span>.<br/>
+- <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">B</span>. <span class="tactic">rewrite</span> <span class="id">Genv.shift_symbol_address_64</span> <span class="tactic">by</span> <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> ! <span class="id">Val.addl_assoc</span>. <span class="tactic">apply</span> <span class="id">Val.addl_lessdef</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">addr_strength_reduction_64_generic_correct</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">addr_strength_reduction_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span> <span class="id">res</span>,<br/>
+&nbsp;&nbsp;<span class="id">vl</span> = <span class="id">map</span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span>) <span class="id">args</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_addressing</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span> <span class="id">e</span>##<span class="id">args</span> = <span class="id">Some</span> <span class="id">res</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">addr</span>', <span class="id">args</span>') := <span class="id">addr_strength_reduction</span> <span class="id">addr</span> <span class="id">args</span> <span class="id">vl</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">res</span>', <span class="id">eval_addressing</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">addr</span>' <span class="id">e</span>##<span class="id">args</span>' = <span class="id">Some</span> <span class="id">res</span>' /\ <span class="id">Val.lessdef</span> <span class="id">res</span> <span class="id">res</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3073')">Proof.</div>
+<div class="proofscript" id="proof3073">
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">eval_addressing</span>, <span class="id">addr_strength_reduction</span>. <span class="tactic">destruct</span> <span class="id">Archi.ptr64</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">addr_strength_reduction_64_correct</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">addr_strength_reduction_32_correct</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_cmp_base_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">args</span> <span class="id">vl</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;<span class="id">vl</span> = <span class="id">map</span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span>) <span class="id">args</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_condition</span> <span class="id">c</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">b</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>', <span class="id">args</span>') := <span class="id">make_cmp_base</span> <span class="id">c</span> <span class="id">args</span> <span class="id">vl</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span>' <span class="id">e</span>##<span class="id">args</span>' <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <span class="id">Val.lessdef</span> (<span class="id">Val.of_bool</span> <span class="id">b</span>) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3074')">Proof.</div>
+<div class="proofscript" id="proof3074">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id">make_cmp_base</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">cond_strength_reduction_correct</span> <span class="id">c</span> <span class="id">args</span> <span class="id">vl</span> <span class="id">H</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">cond_strength_reduction</span> <span class="id">c</span> <span class="id">args</span> <span class="id">vl</span>) <span class="kwd">as</span> [<span class="id">c</span>' <span class="id">args</span>']. <span class="tactic">intros</span> <span class="id">EQ</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>;[|<span class="tactic">eauto</span>]. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">EQ</span>, <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_cmp_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">c</span> <span class="id">args</span> <span class="id">vl</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;<span class="id">vl</span> = <span class="id">map</span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span>) <span class="id">args</span> -&gt;<br/>
+&nbsp;&nbsp;(<span class="id">eval_condition</span> <span class="id">c</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span>) = <span class="id">Some</span> <span class="id">b</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>', <span class="id">args</span>') := <span class="id">make_cmp</span> <span class="id">c</span> <span class="id">args</span> <span class="id">vl</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span>' <span class="id">e</span>##<span class="id">args</span>' <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <span class="id">Val.lessdef</span> (<span class="id">Val.of_bool</span> <span class="id">b</span>) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3075')">Proof.</div>
+<div class="proofscript" id="proof3075">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">c</span> <span class="id">args</span> <span class="id">vl</span> <span class="id">b</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">Y</span>: <span class="kwd">forall</span> <span class="id">r</span>, <span class="id">vincl</span> (<span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span>) (<span class="id">Uns</span> <span class="id">Ptop</span> 1) = <span class="id">true</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r</span> = <span class="id">Vundef</span> \/ <span class="id">e</span>#<span class="id">r</span> = <span class="id">Vint</span> <span class="id">Int.zero</span> \/ <span class="id">e</span>#<span class="id">r</span> = <span class="id">Vint</span> <span class="id">Int.one</span>).<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">vmatch_Uns_1</span> <span class="kwd">with</span> <span class="id">bc</span> <span class="id">Ptop</span>. <span class="tactic">eapply</span> <span class="id">vmatch_ge</span>. <span class="tactic">eapply</span> <span class="id">vincl_ge</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">MATCH</span>. }<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">make_cmp</span>. <span class="tactic">case</span> (<span class="id">make_cmp_match</span> <span class="id">c</span> <span class="id">args</span> <span class="id">vl</span>); <span class="tactic">intros</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.one</span> &amp;&amp; <span class="id">vincl</span> <span class="id">v1</span> (<span class="id">Uns</span> <span class="id">Ptop</span> 1)) <span class="id">eqn</span>:<span class="id">E1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H</span>. <span class="id">InvBooleans</span>. <span class="tactic">subst</span> <span class="id">n</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">Y</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">A</span> | [<span class="id">A</span> | <span class="id">A</span>]]; <span class="tactic">rewrite</span> <span class="id">A</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.zero</span> &amp;&amp; <span class="id">vincl</span> <span class="id">v1</span> (<span class="id">Uns</span> <span class="id">Ptop</span> 1)) <span class="id">eqn</span>:<span class="id">E0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H</span>. <span class="id">InvBooleans</span>. <span class="tactic">subst</span> <span class="id">n</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Val.xor</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vint</span> <span class="id">Int.one</span>)); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">Y</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">A</span> | [<span class="id">A</span> | <span class="id">A</span>]]; <span class="tactic">rewrite</span> <span class="id">A</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>.  <br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">make_cmp_base_correct</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">destruct</span> (<span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.zero</span> &amp;&amp; <span class="id">vincl</span> <span class="id">v1</span> (<span class="id">Uns</span> <span class="id">Ptop</span> 1)) <span class="id">eqn</span>:<span class="id">E0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H</span>. <span class="id">InvBooleans</span>. <span class="tactic">subst</span> <span class="id">n</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">Y</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">A</span> | [<span class="id">A</span> | <span class="id">A</span>]]; <span class="tactic">rewrite</span> <span class="id">A</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.eq_dec</span> <span class="id">n</span> <span class="id">Int.one</span> &amp;&amp; <span class="id">vincl</span> <span class="id">v1</span> (<span class="id">Uns</span> <span class="id">Ptop</span> 1)) <span class="id">eqn</span>:<span class="id">E1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H</span>. <span class="id">InvBooleans</span>. <span class="tactic">subst</span> <span class="id">n</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Val.xor</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vint</span> <span class="id">Int.one</span>)); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">Y</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">A</span> | [<span class="id">A</span> | <span class="id">A</span>]]; <span class="tactic">rewrite</span> <span class="id">A</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>; <span class="tactic">rewrite</span> <span class="id">A</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">make_cmp_base_correct</span>; <span class="tactic">auto</span>.<br/>
+- <span class="tactic">apply</span> <span class="id">make_cmp_base_correct</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_addimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r</span>,<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_addimm</span> <span class="id">n</span> <span class="id">r</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.add</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3076')">Proof.</div>
+<div class="proofscript" id="proof3076">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id">make_addimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="id">exists</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>; <span class="tactic">rewrite</span> ?<span class="id">Int.add_zero</span>, ?<span class="id">Ptrofs.add_zero</span>; <span class="tactic">auto</span>. <br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Val.add</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vint</span> <span class="id">n</span>)); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">Int.repr_signed</span>; <span class="tactic">auto</span>. <br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_shlimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span>,<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_shlimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.shl</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3077')">Proof.</div>
+<div class="proofscript" id="proof3077">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_shlimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int.shl_zero</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.ltu</span> <span class="id">n</span> <span class="id">Int.iwordsize</span>).<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_shrimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span>,<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_shrimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.shr</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3078')">Proof.</div>
+<div class="proofscript" id="proof3078">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_shrimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int.shr_zero</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.ltu</span> <span class="id">n</span> <span class="id">Int.iwordsize</span>).<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_shruimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span>,<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_shruimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.shru</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3079')">Proof.</div>
+<div class="proofscript" id="proof3079">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_shruimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int.shru_zero</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.ltu</span> <span class="id">n</span> <span class="id">Int.iwordsize</span>).<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_mulimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span>,<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_mulimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.mul</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3080')">Proof.</div>
+<div class="proofscript" id="proof3080">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_mulimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Vint</span> <span class="id">Int.zero</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int.mul_zero</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.one</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int.mul_one</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.is_power2</span> <span class="id">n</span>) <span class="id">eqn</span>:?; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> (<span class="id">Val.mul_pow2</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">_</span> <span class="id">_</span> <span class="id">Heqo</span>). <span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_divimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id">Val.divs</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">e</span>#<span class="id">r2</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_divimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">w</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">w</span> /\ <span class="id">Val.lessdef</span> <span class="id">v</span> <span class="id">w</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3081')">Proof.</div>
+<div class="proofscript" id="proof3081">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_divimm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.is_power2</span> <span class="id">n</span>) <span class="id">eqn</span>:?.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.ltu</span> <span class="id">i</span> (<span class="id">Int.repr</span> 31)) <span class="id">eqn</span>:?.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>. <span class="tactic">eapply</span> <span class="id">Val.divs_pow2</span>; <span class="tactic">eauto</span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_divuimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id">Val.divu</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">e</span>#<span class="id">r2</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_divuimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">w</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">w</span> /\ <span class="id">Val.lessdef</span> <span class="id">v</span> <span class="id">w</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3082')">Proof.</div>
+<div class="proofscript" id="proof3082">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_divuimm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.is_power2</span> <span class="id">n</span>) <span class="id">eqn</span>:?.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="id">erewrite</span> <span class="id">Val.divu_pow2</span> <span class="tactic">by</span> <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_moduimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id">Val.modu</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">e</span>#<span class="id">r2</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_moduimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">w</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">w</span> /\ <span class="id">Val.lessdef</span> <span class="id">v</span> <span class="id">w</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3083')">Proof.</div>
+<div class="proofscript" id="proof3083">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_moduimm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.is_power2</span> <span class="id">n</span>) <span class="id">eqn</span>:?.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>. <span class="id">decEq</span>. <span class="tactic">eapply</span> <span class="id">Val.modu_pow2</span>; <span class="tactic">eauto</span>. <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_andimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r</span> <span class="id">x</span>,<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> <span class="id">e</span>#<span class="id">r</span> <span class="id">x</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_andimm</span> <span class="id">n</span> <span class="id">r</span> <span class="id">x</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.and</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3084')">Proof.</div>
+<div class="proofscript" id="proof3084">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_andimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">Vint</span> <span class="id">Int.zero</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int.and_zero</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.mone</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int.and_mone</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="kwd">match</span> <span class="id">x</span> <span class="kwd">with</span> <span class="id">Uns</span> <span class="id">_</span> <span class="id">k</span> =&gt; <span class="id">Int.eq</span> (<span class="id">Int.zero_ext</span> <span class="id">k</span> (<span class="id">Int.not</span> <span class="id">n</span>)) <span class="id">Int.zero</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id">_</span> =&gt; <span class="id">false</span> <span class="kwd">end</span>) <span class="id">eqn</span>:<span class="id">UNS</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">x</span>; <span class="tactic">try</span> <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>. <span class="tactic">replace</span> (<span class="id">Int.and</span> <span class="id">i</span> <span class="id">n</span>) <span class="kwd">with</span> <span class="id">i</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">Int.eq_spec</span> (<span class="id">Int.zero_ext</span> <span class="id">n0</span> (<span class="id">Int.not</span> <span class="id">n</span>)) <span class="id">Int.zero</span>); <span class="tactic">rewrite</span> <span class="id">UNS</span>; <span class="tactic">intro</span> <span class="id">EQ</span>.<br/>
+&nbsp;&nbsp;<span class="id">Int.bit_solve</span>. <span class="tactic">destruct</span> (<span class="id">zlt</span> <span class="id">i0</span> <span class="id">n0</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">replace</span> (<span class="id">Int.testbit</span> <span class="id">n</span> <span class="id">i0</span>) <span class="kwd">with</span> (<span class="id">negb</span> (<span class="id">Int.testbit</span> <span class="id">Int.zero</span> <span class="id">i0</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Int.bits_zero</span>. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">andb_true_r</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">EQ</span>. <span class="tactic">rewrite</span> <span class="id">Int.bits_zero_ext</span> <span class="tactic">by</span> <span class="tactic">omega</span>. <span class="tactic">rewrite</span> <span class="id">zlt_true</span> <span class="tactic">by</span> <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Int.bits_not</span> <span class="tactic">by</span> <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id">negb_involutive</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H6</span> <span class="tactic">by</span> <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_orimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r</span>,<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_orimm</span> <span class="id">n</span> <span class="id">r</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.or</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3085')">Proof.</div>
+<div class="proofscript" id="proof3085">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_orimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int.or_zero</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.mone</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">Vint</span> <span class="id">Int.mone</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int.or_mone</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_xorimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r</span>,<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_xorimm</span> <span class="id">n</span> <span class="id">r</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.xor</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3086')">Proof.</div>
+<div class="proofscript" id="proof3086">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_xorimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int.xor_zero</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.mone</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">Val.notint</span> <span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_addlimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r</span>,<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_addlimm</span> <span class="id">n</span> <span class="id">r</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.addl</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vlong</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3087')">Proof.</div>
+<div class="proofscript" id="proof3087">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id">make_addlimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int64.eq</span> <span class="id">Int64.eq_spec</span> <span class="id">n</span> <span class="id">Int64.zero</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="id">exists</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>; <span class="tactic">rewrite</span> ? <span class="id">Int64.add_zero</span>, ? <span class="id">Ptrofs.add_zero</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Val.addl</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vlong</span> <span class="id">n</span>)); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">Int64.repr_signed</span>; <span class="tactic">auto</span>. <br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_shllimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span>,<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_shllimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.shll</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3088')">Proof.</div>
+<div class="proofscript" id="proof3088">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_shllimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Int64.shl</span>'. <span class="tactic">rewrite</span> <span class="id">Z.shiftl_0_r</span>, <span class="id">Int64.repr_unsigned</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.ltu</span> <span class="id">n</span> <span class="id">Int64.iwordsize</span>').<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_shrlimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span>,<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_shrlimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.shrl</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3089')">Proof.</div>
+<div class="proofscript" id="proof3089">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_shrlimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Int64.shr</span>'. <span class="tactic">rewrite</span> <span class="id">Z.shiftr_0_r</span>, <span class="id">Int64.repr_signed</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.ltu</span> <span class="id">n</span> <span class="id">Int64.iwordsize</span>').<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_shrluimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span>,<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_shrluimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.shrlu</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vint</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3090')">Proof.</div>
+<div class="proofscript" id="proof3090">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_shrluimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int.eq</span> <span class="id">Int.eq_spec</span> <span class="id">n</span> <span class="id">Int.zero</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Int64.shru</span>'. <span class="tactic">rewrite</span> <span class="id">Z.shiftr_0_r</span>, <span class="id">Int64.repr_unsigned</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int.ltu</span> <span class="id">n</span> <span class="id">Int64.iwordsize</span>').<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>. <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_mullimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span>,<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_mullimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.mull</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vlong</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3091')">Proof.</div>
+<div class="proofscript" id="proof3091">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_mullimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int64.eq</span> <span class="id">Int64.eq_spec</span> <span class="id">n</span> <span class="id">Int64.zero</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Vlong</span> <span class="id">Int64.zero</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int64.mul_zero</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int64.eq</span> <span class="id">Int64.eq_spec</span> <span class="id">n</span> <span class="id">Int64.one</span>; <span class="tactic">intros</span>. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int64.mul_one</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int64.is_power2</span>' <span class="id">n</span>) <span class="id">eqn</span>:?; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Val.shll</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vint</span> <span class="id">i</span>)); <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id">Int64.is_power2</span>'<span class="id">_range</span> <span class="tactic">by</span> <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id">Int64.mul_pow2</span>' <span class="tactic">by</span> <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_divlimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id">Val.divls</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">e</span>#<span class="id">r2</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vlong</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_divlimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">w</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">w</span> /\ <span class="id">Val.lessdef</span> <span class="id">v</span> <span class="id">w</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3092')">Proof.</div>
+<div class="proofscript" id="proof3092">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_divlimm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int64.is_power2</span>' <span class="id">n</span>) <span class="id">eqn</span>:?. <span class="tactic">destruct</span> (<span class="id">Int.ltu</span> <span class="id">i</span> (<span class="id">Int.repr</span> 63)) <span class="id">eqn</span>:?.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">Val.divls_pow2</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_divluimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id">Val.divlu</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">e</span>#<span class="id">r2</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vlong</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_divluimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">w</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">w</span> /\ <span class="id">Val.lessdef</span> <span class="id">v</span> <span class="id">w</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3093')">Proof.</div>
+<div class="proofscript" id="proof3093">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_divluimm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int64.is_power2</span>' <span class="id">n</span>) <span class="id">eqn</span>:?.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">simpl</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">destruct</span> (<span class="id">Int64.eq</span> <span class="id">n</span> <span class="id">Int64.zero</span>); <span class="id">inv</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id">Int64.is_power2</span>'<span class="id">_range</span> <span class="tactic">by</span> <span class="tactic">eauto</span>.    <br/>
+&nbsp;&nbsp;<span class="id">erewrite</span> <span class="id">Int64.divu_pow2</span>' <span class="tactic">by</span> <span class="tactic">eauto</span>.  <span class="tactic">auto</span>. <br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_modluimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id">Val.modlu</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">e</span>#<span class="id">r2</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vlong</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_modluimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">w</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">w</span> /\ <span class="id">Val.lessdef</span> <span class="id">v</span> <span class="id">w</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3094')">Proof.</div>
+<div class="proofscript" id="proof3094">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_modluimm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Int64.is_power2</span> <span class="id">n</span>) <span class="id">eqn</span>:?.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>. <span class="id">decEq</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="id">inv</span> <span class="id">H</span>. <span class="tactic">destruct</span> (<span class="id">Int64.eq</span> <span class="id">n</span> <span class="id">Int64.zero</span>); <span class="id">inv</span> <span class="id">H2</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">erewrite</span> <span class="id">Int64.modu_and</span> <span class="tactic">by</span> <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_andlimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r</span> <span class="id">x</span>,<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_andlimm</span> <span class="id">n</span> <span class="id">r</span> <span class="id">x</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.andl</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vlong</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3095')">Proof.</div>
+<div class="proofscript" id="proof3095">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_andlimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int64.eq</span> <span class="id">Int64.eq_spec</span> <span class="id">n</span> <span class="id">Int64.zero</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">Vlong</span> <span class="id">Int64.zero</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int64.and_zero</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int64.eq</span> <span class="id">Int64.eq_spec</span> <span class="id">n</span> <span class="id">Int64.mone</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int64.and_mone</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_orlimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r</span>,<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_orlimm</span> <span class="id">n</span> <span class="id">r</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.orl</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vlong</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3096')">Proof.</div>
+<div class="proofscript" id="proof3096">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_orlimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int64.eq</span> <span class="id">Int64.eq_spec</span> <span class="id">n</span> <span class="id">Int64.zero</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int64.or_zero</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int64.eq</span> <span class="id">Int64.eq_spec</span> <span class="id">n</span> <span class="id">Int64.mone</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">Vlong</span> <span class="id">Int64.mone</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int64.or_mone</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_xorlimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r</span>,<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_xorlimm</span> <span class="id">n</span> <span class="id">r</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.xorl</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Vlong</span> <span class="id">n</span>)) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3097')">Proof.</div>
+<div class="proofscript" id="proof3097">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_xorlimm</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int64.eq</span> <span class="id">Int64.eq_spec</span> <span class="id">n</span> <span class="id">Int64.zero</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Int64.xor_zero</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">predSpec</span> <span class="id">Int64.eq</span> <span class="id">Int64.eq_spec</span> <span class="id">n</span> <span class="id">Int64.mone</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">n</span>. <span class="id">exists</span> (<span class="id">Val.notl</span> <span class="id">e</span>#<span class="id">r</span>); <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_mulfimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span>,<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vfloat</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_mulfimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.mulf</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">e</span>#<span class="id">r2</span>) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3098')">Proof.</div>
+<div class="proofscript" id="proof3098">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_mulfimm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Float.eq_dec</span> <span class="id">n</span> (<span class="id">Float.of_int</span> (<span class="id">Int.repr</span> 2))); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">subst</span> <span class="id">n</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Float.mul2_add</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_mulfimm_correct_2</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span>,<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r1</span> = <span class="id">Vfloat</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_mulfimm</span> <span class="id">n</span> <span class="id">r2</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.mulf</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">e</span>#<span class="id">r2</span>) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3099')">Proof.</div>
+<div class="proofscript" id="proof3099">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_mulfimm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Float.eq_dec</span> <span class="id">n</span> (<span class="id">Float.of_int</span> (<span class="id">Int.repr</span> 2))); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">subst</span> <span class="id">n</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r2</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Float.mul2_add</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Float.mul_commut</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_mulfsimm_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span>,<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vsingle</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_mulfsimm</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.mulfs</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">e</span>#<span class="id">r2</span>) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3100')">Proof.</div>
+<div class="proofscript" id="proof3100">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_mulfsimm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Float32.eq_dec</span> <span class="id">n</span> (<span class="id">Float32.of_int</span> (<span class="id">Int.repr</span> 2))); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">subst</span> <span class="id">n</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r1</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Float32.mul2_add</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_mulfsimm_correct_2</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span> <span class="id">r1</span> <span class="id">r2</span>,<br/>
+&nbsp;&nbsp;<span class="id">e</span>#<span class="id">r1</span> = <span class="id">Vsingle</span> <span class="id">n</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_mulfsimm</span> <span class="id">n</span> <span class="id">r2</span> <span class="id">r1</span> <span class="id">r2</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.mulfs</span> <span class="id">e</span>#<span class="id">r1</span> <span class="id">e</span>#<span class="id">r2</span>) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3101')">Proof.</div>
+<div class="proofscript" id="proof3101">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_mulfsimm</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">Float32.eq_dec</span> <span class="id">n</span> (<span class="id">Float32.of_int</span> (<span class="id">Int.repr</span> 2))); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">econstructor</span>; <span class="tactic">split</span>. <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">H</span>; <span class="tactic">subst</span> <span class="id">n</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">e</span>#<span class="id">r2</span>); <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">Float32.mul2_add</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Float32.mul_commut</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_cast8signed_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">r</span> <span class="id">x</span>,<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> <span class="id">e</span>#<span class="id">r</span> <span class="id">x</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_cast8signed</span> <span class="id">r</span> <span class="id">x</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.sign_ext</span> 8 <span class="id">e</span>#<span class="id">r</span>) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3102')">Proof.</div>
+<div class="proofscript" id="proof3102">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_cast8signed</span>. <span class="tactic">destruct</span> (<span class="id">vincl</span> <span class="id">x</span> (<span class="id">Sgn</span> <span class="id">Ptop</span> 8)) <span class="id">eqn</span>:<span class="id">INCL</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">e</span>#<span class="id">r</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">V</span>: <span class="id">vmatch</span> <span class="id">bc</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Sgn</span> <span class="id">Ptop</span> 8)).<br/>
+&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id">vmatch_ge</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">vincl_ge</span>; <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">V</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">is_sgn_sign_ext</span> <span class="kwd">in</span> <span class="id">H4</span> <span class="tactic">by</span> <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H4</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">simpl</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_cast8unsigned_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">r</span> <span class="id">x</span>,<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> <span class="id">e</span>#<span class="id">r</span> <span class="id">x</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_cast8unsigned</span> <span class="id">r</span> <span class="id">x</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.zero_ext</span> 8 <span class="id">e</span>#<span class="id">r</span>) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3103')">Proof.</div>
+<div class="proofscript" id="proof3103">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_cast8unsigned</span>. <span class="tactic">destruct</span> (<span class="id">vincl</span> <span class="id">x</span> (<span class="id">Uns</span> <span class="id">Ptop</span> 8)) <span class="id">eqn</span>:<span class="id">INCL</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">e</span>#<span class="id">r</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">V</span>: <span class="id">vmatch</span> <span class="id">bc</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Uns</span> <span class="id">Ptop</span> 8)).<br/>
+&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id">vmatch_ge</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">vincl_ge</span>; <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">V</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">is_uns_zero_ext</span> <span class="kwd">in</span> <span class="id">H4</span> <span class="tactic">by</span> <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H4</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">simpl</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_cast16signed_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">r</span> <span class="id">x</span>,<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> <span class="id">e</span>#<span class="id">r</span> <span class="id">x</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_cast16signed</span> <span class="id">r</span> <span class="id">x</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.sign_ext</span> 16 <span class="id">e</span>#<span class="id">r</span>) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3104')">Proof.</div>
+<div class="proofscript" id="proof3104">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_cast16signed</span>. <span class="tactic">destruct</span> (<span class="id">vincl</span> <span class="id">x</span> (<span class="id">Sgn</span> <span class="id">Ptop</span> 16)) <span class="id">eqn</span>:<span class="id">INCL</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">e</span>#<span class="id">r</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">V</span>: <span class="id">vmatch</span> <span class="id">bc</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Sgn</span> <span class="id">Ptop</span> 16)).<br/>
+&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id">vmatch_ge</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">vincl_ge</span>; <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">V</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">is_sgn_sign_ext</span> <span class="kwd">in</span> <span class="id">H4</span> <span class="tactic">by</span> <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H4</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">simpl</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">make_cast16unsigned_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">r</span> <span class="id">x</span>,<br/>
+&nbsp;&nbsp;<span class="id">vmatch</span> <span class="id">bc</span> <span class="id">e</span>#<span class="id">r</span> <span class="id">x</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>, <span class="id">args</span>) := <span class="id">make_cast16unsigned</span> <span class="id">r</span> <span class="id">x</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> /\ <span class="id">Val.lessdef</span> (<span class="id">Val.zero_ext</span> 16 <span class="id">e</span>#<span class="id">r</span>) <span class="id">v</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3105')">Proof.</div>
+<div class="proofscript" id="proof3105">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">unfold</span> <span class="id">make_cast16unsigned</span>. <span class="tactic">destruct</span> (<span class="id">vincl</span> <span class="id">x</span> (<span class="id">Uns</span> <span class="id">Ptop</span> 16)) <span class="id">eqn</span>:<span class="id">INCL</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">e</span>#<span class="id">r</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">V</span>: <span class="id">vmatch</span> <span class="id">bc</span> <span class="id">e</span>#<span class="id">r</span> (<span class="id">Uns</span> <span class="id">Ptop</span> 16)).<br/>
+&nbsp;&nbsp;{ <span class="tactic">eapply</span> <span class="id">vmatch_ge</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">vincl_ge</span>; <span class="tactic">auto</span>. }<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">V</span>; <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">is_uns_zero_ext</span> <span class="kwd">in</span> <span class="id">H4</span> <span class="tactic">by</span> <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">H4</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">split</span>; <span class="tactic">simpl</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">op_strength_reduction_correct</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">op</span> <span class="id">args</span> <span class="id">vl</span> <span class="id">v</span>,<br/>
+&nbsp;&nbsp;<span class="id">vl</span> = <span class="id">map</span> (<span class="kwd">fun</span> <span class="id">r</span> =&gt; <span class="id">AE.get</span> <span class="id">r</span> <span class="id">ae</span>) <span class="id">args</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span> <span class="id">e</span>##<span class="id">args</span> <span class="id">m</span> = <span class="id">Some</span> <span class="id">v</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">let</span> (<span class="id">op</span>', <span class="id">args</span>') := <span class="id">op_strength_reduction</span> <span class="id">op</span> <span class="id">args</span> <span class="id">vl</span> <span class="kwd">in</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">w</span>, <span class="id">eval_operation</span> <span class="id">ge</span> (<span class="id">Vptr</span> <span class="id">sp</span> <span class="id">Ptrofs.zero</span>) <span class="id">op</span>' <span class="id">e</span>##<span class="id">args</span>' <span class="id">m</span> = <span class="id">Some</span> <span class="id">w</span> /\ <span class="id">Val.lessdef</span> <span class="id">v</span> <span class="id">w</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof3106')">Proof.</div>
+<div class="proofscript" id="proof3106">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">v</span>; <span class="tactic">unfold</span> <span class="id">op_strength_reduction</span>;<br/>
+&nbsp;&nbsp;<span class="tactic">case</span> (<span class="id">op_strength_reduction_match</span> <span class="id">op</span> <span class="id">args</span> <span class="id">vl</span>); <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;cast8signed&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_cast8signed_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;cast8unsigned&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_cast8unsigned_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;cast16signed&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_cast16signed_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;cast16unsigned&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_cast16unsigned_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;sub&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">rewrite</span> <span class="id">Val.sub_add_opp</span>. <span class="tactic">apply</span> <span class="id">make_addimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;mul&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Val.mul_commut</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_mulimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_mulimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;divs&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n2</span>). <span class="tactic">clear</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">make_divimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;divu&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n2</span>). <span class="tactic">clear</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">make_divuimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;modu&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vint</span> <span class="id">n2</span>). <span class="tactic">clear</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">make_moduimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;and&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Val.and_commut</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_andimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_andimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_andimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;or&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Val.or_commut</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_orimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_orimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;xor&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Val.xor_commut</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_xorimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_xorimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;shl&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_shlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;shr&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_shrimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;shru&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_shruimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;lea&nbsp;*)</span>&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">addr_strength_reduction_32_correct</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">addr_strength_reduction_32</span> <span class="id">addr</span> <span class="id">args0</span> <span class="id">vl0</span>) <span class="kwd">as</span> [<span class="id">addr</span>' <span class="id">args</span>'].<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;subl&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">replace</span> (<span class="id">Val.subl</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vlong</span> <span class="id">n2</span>)) <span class="kwd">with</span> (<span class="id">Val.addl</span> <span class="id">e</span>#<span class="id">r1</span> (<span class="id">Vlong</span> (<span class="id">Int64.neg</span> <span class="id">n2</span>))).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">make_addlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">Val.addl</span>, <span class="id">Val.subl</span>. <span class="tactic">destruct</span> <span class="id">Archi.ptr64</span> <span class="id">eqn</span>:<span class="id">SF</span>, <span class="id">e</span>#<span class="id">r1</span>; <span class="tactic">auto</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Int64.sub_add_opp</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Ptrofs.sub_add_opp</span>. <span class="tactic">do</span> 2 <span class="tactic">f_equal</span>. <span class="tactic">auto</span> <span class="kwd">with</span> <span class="id">ptrofs</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Int64.sub_add_opp</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;mull&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Val.mull_commut</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_mullimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_mullimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;divl&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vlong</span> <span class="id">n2</span>). <span class="tactic">clear</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">make_divlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;divlu&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vlong</span> <span class="id">n2</span>). <span class="tactic">clear</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">make_divluimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;modlu&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">e</span>#<span class="id">r2</span> = <span class="id">Vlong</span> <span class="id">n2</span>). <span class="tactic">clear</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">make_modluimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;andl&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Val.andl_commut</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_andlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_andlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_andlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;orl&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Val.orl_commut</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_orlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_orlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;xorl&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">Val.xorl_commut</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_xorlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_xorlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;shll&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_shllimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;shrl&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_shrlimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;shrlu&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">apply</span> <span class="id">make_shrluimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;leal&nbsp;*)</span>&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">addr_strength_reduction_64_correct</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">addr_strength_reduction_64</span> <span class="id">addr</span> <span class="id">args0</span> <span class="id">vl0</span>) <span class="kwd">as</span> [<span class="id">addr</span>' <span class="id">args</span>'].<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;cond&nbsp;*)</span>&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">destruct</span> (<span class="id">eval_condition</span> <span class="id">c</span> <span class="id">e</span> ## <span class="id">args0</span> <span class="id">m</span>) <span class="id">eqn</span>:?; [|<span class="tactic">discriminate</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="id">inv</span> <span class="id">H2</span>. <span class="tactic">apply</span> <span class="id">make_cmp_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;mulf&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H2</span>. <span class="tactic">apply</span> <span class="id">make_mulfimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="id">fold</span> (<span class="id">Val.mulf</span> (<span class="id">Vfloat</span> <span class="id">n1</span>) <span class="id">e</span>#<span class="id">r2</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H2</span>. <span class="tactic">apply</span> <span class="id">make_mulfimm_correct_2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;mulfs&nbsp;*)</span>&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">H2</span>. <span class="tactic">apply</span> <span class="id">make_mulfsimm_correct</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">InvApproxRegs</span>; <span class="id">SimplVM</span>; <span class="id">inv</span> <span class="id">H0</span>. <span class="id">fold</span> (<span class="id">Val.mulfs</span> (<span class="id">Vsingle</span> <span class="id">n1</span>) <span class="id">e</span>#<span class="id">r2</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H2</span>. <span class="tactic">apply</span> <span class="id">make_mulfsimm_correct_2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;default&nbsp;*)</span>&nbsp;&nbsp;<span class="id">exists</span> <span class="id">v</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">STRENGTH_REDUCTION</span>.<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

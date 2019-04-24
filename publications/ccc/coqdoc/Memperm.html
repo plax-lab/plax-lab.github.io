@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Memperm</title>
+<meta name="description" content="Documentation of Coq module Memperm" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Memperm</h1>
+<div class="coq">
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span>.<br/>
+<br/>
+<div class="doc">Memory states are accessed by addresses <span class="bracket"><span class="id">b</span>, <span class="id">ofs</span></span>: pairs of a block
+  identifier <span class="bracket"><span class="id">b</span></span> and a byte offset <span class="bracket"><span class="id">ofs</span></span> within that block.
+  Each address is associated to permissions, also known as access rights.
+  The following permissions are expressible:
+<ul>
+<li>
+ Freeable (exclusive access): all operations permitted
+</li>
+<li>
+ Writable: load, store and pointer comparison operations are permitted,
+  but freeing is not.
+</li>
+<li>
+ Readable: only load and pointer comparison operations are permitted.
+</li>
+<li>
+ Nonempty: valid, but only pointer comparisons are permitted.
+</li>
+<li>
+ Empty: not yet allocated or previously freed; no operation permitted.
+</li>
+</ul>
+The first four cases are represented by the following type of permissions.
+Being empty is represented by the absence of any permission.
+</div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="permission">permission</a></span>: <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="Freeable">Freeable</a></span>: <span class="id"><a href="Memperm.html#permission">permission</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="Writable">Writable</a></span>: <span class="id"><a href="Memperm.html#permission">permission</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="Readable">Readable</a></span>: <span class="id"><a href="Memperm.html#permission">permission</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="Nonempty">Nonempty</a></span>: <span class="id"><a href="Memperm.html#permission">permission</a></span>.<br/>
+<br/>
+<div class="doc">In the list, each permission implies the other permissions further down the
+    list.  We reflect this fact by the following order over permissions. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="perm_order">perm_order</a></span>: <span class="id"><a href="Memperm.html#permission">permission</a></span> -&gt; <span class="id"><a href="Memperm.html#permission">permission</a></span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="perm_refl">perm_refl</a></span>:  <span class="kwd">forall</span> <span class="id">p</span>, <span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id"><a href="Memperm.html#p">p</a></span> <span class="id"><a href="Memperm.html#p">p</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="perm_F_any">perm_F_any</a></span>: <span class="kwd">forall</span> <span class="id">p</span>, <span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id"><a href="Memperm.html#Freeable">Freeable</a></span> <span class="id"><a href="Memperm.html#p">p</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="perm_W_R">perm_W_R</a></span>:   <span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id"><a href="Memperm.html#Writable">Writable</a></span> <span class="id"><a href="Memperm.html#Readable">Readable</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="perm_any_N">perm_any_N</a></span>: <span class="kwd">forall</span> <span class="id">p</span>, <span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id"><a href="Memperm.html#p">p</a></span> <span class="id"><a href="Memperm.html#Nonempty">Nonempty</a></span>.<br/>
+<br/>
+<span class="kwd">Hint</span> <span class="id">Constructors</span> <span class="id"><a href="Memperm.html#perm_order">perm_order</a></span>: <span class="id">mem</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="perm_order_trans">perm_order_trans</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p1</span> <span class="id">p2</span> <span class="id">p3</span>, <span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id"><a href="Memperm.html#p1">p1</a></span> <span class="id"><a href="Memperm.html#p2">p2</a></span> -&gt; <span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id"><a href="Memperm.html#p2">p2</a></span> <span class="id"><a href="Memperm.html#p3">p3</a></span> -&gt; <span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id"><a href="Memperm.html#p1">p1</a></span> <span class="id"><a href="Memperm.html#p3">p3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5683')">Proof.</div>
+<div class="proofscript" id="proof5683">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H0</span>; <span class="id">constructor</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Each address has not one, but two permissions associated
+  with it.  The first is the current permission.  It governs whether
+  operations (load, store, free, etc) over this address succeed or
+  not.  The other is the maximal permission.  It is always at least as
+  strong as the current permission.  Once a block is allocated, the
+  maximal permission of an address within this block can only
+  decrease, as a result of <span class="bracket"><span class="id">free</span></span> or <span class="bracket"><span class="id">drop_perm</span></span> operations, or of
+  external calls.  In contrast, the current permission of an address
+  can be temporarily lowered by an external call, then raised again by
+  another external call. </div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id"><a name="perm_kind">perm_kind</a></span>: <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id"><a name="Max">Max</a></span>: <span class="id"><a href="Memperm.html#perm_kind">perm_kind</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a name="Cur">Cur</a></span>: <span class="id"><a href="Memperm.html#perm_kind">perm_kind</a></span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">perm_order</span>' (<span class="id">po</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Memperm.html#permission">permission</a></span>) (<span class="id">p</span>: <span class="id"><a href="Memperm.html#permission">permission</a></span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="Memperm.html#po">po</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">p</span>' =&gt; <span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id">p</span>' <span class="id"><a href="Memperm.html#p">p</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span><br/>
+&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">perm_order</span>'' (<span class="id">po1</span> <span class="id">po2</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#option">option</a></span> <span class="id"><a href="Memperm.html#permission">permission</a></span>) :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="Memperm.html#po1">po1</a></span>, <span class="id"><a href="Memperm.html#po2">po2</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">p1</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">p2</span> =&gt; <span class="id"><a href="Memperm.html#perm_order">perm_order</a></span> <span class="id">p1</span> <span class="id">p2</span><br/>
+&nbsp;&nbsp;| <span class="id">_</span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#True">True</a></span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>, <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#Some">Some</a></span> <span class="id">_</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Logic.html#False">False</a></span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">perm_order</span>''<span class="id">_trans</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">p1</span> <span class="id">p2</span> <span class="id">p3</span>, <span class="id">perm_order</span>'' <span class="id"><a href="Memperm.html#p1">p1</a></span> <span class="id"><a href="Memperm.html#p2">p2</a></span> -&gt; <span class="id">perm_order</span>'' <span class="id"><a href="Memperm.html#p2">p2</a></span> <span class="id"><a href="Memperm.html#p3">p3</a></span> -&gt; <span class="id">perm_order</span>'' <span class="id"><a href="Memperm.html#p1">p1</a></span> <span class="id"><a href="Memperm.html#p3">p3</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof5684')">Proof.</div>
+<div class="proofscript" id="proof5684">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">p1</span>, <span class="id">p2</span>, <span class="id">p3</span>; <span class="tactic">try</span> (<span class="tactic">eapply</span> <span class="id"><a href="Memperm.html#perm_order_trans">perm_order_trans</a></span>; <span class="tactic">eauto</span>; <span class="tactic">fail</span>); <span class="tactic">auto</span>. <span class="id">contradiction</span>.<br/>
+Qed.</div>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

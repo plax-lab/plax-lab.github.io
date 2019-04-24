@@ -1,0 +1,361 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module FiniteMaps</title>
+<meta name="description" content="Documentation of Coq module FiniteMaps" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module FiniteMaps</h1>
+<div class="coq">
+<div class="doc">This file is mostly copied from Compositional CompCert. </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Coqlib.html">Coqlib</a></span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="Maps.html">Maps</a></span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="FINITE">FINITE</a></span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="FINITE.A">A</a></span>: <span class="kwd">Type</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="ptree_finite">ptree_finite</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">t</span>: <span class="id"><a href="Maps.html#PTree.t">PTree.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>), <span class="id">exists</span> <span class="id">p</span>, <span class="kwd">forall</span> <span class="id">n</span>, (<span class="id"><a href="FiniteMaps.html#p">p</a></span> &lt;= <span class="id"><a href="FiniteMaps.html#n">n</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="Maps.html#PTree.get">PTree.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#t">t</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6754')">Proof.</div>
+<div class="proofscript" id="proof6754">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">t</span>.<br/>
+- <span class="comment">(*&nbsp;Leaf&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> 1%<span class="id">positive</span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="Maps.html#PTree.gempty">PTree.gempty</a></span>. <br/>
+- <span class="comment">(*&nbsp;Node&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">IHt1</span> <span class="kwd">as</span> [<span class="id">p1</span> <span class="id">N1</span>]. <span class="tactic">destruct</span> <span class="id">IHt2</span> <span class="kwd">as</span> [<span class="id">p2</span> <span class="id">N2</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.max">Pos.max</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#xO">xO</a></span> <span class="id">p1</span>) (<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#xI">xI</a></span> <span class="id">p2</span>)); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">n</span>; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">N2</span>. <span class="id">zify</span>; <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">N1</span>. <span class="id">zify</span>; <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;<span class="id">zify</span>; <span class="id">omegaContradiction</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="ptree_finite_type">ptree_finite_type</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">t</span>: <span class="id"><a href="Maps.html#PTree.t">PTree.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>), {<span class="id">p</span>:<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> &amp; <span class="kwd">forall</span> <span class="id">n</span>, (<span class="id">p</span> &lt;= <span class="id"><a href="FiniteMaps.html#n">n</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="Maps.html#PTree.get">PTree.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#t">t</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6755')">Proof.</div>
+<div class="proofscript" id="proof6755">
+&nbsp;&nbsp;<span class="tactic">cut</span> (<span class="kwd">forall</span> (<span class="id">l</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#list">list</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span>*<span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>)), {<span class="id">p</span>:<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> &amp; <span class="kwd">forall</span> <span class="id">a</span> <span class="id">n</span>, (<span class="id">p</span> &lt;= <span class="id"><a href="FiniteMaps.html#n">n</a></span>)%<span class="id">positive</span> -&gt; ~ <span class="id"><a href="http://coq.inria.fr/library/Coq.Lists.List.html#In">In</a></span> (<span class="id"><a href="FiniteMaps.html#n">n</a></span>,<span class="id"><a href="FiniteMaps.html#a">a</a></span>) <span class="id"><a href="FiniteMaps.html#l">l</a></span>}).<br/>
+&nbsp;&nbsp;{ <span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">X</span> (<span class="id"><a href="Maps.html#PTree.elements">PTree.elements</a></span> <span class="id">t</span>)) <span class="kwd">as</span> [<span class="id">N</span> <span class="id">condition</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">N</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">t</span>!<span class="id">n</span>) <span class="id">eqn</span>:<span class="id">mapget</span>; <span class="tactic">trivial</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="Maps.html#PTree.elements_correct">PTree.elements_correct</a></span> <span class="kwd">in</span> <span class="id">mapget</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">contradict</span> <span class="id">mapget</span>; <span class="tactic">apply</span> <span class="id">condition</span>; <span class="tactic">trivial</span>. }<br/>
+&nbsp;&nbsp;{ <span class="tactic">induction</span> <span class="id">l</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id">exists</span> 1%<span class="id">positive</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="tactic">destruct</span> <span class="id">IHl</span> <span class="kwd">as</span> [<span class="id">N</span> <span class="id">condition</span>]; <span class="tactic">destruct</span> <span class="id">a</span> <span class="kwd">as</span> [<span class="id">a</span> <span class="id">A</span>'].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.max">Pos.max</a></span> <span class="id">N</span> (<span class="id">a</span> + 1)); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">intros</span> <span class="id">HH</span>; <span class="tactic">destruct</span> <span class="id">HH</span> <span class="kwd">as</span> [<span class="id">HH</span> | <span class="id">HH</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">inversion</span> <span class="id">HH</span>; <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">contradict</span> <span class="id">H</span>. <span class="id">xomega</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="tactic">assert</span> (<span class="id">ineq</span>: (<span class="id">N</span> &lt;= <span class="id">n</span>)%<span class="id">positive</span>) <span class="tactic">by</span> <span class="id">xomega</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> (<span class="id">condition</span> <span class="id">_</span> <span class="id">_</span> <span class="id">ineq</span> <span class="id">HH</span>). }<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="pmap_finite">pmap_finite</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">m</span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>), <span class="id">exists</span> <span class="id">p</span>, <span class="kwd">forall</span> <span class="id">n</span>, (<span class="id"><a href="FiniteMaps.html#p">p</a></span> &lt;= <span class="id"><a href="FiniteMaps.html#n">n</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6756')">Proof.</div>
+<div class="proofscript" id="proof6756">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">m</span> <span class="kwd">as</span> [<span class="id">dfl</span> <span class="id">t</span>]; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="FiniteMaps.html#ptree_finite">ptree_finite</a></span> <span class="id">t</span>) <span class="kwd">as</span> [<span class="id">p</span> <span class="id">N</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p</span>; <span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span>. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">N</span>; <span class="tactic">auto</span>. <br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="pmap_finite_type">pmap_finite_type</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">m</span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>), { <span class="id">p</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> &amp; <span class="kwd">forall</span> <span class="id">n</span>, (<span class="id">p</span> &lt;= <span class="id"><a href="FiniteMaps.html#n">n</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6757')">Proof.</div>
+<div class="proofscript" id="proof6757">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">m</span> <span class="kwd">as</span> [<span class="id">dfl</span> <span class="id">t</span>]; <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="FiniteMaps.html#ptree_finite_type">ptree_finite_type</a></span> <span class="id">t</span>) <span class="kwd">as</span> [<span class="id">p</span> <span class="id">N</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">p</span>; <span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span>. <span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">N</span>; <span class="tactic">auto</span>. <br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="pmap_construct">pmap_construct</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">f</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>) <span class="id">hi</span> <span class="id">dfl</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">n</span>, (<span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt;= <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">m</span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>, <span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6758')">Proof.</div>
+<div class="proofscript" id="proof6758">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">dfl</span>; <span class="tactic">intros</span> <span class="id">OUTSIDE</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">REC</span>: <span class="kwd">forall</span> <span class="id">x</span>, (<span class="id"><a href="FiniteMaps.html#x">x</a></span> &lt;= <span class="id">hi</span>)%<span class="id">positive</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">m</span>, <span class="kwd">forall</span> <span class="id">n</span>, (<span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt; <span class="id"><a href="FiniteMaps.html#x">x</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt;= <span class="id">hi</span>)%<span class="id">positive</span> -&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id">f</span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>).<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">x0</span>; <span class="tactic">pattern</span> <span class="id">x0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.peano_rect">Pos.peano_rect</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#PMap.init">PMap.init</a></span> <span class="id">dfl</span>). <span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gi">PMap.gi</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H0</span>. <span class="id">xomega</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">symmetry</span>. <span class="tactic">apply</span> <span class="id">OUTSIDE</span>. <span class="tactic">assumption</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="comment">(*&nbsp;Inductive&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">HP</span>: (<span class="id">p</span> &lt;= <span class="id">hi</span>)%<span class="id">positive</span>). <span class="id">xomega</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H</span> <span class="id">HP</span>) <span class="kwd">as</span> [<span class="id">m</span> <span class="id">P</span>]. <span class="tactic">clear</span> <span class="id">H</span> <span class="id">HP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#PMap.set">PMap.set</a></span> <span class="id">p</span> (<span class="id">f</span> <span class="id">p</span>) <span class="id">m</span>); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#peq">peq</a></span> <span class="id">n</span> <span class="id">p</span>). <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">P</span>. <span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">left</span>. <span class="id">xomega</span>. <span class="id">right</span>; <span class="tactic">assumption</span>. <br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">REC</span> <span class="id">hi</span>) <span class="kwd">as</span> [<span class="id">m</span> <span class="id">P</span>]. <span class="id">xomega</span>. <br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">m</span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">P</span>. <span class="id">xomega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="zmap_finite">zmap_finite</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">m</span>: <span class="id"><a href="Maps.html#ZMap.t">ZMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>), <span class="id">exists</span> <span class="id">lo</span>, <span class="id">exists</span> <span class="id">hi</span>, <span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt; <span class="id"><a href="FiniteMaps.html#lo">lo</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt; <span class="id"><a href="FiniteMaps.html#hi">hi</a></span> -&gt; <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6759')">Proof.</div>
+<div class="proofscript" id="proof6759">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="FiniteMaps.html#pmap_finite">pmap_finite</a></span> <span class="id">m</span>) <span class="kwd">as</span> [<span class="id">p</span> <span class="id">D</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (-2 * <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.pos">Z.pos</a></span> <span class="id">p</span>); <span class="id">exists</span> (2 * <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.pos">Z.pos</a></span> <span class="id">p</span>); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span>. <span class="tactic">apply</span> <span class="id">D</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Maps.html#ZIndexed.index">ZIndexed.index</a></span>. <span class="tactic">destruct</span> <span class="id">n</span>; <span class="id">zify</span>; <span class="tactic">omega</span>. <br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="zmap_finite_type">zmap_finite_type</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">m</span>: <span class="id"><a href="Maps.html#ZMap.t">ZMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>), <br/>
+&nbsp;&nbsp;{<span class="id">lo</span> : <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> &amp; { <span class="id">hi</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> &amp; <span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt; <span class="id">lo</span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt; <span class="id">hi</span> -&gt; <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> }}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6760')">Proof.</div>
+<div class="proofscript" id="proof6760">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="FiniteMaps.html#pmap_finite_type">pmap_finite_type</a></span> <span class="id">m</span>) <span class="kwd">as</span> [<span class="id">p</span> <span class="id">D</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (-2 * <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.pos">Z.pos</a></span> <span class="id">p</span>); <span class="id">exists</span> (2 * <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.pos">Z.pos</a></span> <span class="id">p</span>); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span>. <span class="tactic">apply</span> <span class="id">D</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Maps.html#ZIndexed.index">ZIndexed.index</a></span>. <span class="tactic">destruct</span> <span class="id">n</span>; <span class="id">zify</span>; <span class="tactic">omega</span>. <br/>
+Qed.</div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.Zwf.html">Zwf</a></span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="zmap_construct">zmap_construct</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">f</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>) <span class="id">lo</span> <span class="id">hi</span> <span class="id">dfl</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt; <span class="id"><a href="FiniteMaps.html#lo">lo</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt; <span class="id"><a href="FiniteMaps.html#hi">hi</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">m</span>: <span class="id"><a href="Maps.html#ZMap.t">ZMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>, <span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6761')">Proof.</div>
+<div class="proofscript" id="proof6761">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">dfl</span>; <span class="tactic">intros</span> <span class="id">OUTSIDE</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">REC</span>: <span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="FiniteMaps.html#x">x</a></span> &lt;= <span class="id">hi</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">m</span>, <span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt;= <span class="id"><a href="FiniteMaps.html#x">x</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt; <span class="id">hi</span> -&gt; <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id">f</span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>).<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">x0</span>; <span class="tactic">pattern</span> <span class="id">x0</span>; <span class="tactic">apply</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_ind">well_founded_ind</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.Zwf.html#Zwf_well_founded">Zwf_well_founded</a></span> <span class="id">lo</span>)); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#zlt">zlt</a></span> <span class="id">x</span> <span class="id">lo</span>).<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;Base&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#ZMap.init">ZMap.init</a></span> <span class="id">dfl</span>). <span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#ZMap.gi">ZMap.gi</a></span>. <span class="tactic">symmetry</span>. <span class="tactic">apply</span> <span class="id">OUTSIDE</span>. <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;Inductive&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H</span> (<span class="id">x</span> - 1)) <span class="kwd">as</span> [<span class="id">m</span> <span class="id">P</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">red</span>. <span class="tactic">omega</span>. <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#ZMap.set">ZMap.set</a></span> <span class="id">x</span> (<span class="id">f</span> <span class="id">x</span>) <span class="id">m</span>); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#ZMap.gsspec">ZMap.gsspec</a></span>. <span class="tactic">unfold</span> <span class="id"><a href="Maps.html#ZIndexed.eq">ZIndexed.eq</a></span>. <span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#zeq">zeq</a></span> <span class="id">n</span> <span class="id">x</span>). <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">P</span>. <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">REC</span> <span class="id">hi</span>) <span class="kwd">as</span> [<span class="id">m</span> <span class="id">P</span>]. <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">m</span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">P</span>. <span class="tactic">omega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="zmap_construct_type">zmap_construct_type</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">f</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>) <span class="id">lo</span> <span class="id">hi</span> <span class="id">dfl</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt; <span class="id"><a href="FiniteMaps.html#lo">lo</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt; <span class="id"><a href="FiniteMaps.html#hi">hi</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#sigT">sigT</a></span> (<span class="kwd">fun</span> (<span class="id">m</span>:<span class="id"><a href="Maps.html#ZMap.t">ZMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE.A">A</a></span>) =&gt; <span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6762')">Proof.</div>
+<div class="proofscript" id="proof6762">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">until</span> <span class="id">dfl</span>; <span class="tactic">intros</span> <span class="id">OUTSIDE</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">REC</span>: <span class="kwd">forall</span> <span class="id">x</span>, <span class="id"><a href="FiniteMaps.html#x">x</a></span> &lt;= <span class="id">hi</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Specif.html#sigT">sigT</a></span> (<span class="kwd">fun</span> <span class="id">m</span> =&gt; <span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt;= <span class="id"><a href="FiniteMaps.html#x">x</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt; <span class="id">hi</span> -&gt; <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id">f</span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>)).<br/>
+&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">x0</span>. <span class="tactic">pattern</span> <span class="id">x0</span>. <span class="tactic">apply</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_induction_type">well_founded_induction_type</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.Zwf.html#Zwf_well_founded">Zwf_well_founded</a></span> <span class="id">lo</span>)); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#zlt">zlt</a></span> <span class="id">x</span> <span class="id">lo</span>).<br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;Base&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#ZMap.init">ZMap.init</a></span> <span class="id">dfl</span>). <span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#ZMap.gi">ZMap.gi</a></span>. <span class="tactic">symmetry</span>. <span class="tactic">apply</span> <span class="id">OUTSIDE</span>. <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;Inductive&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">X</span> (<span class="id">x</span> - 1)) <span class="kwd">as</span> [<span class="id">m</span> <span class="id">P</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">red</span>. <span class="tactic">omega</span>. <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#ZMap.set">ZMap.set</a></span> <span class="id">x</span> (<span class="id">f</span> <span class="id">x</span>) <span class="id">m</span>); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#ZMap.gsspec">ZMap.gsspec</a></span>. <span class="tactic">unfold</span> <span class="id"><a href="Maps.html#ZIndexed.eq">ZIndexed.eq</a></span>. <span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#zeq">zeq</a></span> <span class="id">n</span> <span class="id">x</span>). <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">P</span>. <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">REC</span> <span class="id">hi</span>) <span class="kwd">as</span> [<span class="id">m</span> <span class="id">P</span>]. <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">m</span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">P</span>. <span class="tactic">omega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="FiniteMaps.html#FINITE">FINITE</a></span>.<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id"><a name="FINITE_CONSTRUCTIVE">FINITE_CONSTRUCTIVE</a></span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id"><a name="FINITE_CONSTRUCTIVE.A">A</a></span>: <span class="kwd">Type</span>.<br/>
+<br/>
+<span class="kwd">Fixpoint</span> <span class="id"><a name="p_tree_finite_c">p_tree_finite_c</a></span> (<span class="id">t</span>: <span class="id"><a href="Maps.html#PTree.t">PTree.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id"><a href="FiniteMaps.html#t">t</a></span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#PTree.Leaf">PTree.Leaf</a></span> =&gt; 1%<span class="id">positive</span><br/>
+&nbsp;&nbsp;| <span class="id"><a href="Maps.html#PTree.Node">PTree.Node</a></span> <span class="id">l</span> <span class="id">_</span> <span class="id">r</span> =&gt; <span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.max">Pos.max</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#xO">xO</a></span> (<span class="id"><a href="FiniteMaps.html#p_tree_finite_c">p_tree_finite_c</a></span> <span class="id">l</span>)) (<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#xI">xI</a></span> (<span class="id"><a href="FiniteMaps.html#p_tree_finite_c">p_tree_finite_c</a></span> <span class="id">r</span>))<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="ptree_finite_c_sound">ptree_finite_c_sound</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">t</span>: <span class="id"><a href="Maps.html#PTree.t">PTree.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) <span class="id">n</span>, ((<span class="id"><a href="FiniteMaps.html#p_tree_finite_c">p_tree_finite_c</a></span> <span class="id"><a href="FiniteMaps.html#t">t</a></span>) &lt;= <span class="id"><a href="FiniteMaps.html#n">n</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="Maps.html#PTree.get">PTree.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#t">t</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#None">None</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6763')">Proof.</div>
+<div class="proofscript" id="proof6763">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">t</span>.<br/>
+- <span class="comment">(*&nbsp;Leaf&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id"><a href="Maps.html#PTree.gempty">PTree.gempty</a></span>. <br/>
+- <span class="comment">(*&nbsp;Node&nbsp;case&nbsp;*)</span><br/>
+destruct&nbsp;IHt1&nbsp;as&nbsp;[p1&nbsp;N1].&nbsp;destruct&nbsp;IHt2&nbsp;as&nbsp;[p2&nbsp;N2].<br/>
+&nbsp;&nbsp;exists&nbsp;(Pos.max&nbsp;(xO&nbsp;p1)&nbsp;(xI&nbsp;p2));*)</span>&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">n</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHt2</span>. <span class="id">zify</span>; <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHt1</span>. <span class="id">zify</span>; <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;<span class="id">zify</span>; <span class="id">omegaContradiction</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="pmap_finite_c">pmap_finite_c</a></span> (<span class="id">m</span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) : <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="FiniteMaps.html#p_tree_finite_c">p_tree_finite_c</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#snd">snd</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span>). <br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="pmap_finite_sound_c">pmap_finite_sound_c</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">m</span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) <span class="id">n</span>, ((<span class="id"><a href="FiniteMaps.html#pmap_finite_c">pmap_finite_c</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span>) &lt;= <span class="id"><a href="FiniteMaps.html#n">n</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6764')">Proof.</div>
+<div class="proofscript" id="proof6764">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">unfold</span> <span class="id"><a href="FiniteMaps.html#pmap_finite_c">pmap_finite_c</a></span> <span class="kwd">in</span> <span class="id">H</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">m</span> <span class="kwd">as</span> [<span class="id">dfl</span> <span class="id">t</span>]; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span>. <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> (<span class="id"><a href="FiniteMaps.html#ptree_finite_c_sound">ptree_finite_c_sound</a></span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span>); <span class="tactic">trivial</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="REC_p">REC_p</a></span> (<span class="id">f</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) (<span class="id">hi</span>:<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span>) (<span class="id">dfl</span>:<span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>)<br/>
+&nbsp;&nbsp;(<span class="id">OUTSIDE</span>: <span class="kwd">forall</span> <span class="id">n</span>, (<span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt;= <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span>):<br/>
+&nbsp;<span class="kwd">forall</span> <span class="id">x</span>, (<span class="id"><a href="FiniteMaps.html#x">x</a></span> &lt;= <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>)%<span class="id">positive</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;{<span class="id">m</span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span> | <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span> /\ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span>, (<span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt; <span class="id"><a href="FiniteMaps.html#x">x</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt;= <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>)%<span class="id">positive</span> -&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6765')">Proof.</div>
+<div class="proofscript" id="proof6765">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">x0</span>; <span class="tactic">pattern</span> <span class="id">x0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.peano_rect">Pos.peano_rect</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#PMap.init">PMap.init</a></span> <span class="id">dfl</span>). <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gi">PMap.gi</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H0</span>. <span class="id">xomega</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">symmetry</span>. <span class="tactic">apply</span> <span class="id">OUTSIDE</span>. <span class="tactic">assumption</span>. <br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;Inductive&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">HP</span>: (<span class="id">p</span> &lt;= <span class="id">hi</span>)%<span class="id">positive</span>). <span class="id">xomega</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">X</span> <span class="id">HP</span>) <span class="kwd">as</span> [<span class="id">m</span> [<span class="id">PDef</span> <span class="id">P</span>]]. <span class="tactic">clear</span> <span class="id">X</span> <span class="id">HP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#PMap.set">PMap.set</a></span> <span class="id">p</span> (<span class="id">f</span> <span class="id">p</span>) <span class="id">m</span>); <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#peq">peq</a></span> <span class="id">n</span> <span class="id">p</span>). <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">P</span>. <span class="tactic">destruct</span> <span class="id">H0</span>. <span class="id">left</span>. <span class="id">xomega</span>. <span class="id">right</span>; <span class="tactic">assumption</span>. <br/>
+Defined.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="pmap_construct_c">pmap_construct_c</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">f</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) <span class="id">hi</span> <span class="id">dfl</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">OUTSIDE</span>: <span class="kwd">forall</span> <span class="id">n</span>, (<span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt;= <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span>):<br/>
+&nbsp;&nbsp;&nbsp;{<span class="id">m</span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span> | <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span> /\ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6766')">Proof.</div>
+<div class="proofscript" id="proof6766">
+&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="FiniteMaps.html#REC_p">REC_p</a></span> <span class="id">f</span> <span class="id">hi</span> <span class="id">dfl</span> <span class="id">OUTSIDE</span> <span class="id">hi</span>) <span class="kwd">as</span> [<span class="id">m</span> [<span class="id">PDef</span> <span class="id">P</span>]].<br/>
+&nbsp;&nbsp;&nbsp;<span class="id">xomega</span>.<br/>
+&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">m</span>.<br/>
+&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">P</span>. <span class="id">xomega</span>.<br/>
+Defined.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="REC_d">REC_d</a></span> (<span class="id">f</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) (<span class="id">hi</span>:<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span>) (<span class="id">dfl</span>:<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>)<br/>
+&nbsp;&nbsp;(<span class="id">OUTSIDE</span>: <span class="kwd">forall</span> <span class="id">n</span>, (<span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt;= <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span> <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>):<br/>
+&nbsp;<span class="kwd">forall</span> <span class="id">x</span>, (<span class="id"><a href="FiniteMaps.html#x">x</a></span> &lt;= <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>)%<span class="id">positive</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;{<span class="id">m</span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span> | <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id">m</span> = (<span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span> <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>) /\ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span>, (<span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt; <span class="id"><a href="FiniteMaps.html#x">x</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt;= <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>)%<span class="id">positive</span> -&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6767')">Proof.</div>
+<div class="proofscript" id="proof6767">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">x0</span>; <span class="tactic">pattern</span> <span class="id">x0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id"><a href="http://coq.inria.fr/library/Coq.PArith.BinPos.html#Pos.peano_rect">Pos.peano_rect</a></span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#PMap.init">PMap.init</a></span> (<span class="id">dfl</span> <span class="id">hi</span>)). <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gi">PMap.gi</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H0</span>. <span class="id">xomega</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">symmetry</span>. <span class="tactic">apply</span> <span class="id">OUTSIDE</span>. <span class="tactic">assumption</span>. <br/>
+&nbsp;&nbsp;- <span class="comment">(*&nbsp;Inductive&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">HP</span>: (<span class="id">p</span> &lt;= <span class="id">hi</span>)%<span class="id">positive</span>). <span class="id">xomega</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">X</span> <span class="id">HP</span>) <span class="kwd">as</span> [<span class="id">m</span> [<span class="id">PDef</span> <span class="id">P</span>]]. <span class="tactic">clear</span> <span class="id">X</span> <span class="id">HP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#PMap.set">PMap.set</a></span> <span class="id">p</span> (<span class="id">f</span> <span class="id">p</span>) <span class="id">m</span>); <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#PMap.gsspec">PMap.gsspec</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#peq">peq</a></span> <span class="id">n</span> <span class="id">p</span>). <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">P</span>. <span class="tactic">destruct</span> <span class="id">H0</span>. <span class="id">left</span>. <span class="id">xomega</span>. <span class="id">right</span>; <span class="tactic">assumption</span>. <br/>
+Defined.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="pmap_construct_dep">pmap_construct_dep</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">f</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) <span class="id">hi</span> (<span class="id">dfl</span> : <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#positive">positive</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">OUTSIDE</span>: <span class="kwd">forall</span> <span class="id">n</span>, (<span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt;= <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>)%<span class="id">positive</span> -&gt; <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span> <span class="id"><a href="FiniteMaps.html#hi">hi</a></span>):<br/>
+&nbsp;&nbsp;&nbsp;{<span class="id">m</span>: <span class="id"><a href="Maps.html#PMap.t">PMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span> | <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span> <span class="id"><a href="FiniteMaps.html#hi">hi</a></span> /\ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="Maps.html#PMap.get">PMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>}.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6768')">Proof.</div>
+<div class="proofscript" id="proof6768">
+&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="FiniteMaps.html#REC_d">REC_d</a></span> <span class="id">f</span> <span class="id">hi</span> <span class="id">dfl</span> <span class="id">OUTSIDE</span> <span class="id">hi</span>) <span class="kwd">as</span> [<span class="id">m</span> [<span class="id">PDef</span> <span class="id">P</span>]].<br/>
+&nbsp;&nbsp;&nbsp;<span class="id">xomega</span>.<br/>
+&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">m</span>.<br/>
+&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">P</span>. <span class="id">xomega</span>.<br/>
+Defined.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="zmap_finite_c">zmap_finite_c</a></span> (<span class="id">m</span>: <span class="id"><a href="Maps.html#ZMap.t">ZMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>): <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> * <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> :=<br/>
+&nbsp;&nbsp;(-2 * <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.pos">Z.pos</a></span> (<span class="id"><a href="FiniteMaps.html#pmap_finite_c">pmap_finite_c</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span>), 2 * <span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.BinInt.html#Z.pos">Z.pos</a></span> (<span class="id"><a href="FiniteMaps.html#pmap_finite_c">pmap_finite_c</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span>)).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id"><a name="zmap_finite_sound_c">zmap_finite_sound_c</a></span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> (<span class="id">m</span>: <span class="id"><a href="Maps.html#ZMap.t">ZMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) <span class="id">lo</span> <span class="id">hi</span>, <span class="id"><a href="FiniteMaps.html#zmap_finite_c">zmap_finite_c</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = (<span class="id"><a href="FiniteMaps.html#lo">lo</a></span>,<span class="id"><a href="FiniteMaps.html#hi">hi</a></span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt; <span class="id"><a href="FiniteMaps.html#lo">lo</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt; <span class="id"><a href="FiniteMaps.html#hi">hi</a></span> -&gt; <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span> = <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id"><a href="FiniteMaps.html#m">m</a></span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof6769')">Proof.</div>
+<div class="proofscript" id="proof6769">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">D</span>:= <span class="id"><a href="FiniteMaps.html#pmap_finite_sound_c">pmap_finite_sound_c</a></span> <span class="id">m</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="FiniteMaps.html#zmap_finite_c">zmap_finite_c</a></span> <span class="kwd">in</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span>. <span class="tactic">apply</span> <span class="id">D</span>. <br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id"><a href="Maps.html#ZIndexed.index">ZIndexed.index</a></span>. <span class="tactic">destruct</span> <span class="id">n</span>; <span class="id">zify</span>; <span class="tactic">omega</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="REC">REC</a></span> (<span class="id">f</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) (<span class="id">lo</span> <span class="id">hi</span>:<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span>) (<span class="id">dfl</span>:<span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>)<br/>
+&nbsp;&nbsp;(<span class="id">OUTSIDE</span>: <span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt; <span class="id"><a href="FiniteMaps.html#lo">lo</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt; <span class="id"><a href="FiniteMaps.html#hi">hi</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span>):<br/>
+&nbsp;<span class="kwd">forall</span> <span class="id">x</span>,<br/>
+&nbsp;&nbsp;<span class="id"><a href="FiniteMaps.html#x">x</a></span> &lt;= <span class="id"><a href="FiniteMaps.html#hi">hi</a></span> -&gt; {<span class="id">m</span>: <span class="id"><a href="Maps.html#ZMap.t">ZMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span> | <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span> /\ <span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt;= <span class="id"><a href="FiniteMaps.html#x">x</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt; <span class="id"><a href="FiniteMaps.html#hi">hi</a></span> -&gt; <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>}.<br/>
+<span class="tactic">intros</span> <span class="id">x0</span>; <span class="tactic">pattern</span> <span class="id">x0</span>.<br/>
+<span class="tactic">apply</span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Wf.html#well_founded_induction_type">well_founded_induction_type</a></span> (<span class="id"><a href="http://coq.inria.fr/library/Coq.ZArith.Zwf.html#Zwf_well_founded">Zwf_well_founded</a></span> <span class="id">lo</span>)); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#zlt">zlt</a></span> <span class="id">x</span> <span class="id">lo</span>).<br/>
+&nbsp;&nbsp;- <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#ZMap.init">ZMap.init</a></span> <span class="id">dfl</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>. <span class="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#ZMap.gi">ZMap.gi</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">symmetry</span>. <span class="tactic">apply</span> <span class="id">OUTSIDE</span>. <span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;- <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">X</span> (<span class="id">x</span> - 1)) <span class="kwd">as</span> [<span class="id">m</span> [<span class="id">Pdef</span> <span class="id">P</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">red</span>. <span class="tactic">omega</span>. <span class="tactic">omega</span>. <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> (<span class="id"><a href="Maps.html#ZMap.set">ZMap.set</a></span> <span class="id">x</span> (<span class="id">f</span> <span class="id">x</span>) <span class="id">m</span>); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">split</span>; <span class="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">rewrite</span> <span class="id"><a href="Maps.html#ZMap.gsspec">ZMap.gsspec</a></span>. <span class="tactic">unfold</span> <span class="id"><a href="Maps.html#ZIndexed.eq">ZIndexed.eq</a></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="Coqlib.html#zeq">zeq</a></span> <span class="id">n</span> <span class="id">x</span>). <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">P</span>. <span class="tactic">omega</span>.<br/>
+Defined.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id"><a name="zmap_construct_c">zmap_construct_c</a></span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">f</span>: <span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>) (<span class="id">lo</span> <span class="id">hi</span>:<span class="id"><a href="http://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z">Z</a></span>) (<span class="id">dfl</span>:<span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">OUTSIDE</span>: <span class="kwd">forall</span> <span class="id">n</span>, <span class="id"><a href="FiniteMaps.html#n">n</a></span> &lt; <span class="id"><a href="FiniteMaps.html#lo">lo</a></span> \/ <span class="id"><a href="FiniteMaps.html#n">n</a></span> &gt; <span class="id"><a href="FiniteMaps.html#hi">hi</a></span> -&gt; <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span>) : <br/>
+&nbsp;&nbsp;{ <span class="id">m</span> : <span class="id"><a href="Maps.html#ZMap.t">ZMap.t</a></span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE.A">A</a></span> | <span class="id"><a href="http://coq.inria.fr/library/Coq.Init.Datatypes.html#fst">fst</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#dfl">dfl</a></span> /\ <span class="kwd">forall</span> <span class="id">n</span>,  <span class="id"><a href="Maps.html#ZMap.get">ZMap.get</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span> <span class="id">m</span> = <span class="id"><a href="FiniteMaps.html#f">f</a></span> <span class="id"><a href="FiniteMaps.html#n">n</a></span>}. <br/>
+&nbsp;<span class="tactic">destruct</span> (<span class="id"><a href="FiniteMaps.html#REC">REC</a></span> <span class="id">f</span> <span class="id">lo</span> <span class="id">hi</span> <span class="id">dfl</span> <span class="id">OUTSIDE</span> <span class="id">hi</span>) <span class="kwd">as</span> [<span class="id">m</span> [<span class="id">PDef</span> <span class="id">P</span>]].<br/>
+&nbsp;&nbsp;&nbsp;<span class="tactic">omega</span>.<br/>
+&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">m</span>. <span class="tactic">split</span>; <span class="tactic">trivial</span>. <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">P</span>. <span class="tactic">omega</span>.<br/>
+Defined.</div>
+<br/>
+<span class="kwd">End</span> <span class="id"><a href="FiniteMaps.html#FINITE_CONSTRUCTIVE">FINITE_CONSTRUCTIVE</a></span>.</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>

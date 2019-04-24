@@ -1,0 +1,898 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Module Behaviors</title>
+<meta name="description" content="Documentation of Coq module Behaviors" />
+<link href="coq2html.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="coq2html.js"> </script>
+</head>
+
+<body onload="hideAll('proofscript')">
+<h1 class="title">Module Behaviors</h1>
+<div class="coq">
+<br/>
+<div class="doc">Whole-program behaviors </div>
+<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Classical</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">ClassicalEpsilon</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Coqlib</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Events</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Globalenvs</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Integers</span>.<br/>
+<span class="kwd">Require</span> <span class="kwd">Import</span> <span class="id">Smallstep</span>.<br/>
+<br/>
+<span class="kwd">Set</span> <span class="kwd">Implicit</span> <span class="id">Arguments</span>.<br/>
+<br/>
+<h1> Behaviors for program executions </h1>
+<br/>
+<div class="doc">The four possible outcomes for the execution of a program:
+<ul>
+<li>
+ Termination, with a finite trace of observable events
+  and an integer value that stands for the process exit code
+  (the return value of the main function).
+</li>
+<li>
+ Divergence with a finite trace of observable events.
+  (At some point, the program runs forever without doing any I/O.)
+</li>
+<li>
+ Reactive divergence with an infinite trace of observable events.
+  (The program performs infinitely many I/O operations separated
+   by finite amounts of internal computations.)
+</li>
+<li>
+ Going wrong, with a finite trace of observable events
+  performed before the program gets stuck.
+</li>
+</ul>
+</div>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">program_behavior</span>: <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">Terminates</span>: <span class="id">trace</span> -&gt; <span class="id">int</span> -&gt; <span class="id">program_behavior</span><br/>
+&nbsp;&nbsp;| <span class="id">Diverges</span>: <span class="id">trace</span> -&gt; <span class="id">program_behavior</span><br/>
+&nbsp;&nbsp;| <span class="id">Reacts</span>: <span class="id">traceinf</span> -&gt; <span class="id">program_behavior</span><br/>
+&nbsp;&nbsp;| <span class="id">Goes_wrong</span>: <span class="id">trace</span> -&gt; <span class="id">program_behavior</span>.<br/>
+<br/>
+<div class="doc">Operations and relations on behaviors </div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">not_wrong</span> (<span class="id">beh</span>: <span class="id">program_behavior</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">beh</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Terminates</span> <span class="id">_</span> <span class="id">_</span> =&gt; <span class="id">True</span><br/>
+&nbsp;&nbsp;| <span class="id">Diverges</span> <span class="id">_</span> =&gt; <span class="id">True</span><br/>
+&nbsp;&nbsp;| <span class="id">Reacts</span> <span class="id">_</span> =&gt; <span class="id">True</span><br/>
+&nbsp;&nbsp;| <span class="id">Goes_wrong</span> <span class="id">_</span> =&gt; <span class="id">False</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">behavior_app</span> (<span class="id">t</span>: <span class="id">trace</span>) (<span class="id">beh</span>: <span class="id">program_behavior</span>): <span class="id">program_behavior</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">beh</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">Terminates</span> <span class="id">t1</span> <span class="id">r</span> =&gt; <span class="id">Terminates</span> (<span class="id">t</span> ** <span class="id">t1</span>) <span class="id">r</span><br/>
+&nbsp;&nbsp;| <span class="id">Diverges</span> <span class="id">t1</span> =&gt; <span class="id">Diverges</span> (<span class="id">t</span> ** <span class="id">t1</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Reacts</span> <span class="id">T</span> =&gt; <span class="id">Reacts</span> (<span class="id">t</span> *** <span class="id">T</span>)<br/>
+&nbsp;&nbsp;| <span class="id">Goes_wrong</span> <span class="id">t1</span> =&gt; <span class="id">Goes_wrong</span> (<span class="id">t</span> ** <span class="id">t1</span>)<br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">behavior_app_assoc</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t1</span> <span class="id">t2</span> <span class="id">beh</span>,<br/>
+&nbsp;&nbsp;<span class="id">behavior_app</span> (<span class="id">t1</span> ** <span class="id">t2</span>) <span class="id">beh</span> = <span class="id">behavior_app</span> <span class="id">t1</span> (<span class="id">behavior_app</span> <span class="id">t2</span> <span class="id">beh</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1969')">Proof.</div>
+<div class="proofscript" id="proof1969">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">beh</span>; <span class="tactic">simpl</span>; <span class="tactic">f_equal</span>; <span class="id">traceEq</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">behavior_app_E0</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">beh</span>, <span class="id">behavior_app</span> <span class="id">E0</span> <span class="id">beh</span> = <span class="id">beh</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1970')">Proof.</div>
+<div class="proofscript" id="proof1970">
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">beh</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Definition</span> <span class="id">behavior_prefix</span> (<span class="id">t</span>: <span class="id">trace</span>) (<span class="id">beh</span>: <span class="id">program_behavior</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh</span>', <span class="id">beh</span> = <span class="id">behavior_app</span> <span class="id">t</span> <span class="id">beh</span>'.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">behavior_improves</span> (<span class="id">beh1</span> <span class="id">beh2</span>: <span class="id">program_behavior</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id">beh1</span> = <span class="id">beh2</span> \/ <span class="id">exists</span> <span class="id">t</span>, <span class="id">beh1</span> = <span class="id">Goes_wrong</span> <span class="id">t</span> /\ <span class="id">behavior_prefix</span> <span class="id">t</span> <span class="id">beh2</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">behavior_improves_refl</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">beh</span>, <span class="id">behavior_improves</span> <span class="id">beh</span> <span class="id">beh</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1971')">Proof.</div>
+<div class="proofscript" id="proof1971">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">behavior_improves_trans</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">beh1</span> <span class="id">beh2</span> <span class="id">beh3</span>,<br/>
+&nbsp;&nbsp;<span class="id">behavior_improves</span> <span class="id">beh1</span> <span class="id">beh2</span> -&gt; <span class="id">behavior_improves</span> <span class="id">beh2</span> <span class="id">beh3</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">behavior_improves</span> <span class="id">beh1</span> <span class="id">beh3</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1972')">Proof.</div>
+<div class="proofscript" id="proof1972">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">red</span>. <span class="tactic">destruct</span> <span class="id">H</span>; <span class="tactic">destruct</span> <span class="id">H0</span>; <span class="tactic">subst</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">t1</span> [<span class="id">EQ1</span> [<span class="id">beh2</span>' <span class="id">EQ1</span>']]].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H0</span> <span class="kwd">as</span> [<span class="id">t2</span> [<span class="id">EQ2</span> [<span class="id">beh3</span>' <span class="id">EQ2</span>']]].<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="tactic">destruct</span> <span class="id">beh2</span>'; <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">EQ2</span>; <span class="tactic">try</span> <span class="tactic">discriminate</span>. <span class="id">inv</span> <span class="id">EQ2</span>.<br/>
+&nbsp;&nbsp;<span class="id">right</span>. <span class="id">exists</span> <span class="id">t1</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="id">exists</span> (<span class="id">behavior_app</span> <span class="id">t</span> <span class="id">beh3</span>'). <span class="tactic">apply</span> <span class="id">behavior_app_assoc</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">behavior_improves_bot</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">beh</span>, <span class="id">behavior_improves</span> (<span class="id">Goes_wrong</span> <span class="id">E0</span>) <span class="id">beh</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1973')">Proof.</div>
+<div class="proofscript" id="proof1973">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">right</span>. <span class="id">exists</span> <span class="id">E0</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="id">exists</span> <span class="id">beh</span>. <span class="tactic">rewrite</span> <span class="id">behavior_app_E0</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">behavior_improves_app</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t</span> <span class="id">beh1</span> <span class="id">beh2</span>,<br/>
+&nbsp;&nbsp;<span class="id">behavior_improves</span> <span class="id">beh1</span> <span class="id">beh2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">behavior_improves</span> (<span class="id">behavior_app</span> <span class="id">t</span> <span class="id">beh1</span>) (<span class="id">behavior_app</span> <span class="id">t</span> <span class="id">beh2</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1974')">Proof.</div>
+<div class="proofscript" id="proof1974">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">red</span>; <span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">left</span>; <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">t</span>' [<span class="id">A</span> [<span class="id">beh</span>' <span class="id">B</span>]]]. <span class="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id">right</span>; <span class="id">exists</span> (<span class="id">t</span> ** <span class="id">t</span>'); <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="id">exists</span> <span class="id">beh</span>'. <span class="tactic">rewrite</span> <span class="id">behavior_app_assoc</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<div class="doc">Associating behaviors to programs. </div>
+<br/>
+<span class="kwd">Section</span> <span class="id">PROGRAM_BEHAVIORS</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">L</span>: <span class="id">semantics</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">state_behaves</span> (<span class="id">s</span>: <span class="id">state</span> <span class="id">L</span>): <span class="id">program_behavior</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">state_terminates</span>: <span class="kwd">forall</span> <span class="id">t</span> <span class="id">s</span>' <span class="id">r</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Star</span> <span class="id">L</span> <span class="id">s</span> <span class="id">t</span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">final_state</span> <span class="id">L</span> <span class="id">s</span>' <span class="id">r</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">state_behaves</span> <span class="id">s</span> (<span class="id">Terminates</span> <span class="id">t</span> <span class="id">r</span>)<br/>
+&nbsp;&nbsp;| <span class="id">state_diverges</span>: <span class="kwd">forall</span> <span class="id">t</span> <span class="id">s</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Star</span> <span class="id">L</span> <span class="id">s</span> <span class="id">t</span> <span class="id">s</span>' -&gt; <span class="id">Forever_silent</span> <span class="id">L</span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">state_behaves</span> <span class="id">s</span> (<span class="id">Diverges</span> <span class="id">t</span>)<br/>
+&nbsp;&nbsp;| <span class="id">state_reacts</span>: <span class="kwd">forall</span> <span class="id">T</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Forever_reactive</span> <span class="id">L</span> <span class="id">s</span> <span class="id">T</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">state_behaves</span> <span class="id">s</span> (<span class="id">Reacts</span> <span class="id">T</span>)<br/>
+&nbsp;&nbsp;| <span class="id">state_goes_wrong</span>: <span class="kwd">forall</span> <span class="id">t</span> <span class="id">s</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Star</span> <span class="id">L</span> <span class="id">s</span> <span class="id">t</span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Nostep</span> <span class="id">L</span> <span class="id">s</span>' -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">r</span>, ~<span class="id">final_state</span> <span class="id">L</span> <span class="id">s</span>' <span class="id">r</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">state_behaves</span> <span class="id">s</span> (<span class="id">Goes_wrong</span> <span class="id">t</span>).<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">program_behaves</span>: <span class="id">program_behavior</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">program_runs</span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">beh</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">initial_state</span> <span class="id">L</span> <span class="id">s</span> -&gt; <span class="id">state_behaves</span> <span class="id">s</span> <span class="id">beh</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">program_behaves</span> <span class="id">beh</span><br/>
+&nbsp;&nbsp;| <span class="id">program_goes_initially_wrong</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">s</span>, ~<span class="id">initial_state</span> <span class="id">L</span> <span class="id">s</span>) -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">program_behaves</span> (<span class="id">Goes_wrong</span> <span class="id">E0</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">state_behaves_app</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span> <span class="id">beh</span>,<br/>
+&nbsp;&nbsp;<span class="id">Star</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span> -&gt; <span class="id">state_behaves</span> <span class="id">s2</span> <span class="id">beh</span> -&gt; <span class="id">state_behaves</span> <span class="id">s1</span> (<span class="id">behavior_app</span> <span class="id">t</span> <span class="id">beh</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1975')">Proof.</div>
+<div class="proofscript" id="proof1975">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>; <span class="tactic">simpl</span>; <span class="id">econstructor</span>; <span class="tactic">eauto</span>; <span class="tactic">try</span> (<span class="tactic">eapply</span> <span class="id">star_trans</span>; <span class="tactic">eauto</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">star_forever_reactive</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<h1> Existence of behaviors </h1>
+<br/>
+<div class="doc">We now show that any program admits at least one behavior.
+  The proof requires classical logic: the axiom of excluded middle
+  and an axiom of description. </div>
+<br/>
+<div class="doc">The most difficult part of the proof is to show the existence
+  of an infinite trace in the case of reactive divergence. </div>
+<br/>
+<span class="kwd">Section</span> <span class="id">TRACEINF_REACTS</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">s0</span>: <span class="id">state</span> <span class="id">L</span>.<br/>
+<br/>
+<span class="kwd">Hypothesis</span> <span class="id">reacts</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t1</span>, <span class="id">Star</span> <span class="id">L</span> <span class="id">s0</span> <span class="id">t1</span> <span class="id">s1</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s2</span>, <span class="id">exists</span> <span class="id">t2</span>, <span class="id">Star</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">t2</span> <span class="id">s2</span> /\ <span class="id">t2</span> &lt;&gt; <span class="id">E0</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">reacts</span>':<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t1</span>, <span class="id">Star</span> <span class="id">L</span> <span class="id">s0</span> <span class="id">t1</span> <span class="id">s1</span> -&gt;<br/>
+&nbsp;&nbsp;{ <span class="id">s2</span> : <span class="id">state</span> <span class="id">L</span> &amp; { <span class="id">t2</span> : <span class="id">trace</span> | <span class="id">Star</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">t2</span> <span class="id">s2</span> /\ <span class="id">t2</span> &lt;&gt; <span class="id">E0</span> } }.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1976')">Proof.</div>
+<div class="proofscript" id="proof1976">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">constructive_indefinite_description</span> <span class="id">_</span> (<span class="id">reacts</span> <span class="id">H</span>)) <span class="kwd">as</span> [<span class="id">s2</span> <span class="id">A</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">constructive_indefinite_description</span> <span class="id">_</span> <span class="id">A</span>) <span class="kwd">as</span> [<span class="id">t2</span> [<span class="id">B</span> <span class="id">C</span>]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s2</span>; <span class="id">exists</span> <span class="id">t2</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">CoFixpoint</span> <span class="id">build_traceinf</span>' (<span class="id">s1</span>: <span class="id">state</span> <span class="id">L</span>) (<span class="id">t1</span>: <span class="id">trace</span>) (<span class="id">ST</span>: <span class="id">Star</span> <span class="id">L</span> <span class="id">s0</span> <span class="id">t1</span> <span class="id">s1</span>) : <span class="id">traceinf</span>' :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">reacts</span>' <span class="id">ST</span> <span class="kwd">with</span><br/>
+&nbsp;&nbsp;| <span class="id">existT</span> <span class="id">s2</span> (<span class="id">exist</span> <span class="id">t2</span> (<span class="id">conj</span> <span class="id">A</span> <span class="id">B</span>)) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Econsinf</span>' <span class="id">t2</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">build_traceinf</span>' (<span class="id">star_trans</span> <span class="id">ST</span> <span class="id">A</span> (<span class="id">refl_equal</span> <span class="id">_</span>)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">B</span><br/>
+&nbsp;&nbsp;<span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">reacts_forever_reactive_rec</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t1</span> (<span class="id">ST</span>: <span class="id">Star</span> <span class="id">L</span> <span class="id">s0</span> <span class="id">t1</span> <span class="id">s1</span>),<br/>
+&nbsp;&nbsp;<span class="id">Forever_reactive</span> <span class="id">L</span> <span class="id">s1</span> (<span class="id">traceinf_of_traceinf</span>' (<span class="id">build_traceinf</span>' <span class="id">ST</span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1977')">Proof.</div>
+<div class="proofscript" id="proof1977">
+&nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> (<span class="id">unroll_traceinf</span>' (<span class="id">build_traceinf</span>' <span class="id">ST</span>)). <span class="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">reacts</span>' <span class="id">ST</span>) <span class="kwd">as</span> [<span class="id">s2</span> [<span class="id">t2</span> [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">traceinf_traceinf</span>'<span class="id">_app</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="id">eexact</span> <span class="id">A</span>. <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id">COINDHYP</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">reacts_forever_reactive</span>:<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">T</span>, <span class="id">Forever_reactive</span> <span class="id">L</span> <span class="id">s0</span> <span class="id">T</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1978')">Proof.</div>
+<div class="proofscript" id="proof1978">
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">traceinf_of_traceinf</span>' (<span class="id">build_traceinf</span>' (<span class="id">star_refl</span> (<span class="id">step</span> <span class="id">L</span>) (<span class="id">globalenv</span> <span class="id">L</span>) <span class="id">s0</span>))).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">reacts_forever_reactive_rec</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">TRACEINF_REACTS</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">diverges_forever_silent</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s0</span>,<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t1</span>, <span class="id">Star</span> <span class="id">L</span> <span class="id">s0</span> <span class="id">t1</span> <span class="id">s1</span> -&gt; <span class="id">exists</span> <span class="id">s2</span>, <span class="id">Step</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">E0</span> <span class="id">s2</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">Forever_silent</span> <span class="id">L</span> <span class="id">s0</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1979')">Proof.</div>
+<div class="proofscript" id="proof1979">
+&nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H</span> <span class="id">s0</span> <span class="id">E0</span>) <span class="kwd">as</span> [<span class="id">s1</span> <span class="id">ST</span>]. <span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="id">eexact</span> <span class="id">ST</span>. <span class="tactic">apply</span> <span class="id">COINDHYP</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">H</span>. <span class="tactic">eapply</span> <span class="id">star_left</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">state_behaves_exists</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span>, <span class="id">exists</span> <span class="id">beh</span>, <span class="id">state_behaves</span> <span class="id">s</span> <span class="id">beh</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1980')">Proof.</div>
+<div class="proofscript" id="proof1980">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">s0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">classic</span> (<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t1</span>, <span class="id">Star</span> <span class="id">L</span> <span class="id">s0</span> <span class="id">t1</span> <span class="id">s1</span> -&gt; <span class="id">exists</span> <span class="id">s2</span>, <span class="id">exists</span> <span class="id">t2</span>, <span class="id">Step</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">t2</span> <span class="id">s2</span>)).<br/>
+&nbsp;1&nbsp;Divergence&nbsp;(silent&nbsp;or&nbsp;reactive)&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">classic</span> (<span class="id">exists</span> <span class="id">s1</span>, <span class="id">exists</span> <span class="id">t1</span>, <span class="id">Star</span> <span class="id">L</span> <span class="id">s0</span> <span class="id">t1</span> <span class="id">s1</span> /\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">s2</span> <span class="id">t2</span>, <span class="id">Star</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">t2</span> <span class="id">s2</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s3</span>, <span class="id">Step</span> <span class="id">L</span> <span class="id">s2</span> <span class="id">E0</span> <span class="id">s3</span>))).<br/>
+&nbsp;1.1&nbsp;Silent&nbsp;divergence&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H0</span> <span class="kwd">as</span> [<span class="id">s1</span> [<span class="id">t1</span> [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Diverges</span> <span class="id">t1</span>); <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">diverges_forever_silent</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;1.2&nbsp;Reactive&nbsp;divergence&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">destruct</span> (@<span class="id">reacts_forever_reactive</span> <span class="id">s0</span>) <span class="kwd">as</span> [<span class="id">T</span> <span class="id">FR</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">not_ex_all_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H0</span> <span class="id">s1</span>). <span class="tactic">intro</span> <span class="id">A</span>; <span class="tactic">clear</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">not_ex_all_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">A</span> <span class="id">t1</span>). <span class="tactic">intro</span> <span class="id">B</span>; <span class="tactic">clear</span> <span class="id">A</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">not_and_or</span> <span class="id">_</span> <span class="id">_</span> <span class="id">B</span>). <span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">not_all_ex_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H0</span>) <span class="kwd">as</span> [<span class="id">s2</span> <span class="id">C</span>]; <span class="tactic">clear</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">not_all_ex_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">C</span>) <span class="kwd">as</span> [<span class="id">t2</span> <span class="id">D</span>]; <span class="tactic">clear</span> <span class="id">C</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">imply_to_and</span> <span class="id">_</span> <span class="id">_</span> <span class="id">D</span>) <span class="kwd">as</span> [<span class="id">E</span> <span class="id">F</span>]; <span class="tactic">clear</span> <span class="id">D</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H</span> <span class="id">s2</span> (<span class="id">t1</span> ** <span class="id">t2</span>)) <span class="kwd">as</span> [<span class="id">s3</span> [<span class="id">t3</span> <span class="id">G</span>]]. <span class="tactic">eapply</span> <span class="id">star_trans</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">s3</span>; <span class="id">exists</span> (<span class="id">t2</span> ** <span class="id">t3</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">star_right</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id">app_eq_nil</span> <span class="id">t2</span> <span class="id">t3</span> <span class="id">H0</span>). <span class="tactic">subst</span>. <span class="tactic">elim</span> <span class="id">F</span>. <span class="id">exists</span> <span class="id">s3</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Reacts</span> <span class="id">T</span>); <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;2&nbsp;Termination&nbsp;(normal&nbsp;or&nbsp;by&nbsp;going&nbsp;wrong)&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">not_all_ex_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span>) <span class="kwd">as</span> [<span class="id">s1</span> <span class="id">A</span>]; <span class="tactic">clear</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">not_all_ex_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">A</span>) <span class="kwd">as</span> [<span class="id">t1</span> <span class="id">B</span>]; <span class="tactic">clear</span> <span class="id">A</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">imply_to_and</span> <span class="id">_</span> <span class="id">_</span> <span class="id">B</span>) <span class="kwd">as</span> [<span class="id">C</span> <span class="id">D</span>]; <span class="tactic">clear</span> <span class="id">B</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">classic</span> (<span class="id">exists</span> <span class="id">r</span>, <span class="id">final_state</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">r</span>)) <span class="kwd">as</span> [[<span class="id">r</span> <span class="id">FINAL</span>] | <span class="id">NOTFINAL</span>].<br/>
+&nbsp;2.1&nbsp;Normal&nbsp;termination&nbsp;*)</span>&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Terminates</span> <span class="id">t1</span> <span class="id">r</span>); <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;2.2&nbsp;Going&nbsp;wrong&nbsp;*)</span>&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Goes_wrong</span> <span class="id">t1</span>); <span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">red</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">not_ex_all_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">D</span> <span class="id">s</span>'); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">not_ex_all_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span> <span class="id">t</span>); <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">program_behaves_exists</span>:<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh</span>, <span class="id">program_behaves</span> <span class="id">beh</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1981')">Proof.</div>
+<div class="proofscript" id="proof1981">
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">classic</span> (<span class="id">exists</span> <span class="id">s</span>, <span class="id">initial_state</span> <span class="id">L</span> <span class="id">s</span>)) <span class="kwd">as</span> [[<span class="id">s0</span> <span class="id">INIT</span>] | <span class="id">NOTINIT</span>].<br/>
+&nbsp;1.&nbsp;Initial&nbsp;state&nbsp;is&nbsp;defined.&nbsp;*)</span>&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">state_behaves_exists</span> <span class="id">s0</span>) <span class="kwd">as</span> [<span class="id">beh</span> <span class="id">SB</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh</span>; <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;2.&nbsp;Initial&nbsp;state&nbsp;is&nbsp;undefined&nbsp;*)</span>&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Goes_wrong</span> <span class="id">E0</span>). <span class="tactic">apply</span> <span class="id">program_goes_initially_wrong</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">not_ex_all_not</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">PROGRAM_BEHAVIORS</span>.<br/>
+<br/>
+<h1> Forward simulations and program behaviors </h1>
+<br/>
+<span class="kwd">Section</span> <span class="id">FORWARD_SIMULATIONS</span>.<br/>
+<br/>
+<span class="kwd">Context</span> <span class="id">L1</span> <span class="id">L2</span> <span class="id">index</span> <span class="id">order</span> <span class="id">match_states</span> (<span class="id">S</span>: <span class="id">fsim_properties</span> <span class="id">L1</span> <span class="id">L2</span> <span class="id">index</span> <span class="id">order</span> <span class="id">match_states</span>).<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">forward_simulation_state_behaves</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">beh1</span>,<br/>
+&nbsp;&nbsp;<span class="id">match_states</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span> -&gt; <span class="id">state_behaves</span> <span class="id">L1</span> <span class="id">s1</span> <span class="id">beh1</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh2</span>, <span class="id">state_behaves</span> <span class="id">L2</span> <span class="id">s2</span> <span class="id">beh2</span> /\ <span class="id">behavior_improves</span> <span class="id">beh1</span> <span class="id">beh2</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1982')">Proof.</div>
+<div class="proofscript" id="proof1982">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>.<br/>
+- <span class="comment">(*&nbsp;termination&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">simulation_star</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">i</span>' [<span class="id">s2</span>' [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Terminates</span> <span class="id">t</span> <span class="id">r</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">fsim_match_final_states</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">behavior_improves_refl</span>.<br/>
+- <span class="comment">(*&nbsp;silent&nbsp;divergence&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">simulation_star</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">i</span>' [<span class="id">s2</span>' [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Diverges</span> <span class="id">t</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">simulation_forever_silent</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">behavior_improves_refl</span>.<br/>
+- <span class="comment">(*&nbsp;reactive&nbsp;divergence&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Reacts</span> <span class="id">T</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eapply</span> <span class="id">simulation_forever_reactive</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">behavior_improves_refl</span>.<br/>
+- <span class="comment">(*&nbsp;going&nbsp;wrong&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">simulation_star</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">i</span>' [<span class="id">s2</span>' [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">state_behaves_exists</span> <span class="id">L2</span> <span class="id">s2</span>') <span class="kwd">as</span> [<span class="id">beh</span>' <span class="id">SB</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">behavior_app</span> <span class="id">t</span> <span class="id">beh</span>'); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">state_behaves_app</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">replace</span> (<span class="id">Goes_wrong</span> <span class="id">t</span>) <span class="kwd">with</span> (<span class="id">behavior_app</span> <span class="id">t</span> (<span class="id">Goes_wrong</span> <span class="id">E0</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">behavior_improves_app</span>. <span class="tactic">apply</span> <span class="id">behavior_improves_bot</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="id">decEq</span>. <span class="id">traceEq</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">FORWARD_SIMULATIONS</span>.<br/>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">forward_simulation_behavior_improves</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L1</span> <span class="id">L2</span>, <span class="id">forward_simulation</span> <span class="id">L1</span> <span class="id">L2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">beh1</span>, <span class="id">program_behaves</span> <span class="id">L1</span> <span class="id">beh1</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh2</span>, <span class="id">program_behaves</span> <span class="id">L2</span> <span class="id">beh2</span> /\ <span class="id">behavior_improves</span> <span class="id">beh1</span> <span class="id">beh2</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1983')">Proof.</div>
+<div class="proofscript" id="proof1983">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">L1</span> <span class="id">L2</span> <span class="id">FS</span>. <span class="tactic">destruct</span> <span class="id">FS</span> <span class="kwd">as</span> [<span class="id">init</span> <span class="id">order</span> <span class="id">match_states</span> <span class="id">S</span>]. <span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>.<br/>
+- <span class="comment">(*&nbsp;initial&nbsp;state&nbsp;defined&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id">fsim_match_initial_states</span> <span class="id">S</span>); <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">i</span> [<span class="id">s</span>' [<span class="id">INIT</span> <span class="id">MATCH</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">forward_simulation_state_behaves</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">beh2</span> [<span class="id">A</span> <span class="id">B</span>]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh2</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+- <span class="comment">(*&nbsp;initial&nbsp;state&nbsp;undefined&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">classic</span> (<span class="id">exists</span> <span class="id">s</span>', <span class="id">initial_state</span> <span class="id">L2</span> <span class="id">s</span>')).<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H</span> <span class="kwd">as</span> [<span class="id">s</span>' <span class="id">INIT</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">state_behaves_exists</span> <span class="id">L2</span> <span class="id">s</span>') <span class="kwd">as</span> [<span class="id">beh</span>' <span class="id">SB</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh</span>'; <span class="tactic">split</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">behavior_improves_bot</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Goes_wrong</span> <span class="id">E0</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">program_goes_initially_wrong</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">elim</span> <span class="id">H</span>; <span class="id">exists</span> <span class="id">s</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">behavior_improves_refl</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Corollary</span> <span class="id">forward_simulation_same_safe_behavior</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L1</span> <span class="id">L2</span>, <span class="id">forward_simulation</span> <span class="id">L1</span> <span class="id">L2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">beh</span>,<br/>
+&nbsp;&nbsp;<span class="id">program_behaves</span> <span class="id">L1</span> <span class="id">beh</span> -&gt; <span class="id">not_wrong</span> <span class="id">beh</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">program_behaves</span> <span class="id">L2</span> <span class="id">beh</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1984')">Proof.</div>
+<div class="proofscript" id="proof1984">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">exploit</span> <span class="id">forward_simulation_behavior_improves</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">beh</span>' [<span class="id">A</span> <span class="id">B</span>]]. <span class="tactic">destruct</span> <span class="id">B</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> [<span class="id">t</span> [<span class="id">C</span> <span class="id">D</span>]]. <span class="tactic">subst</span>. <span class="id">contradiction</span>.<br/>
+Qed.</div>
+<br/>
+<h1> Backward simulations and program behaviors </h1>
+<br/>
+<span class="kwd">Section</span> <span class="id">BACKWARD_SIMULATIONS</span>.<br/>
+<br/>
+<span class="kwd">Context</span> <span class="id">L1</span> <span class="id">L2</span> <span class="id">index</span> <span class="id">order</span> <span class="id">match_states</span> (<span class="id">S</span>: <span class="id">bsim_properties</span> <span class="id">L1</span> <span class="id">L2</span> <span class="id">index</span> <span class="id">order</span> <span class="id">match_states</span>).<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">safe_along_behavior</span> (<span class="id">s</span>: <span class="id">state</span> <span class="id">L1</span>) (<span class="id">b</span>: <span class="id">program_behavior</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t1</span> <span class="id">s</span>' <span class="id">b2</span>, <span class="id">Star</span> <span class="id">L1</span> <span class="id">s</span> <span class="id">t1</span> <span class="id">s</span>' -&gt; <span class="id">b</span> = <span class="id">behavior_app</span> <span class="id">t1</span> <span class="id">b2</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">exists</span> <span class="id">r</span>, <span class="id">final_state</span> <span class="id">L1</span> <span class="id">s</span>' <span class="id">r</span>)<br/>
+&nbsp;&nbsp;\/ (<span class="id">exists</span> <span class="id">t2</span>, <span class="id">exists</span> <span class="id">s</span>'', <span class="id">Step</span> <span class="id">L1</span> <span class="id">s</span>' <span class="id">t2</span> <span class="id">s</span>'').<br/>
+<br/>
+<span class="kwd">Remark</span> <span class="id">safe_along_safe</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">b</span>, <span class="id">safe_along_behavior</span> <span class="id">s</span> <span class="id">b</span> -&gt; <span class="id">safe</span> <span class="id">L1</span> <span class="id">s</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1985')">Proof.</div>
+<div class="proofscript" id="proof1985">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="tactic">symmetry</span>; <span class="tactic">apply</span> <span class="id">behavior_app_E0</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Remark</span> <span class="id">star_safe_along</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">b</span> <span class="id">t1</span> <span class="id">s</span>' <span class="id">b2</span>,<br/>
+&nbsp;&nbsp;<span class="id">safe_along_behavior</span> <span class="id">s</span> <span class="id">b</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">Star</span> <span class="id">L1</span> <span class="id">s</span> <span class="id">t1</span> <span class="id">s</span>' -&gt; <span class="id">b</span> = <span class="id">behavior_app</span> <span class="id">t1</span> <span class="id">b2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">safe_along_behavior</span> <span class="id">s</span>' <span class="id">b2</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1986')">Proof.</div>
+<div class="proofscript" id="proof1986">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">H</span>. <span class="tactic">eapply</span> <span class="id">star_trans</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span>. <span class="tactic">rewrite</span> <span class="id">behavior_app_assoc</span>. <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Remark</span> <span class="id">not_safe_along_behavior</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">b</span>,<br/>
+&nbsp;&nbsp;~ <span class="id">safe_along_behavior</span> <span class="id">s</span> <span class="id">b</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">t</span>, <span class="id">exists</span> <span class="id">s</span>',<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">behavior_prefix</span> <span class="id">t</span> <span class="id">b</span><br/>
+&nbsp;&nbsp;/\ <span class="id">Star</span> <span class="id">L1</span> <span class="id">s</span> <span class="id">t</span> <span class="id">s</span>'<br/>
+&nbsp;&nbsp;/\ <span class="id">Nostep</span> <span class="id">L1</span> <span class="id">s</span>'<br/>
+&nbsp;&nbsp;/\ (<span class="kwd">forall</span> <span class="id">r</span>, ~(<span class="id">final_state</span> <span class="id">L1</span> <span class="id">s</span>' <span class="id">r</span>)).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1987')">Proof.</div>
+<div class="proofscript" id="proof1987">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">not_all_ex_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span>) <span class="kwd">as</span> [<span class="id">t1</span> <span class="id">A</span>]; <span class="tactic">clear</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">not_all_ex_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">A</span>) <span class="kwd">as</span> [<span class="id">s</span>' <span class="id">B</span>]; <span class="tactic">clear</span> <span class="id">A</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">not_all_ex_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">B</span>) <span class="kwd">as</span> [<span class="id">b2</span> <span class="id">C</span>]; <span class="tactic">clear</span> <span class="id">B</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">imply_to_and</span> <span class="id">_</span> <span class="id">_</span> <span class="id">C</span>) <span class="kwd">as</span> [<span class="id">D</span> <span class="id">E</span>]; <span class="tactic">clear</span> <span class="id">C</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">imply_to_and</span> <span class="id">_</span> <span class="id">_</span> <span class="id">E</span>) <span class="kwd">as</span> [<span class="id">F</span> <span class="id">G</span>]; <span class="tactic">clear</span> <span class="id">E</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">not_or_and</span> <span class="id">_</span> <span class="id">_</span> <span class="id">G</span>) <span class="kwd">as</span> [<span class="id">P</span> <span class="id">Q</span>]; <span class="tactic">clear</span> <span class="id">G</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">t1</span>; <span class="id">exists</span> <span class="id">s</span>'.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>. <span class="id">exists</span> <span class="id">b2</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>. <span class="tactic">red</span>; <span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">elim</span> <span class="id">Q</span>. <span class="id">exists</span> <span class="id">t</span>; <span class="id">exists</span> <span class="id">s</span>'0; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">elim</span> <span class="id">P</span>. <span class="id">exists</span> <span class="id">r</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">backward_simulation_star</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s2</span> <span class="id">t</span> <span class="id">s2</span>', <span class="id">Star</span> <span class="id">L2</span> <span class="id">s2</span> <span class="id">t</span> <span class="id">s2</span>' -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">b</span>, <span class="id">match_states</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span> -&gt; <span class="id">safe_along_behavior</span> <span class="id">s1</span> (<span class="id">behavior_app</span> <span class="id">t</span> <span class="id">b</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">i</span>', <span class="id">exists</span> <span class="id">s1</span>', <span class="id">Star</span> <span class="id">L1</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s1</span>' /\ <span class="id">match_states</span> <span class="id">i</span>' <span class="id">s1</span>' <span class="id">s2</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1988')">Proof.</div>
+<div class="proofscript" id="proof1988">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">i</span>; <span class="id">exists</span> <span class="id">s1</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id">star_refl</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id">bsim_simulation</span> <span class="id">S</span>); <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">safe_along_safe</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">i</span>' [<span class="id">s1</span>' [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">Star</span> <span class="id">L1</span> <span class="id">s0</span> <span class="id">t1</span> <span class="id">s1</span>'). <span class="tactic">intuition</span>. <span class="tactic">apply</span> <span class="id">plus_star</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">IHstar</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">star_safe_along</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">t</span>; <span class="tactic">apply</span> <span class="id">behavior_app_assoc</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">i</span>'' [<span class="id">s2</span>'' [<span class="id">C</span> <span class="id">D</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">i</span>''; <span class="id">exists</span> <span class="id">s2</span>''; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">eapply</span> <span class="id">star_trans</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">backward_simulation_forever_silent</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span>,<br/>
+&nbsp;&nbsp;<span class="id">Forever_silent</span> <span class="id">L2</span> <span class="id">s2</span> -&gt; <span class="id">match_states</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span> -&gt; <span class="id">safe</span> <span class="id">L1</span> <span class="id">s1</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">Forever_silent</span> <span class="id">L1</span> <span class="id">s1</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1989')">Proof.</div>
+<div class="proofscript" id="proof1989">
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="kwd">forall</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">Forever_silent</span> <span class="id">L2</span> <span class="id">s2</span> -&gt; <span class="id">match_states</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span> -&gt; <span class="id">safe</span> <span class="id">L1</span> <span class="id">s1</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">forever_silent_N</span> (<span class="id">step</span> <span class="id">L1</span>) <span class="id">order</span> (<span class="id">globalenv</span> <span class="id">L1</span>) <span class="id">i</span> <span class="id">s1</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>.  <span class="tactic">destruct</span> (<span class="id">bsim_simulation</span> <span class="id">S</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H2</span> <span class="id">_</span> <span class="id">H0</span> <span class="id">H1</span>) <span class="kwd">as</span> [<span class="id">i</span>' [<span class="id">s2</span>' [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">A</span> <span class="kwd">as</span> [<span class="id">C</span> | [<span class="id">C</span> <span class="id">D</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">forever_silent_N_plus</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">COINDHYP</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">star_safe</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">plus_star</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">forever_silent_N_star</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">COINDHYP</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">star_safe</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">forever_silent_N_forever</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">bsim_order_wf</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">backward_simulation_forever_reactive</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">T</span>,<br/>
+&nbsp;&nbsp;<span class="id">Forever_reactive</span> <span class="id">L2</span> <span class="id">s2</span> <span class="id">T</span> -&gt; <span class="id">match_states</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span> -&gt; <span class="id">safe_along_behavior</span> <span class="id">s1</span> (<span class="id">Reacts</span> <span class="id">T</span>) -&gt;<br/>
+&nbsp;&nbsp;<span class="id">Forever_reactive</span> <span class="id">L1</span> <span class="id">s1</span> <span class="id">T</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1990')">Proof.</div>
+<div class="proofscript" id="proof1990">
+&nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">backward_simulation_star</span> <span class="id">H2</span> (<span class="id">Reacts</span> <span class="id">T0</span>) <span class="id">H0</span>) <span class="kwd">as</span> [<span class="id">i</span>' [<span class="id">s1</span>' [<span class="id">A</span> <span class="id">B</span>]]]; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">COINDHYP</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">star_safe_along</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">backward_simulation_state_behaves</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span> <span class="id">beh2</span>,<br/>
+&nbsp;&nbsp;<span class="id">match_states</span> <span class="id">i</span> <span class="id">s1</span> <span class="id">s2</span> -&gt; <span class="id">state_behaves</span> <span class="id">L2</span> <span class="id">s2</span> <span class="id">beh2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh1</span>, <span class="id">state_behaves</span> <span class="id">L1</span> <span class="id">s1</span> <span class="id">beh1</span> /\ <span class="id">behavior_improves</span> <span class="id">beh1</span> <span class="id">beh2</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1991')">Proof.</div>
+<div class="proofscript" id="proof1991">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id">classic</span> (<span class="id">safe_along_behavior</span> <span class="id">s1</span> <span class="id">beh2</span>)).<br/>
+- <span class="comment">(*&nbsp;1.&nbsp;Safe&nbsp;along&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh2</span>; <span class="tactic">split</span>; [<span class="id">idtac</span>|<span class="tactic">apply</span> <span class="id">behavior_improves_refl</span>].<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H0</span>.<br/>
++ <span class="comment">(*&nbsp;termination&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">Terminates</span> <span class="id">t</span> <span class="id">r</span> = <span class="id">behavior_app</span> <span class="id">t</span> (<span class="id">Terminates</span> <span class="id">E0</span> <span class="id">r</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">E0_right</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">backward_simulation_star</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">i</span>' [<span class="id">s1</span>' [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id">bsim_match_final_states</span> <span class="id">S</span>); <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">safe_along_safe</span>. <span class="tactic">eapply</span> <span class="id">star_safe_along</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">s1</span>'' [<span class="id">C</span> <span class="id">D</span>]].<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eapply</span> <span class="id">star_trans</span>; <span class="tactic">eauto</span>. <span class="id">traceEq</span>. <span class="tactic">auto</span>.<br/>
++ <span class="comment">(*&nbsp;silent&nbsp;divergence&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">Diverges</span> <span class="id">t</span> = <span class="id">behavior_app</span> <span class="id">t</span> (<span class="id">Diverges</span> <span class="id">E0</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">E0_right</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">backward_simulation_star</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">i</span>' [<span class="id">s1</span>' [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">backward_simulation_forever_silent</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">safe_along_safe</span>. <span class="tactic">eapply</span> <span class="id">star_safe_along</span>; <span class="tactic">eauto</span>.<br/>
++ <span class="comment">(*&nbsp;reactive&nbsp;divergence&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eapply</span> <span class="id">backward_simulation_forever_reactive</span>; <span class="tactic">eauto</span>.<br/>
++ <span class="comment">(*&nbsp;goes&nbsp;wrong&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">Goes_wrong</span> <span class="id">t</span> = <span class="id">behavior_app</span> <span class="id">t</span> (<span class="id">Goes_wrong</span> <span class="id">E0</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">rewrite</span> <span class="id">E0_right</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> <span class="id">H0</span> <span class="kwd">in</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">backward_simulation_star</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">i</span>' [<span class="id">s1</span>' [<span class="id">A</span> <span class="id">B</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id">bsim_progress</span> <span class="id">S</span>); <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">safe_along_safe</span>. <span class="tactic">eapply</span> <span class="id">star_safe_along</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [[<span class="id">r</span> <span class="id">FIN</span>] | [<span class="id">t</span>' [<span class="id">s2</span>' <span class="id">STEP2</span>]]].<br/>
+&nbsp;&nbsp;<span class="tactic">elim</span> (<span class="id">H4</span> <span class="id">_</span> <span class="id">FIN</span>).<br/>
+&nbsp;&nbsp;<span class="tactic">elim</span> (<span class="id">H3</span> <span class="id">_</span> <span class="id">_</span> <span class="id">STEP2</span>).<br/>
+<br/>
+- <span class="comment">(*&nbsp;2.&nbsp;Not&nbsp;safe&nbsp;along&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">not_safe_along_behavior</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">t</span> [<span class="id">s1</span>' [<span class="id">PREF</span> [<span class="id">STEPS</span> [<span class="id">NOSTEP</span> <span class="id">NOFIN</span>]]]]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Goes_wrong</span> <span class="id">t</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">right</span>. <span class="id">exists</span> <span class="id">t</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">BACKWARD_SIMULATIONS</span>.<br/>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">backward_simulation_behavior_improves</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L1</span> <span class="id">L2</span>, <span class="id">backward_simulation</span> <span class="id">L1</span> <span class="id">L2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">beh2</span>, <span class="id">program_behaves</span> <span class="id">L2</span> <span class="id">beh2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh1</span>, <span class="id">program_behaves</span> <span class="id">L1</span> <span class="id">beh1</span> /\ <span class="id">behavior_improves</span> <span class="id">beh1</span> <span class="id">beh2</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1992')">Proof.</div>
+<div class="proofscript" id="proof1992">
+&nbsp;&nbsp;<span class="tactic">intros</span> <span class="id">L1</span> <span class="id">L2</span> <span class="id">S</span> <span class="id">beh2</span> <span class="id">H</span>. <span class="tactic">destruct</span> <span class="id">S</span> <span class="kwd">as</span> [<span class="id">index</span> <span class="id">order</span> <span class="id">match_states</span> <span class="id">S</span>]. <span class="id">inv</span> <span class="id">H</span>.<br/>
+- <span class="comment">(*&nbsp;L2's&nbsp;initial&nbsp;state&nbsp;is&nbsp;defined.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">classic</span> (<span class="id">exists</span> <span class="id">s1</span>, <span class="id">initial_state</span> <span class="id">L1</span> <span class="id">s1</span>)) <span class="kwd">as</span> [[<span class="id">s1</span> <span class="id">INIT</span>] | <span class="id">NOINIT</span>].<br/>
++ <span class="comment">(*&nbsp;L1's&nbsp;initial&nbsp;state&nbsp;is&nbsp;defined&nbsp;too.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id">bsim_match_initial_states</span> <span class="id">S</span>); <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">i</span> [<span class="id">s1</span>' [<span class="id">INIT1</span>' <span class="id">MATCH</span>]]].<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">backward_simulation_state_behaves</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">beh1</span> [<span class="id">A</span> <span class="id">B</span>]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">beh1</span>; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
++ <span class="comment">(*&nbsp;L1&nbsp;has&nbsp;no&nbsp;initial&nbsp;state&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Goes_wrong</span> <span class="id">E0</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">program_goes_initially_wrong</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">elim</span> <span class="id">NOINIT</span>; <span class="id">exists</span> <span class="id">s0</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">behavior_improves_bot</span>.<br/>
+- <span class="comment">(*&nbsp;L2&nbsp;has&nbsp;no&nbsp;initial&nbsp;state&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">Goes_wrong</span> <span class="id">E0</span>); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">program_goes_initially_wrong</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> (<span class="id">bsim_initial_states_exist</span> <span class="id">S</span>); <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">s2</span> <span class="id">INIT2</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">elim</span> (<span class="id">H0</span> <span class="id">s2</span>); <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">behavior_improves_refl</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Corollary</span> <span class="id">backward_simulation_same_safe_behavior</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">L1</span> <span class="id">L2</span>, <span class="id">backward_simulation</span> <span class="id">L1</span> <span class="id">L2</span> -&gt;<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">beh</span>, <span class="id">program_behaves</span> <span class="id">L1</span> <span class="id">beh</span> -&gt; <span class="id">not_wrong</span> <span class="id">beh</span>) -&gt;<br/>
+&nbsp;&nbsp;(<span class="kwd">forall</span> <span class="id">beh</span>, <span class="id">program_behaves</span> <span class="id">L2</span> <span class="id">beh</span> -&gt; <span class="id">program_behaves</span> <span class="id">L1</span> <span class="id">beh</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1993')">Proof.</div>
+<div class="proofscript" id="proof1993">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">exploit</span> <span class="id">backward_simulation_behavior_improves</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">beh</span>' [<span class="id">A</span> <span class="id">B</span>]]. <span class="tactic">destruct</span> <span class="id">B</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H2</span> <span class="kwd">as</span> [<span class="id">t</span> [<span class="id">C</span> <span class="id">D</span>]]. <span class="tactic">subst</span>. <span class="tactic">elim</span> (<span class="id">H0</span> (<span class="id">Goes_wrong</span> <span class="id">t</span>)). <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<h1> Program behaviors for the "atomic" construction </h1>
+<br/>
+<span class="kwd">Section</span> <span class="id">ATOMIC</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">L</span>: <span class="id">semantics</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id">Lwb</span>: <span class="id">well_behaved_traces</span> <span class="id">L</span>.<br/>
+<br/>
+<span class="kwd">Remark</span> <span class="id">atomic_finish</span>: <span class="kwd">forall</span> <span class="id">s</span> <span class="id">t</span>, <span class="id">output_trace</span> <span class="id">t</span> -&gt; <span class="id">Star</span> (<span class="id">atomic</span> <span class="id">L</span>) (<span class="id">t</span>, <span class="id">s</span>) <span class="id">t</span> (<span class="id">E0</span>, <span class="id">s</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1994')">Proof.</div>
+<div class="proofscript" id="proof1994">
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">t</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">star_refl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">destruct</span> <span class="id">H</span>. <span class="tactic">eapply</span> <span class="id">star_left</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>. <span class="tactic">apply</span> <span class="id">atomic_step_continue</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">step_atomic_plus</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span>, <span class="id">Step</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span> -&gt; <span class="id">Plus</span> (<span class="id">atomic</span> <span class="id">L</span>) (<span class="id">E0</span>,<span class="id">s1</span>) <span class="id">t</span> (<span class="id">E0</span>,<span class="id">s2</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1995')">Proof.</div>
+<div class="proofscript" id="proof1995">
+&nbsp;&nbsp;<span class="tactic">intros</span>.  <span class="tactic">destruct</span> <span class="id">t</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">plus_one</span>. <span class="tactic">simpl</span>; <span class="tactic">apply</span> <span class="id">atomic_step_silent</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">Lwb</span>; <span class="tactic">eauto</span>. <span class="tactic">simpl</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">plus_left</span>. <span class="tactic">eapply</span> <span class="id">atomic_step_start</span>; <span class="tactic">eauto</span>. <span class="tactic">eapply</span> <span class="id">atomic_finish</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">star_atomic_star</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span>, <span class="id">Star</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span> -&gt; <span class="id">Star</span> (<span class="id">atomic</span> <span class="id">L</span>) (<span class="id">E0</span>,<span class="id">s1</span>) <span class="id">t</span> (<span class="id">E0</span>,<span class="id">s2</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1996')">Proof.</div>
+<div class="proofscript" id="proof1996">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1. <span class="tactic">apply</span> <span class="id">star_refl</span>. <span class="tactic">eapply</span> <span class="id">star_trans</span> <span class="kwd">with</span> (<span class="id">s2</span> := (<span class="id">E0</span>,<span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">plus_star</span>. <span class="tactic">eapply</span> <span class="id">step_atomic_plus</span>; <span class="tactic">eauto</span>. <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">atomic_forward_simulation</span>: <span class="id">forward_simulation</span> <span class="id">L</span> (<span class="id">atomic</span> <span class="id">L</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1997')">Proof.</div>
+<div class="proofscript" id="proof1997">
+&nbsp;&nbsp;<span class="tactic">set</span> (<span class="id">ms</span> := <span class="kwd">fun</span> (<span class="id">s</span>: <span class="id">state</span> <span class="id">L</span>) (<span class="id">ts</span>: <span class="id">state</span> (<span class="id">atomic</span> <span class="id">L</span>)) =&gt; <span class="id">ts</span> = (<span class="id">E0</span>,<span class="id">s</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">forward_simulation_plus</span> <span class="kwd">with</span> <span class="id">ms</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">E0</span>,<span class="id">s1</span>); <span class="tactic">split</span>. <span class="tactic">simpl</span>; <span class="tactic">auto</span>. <span class="tactic">red</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">red</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">subst</span> <span class="id">s2</span>. <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">red</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">subst</span> <span class="id">s2</span>. <span class="id">exists</span> (<span class="id">E0</span>,<span class="id">s1</span>'); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">step_atomic_plus</span>; <span class="tactic">auto</span>. <span class="tactic">red</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">atomic_star_star_gen</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">ts1</span> <span class="id">t</span> <span class="id">ts2</span>, <span class="id">Star</span> (<span class="id">atomic</span> <span class="id">L</span>) <span class="id">ts1</span> <span class="id">t</span> <span class="id">ts2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">t</span>', <span class="id">Star</span> <span class="id">L</span> (<span class="id">snd</span> <span class="id">ts1</span>) <span class="id">t</span>' (<span class="id">snd</span> <span class="id">ts2</span>) /\ <span class="id">fst</span> <span class="id">ts1</span> ** <span class="id">t</span>' = <span class="id">t</span> ** <span class="id">fst</span> <span class="id">ts2</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1998')">Proof.</div>
+<div class="proofscript" id="proof1998">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">E0</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">star_refl</span>. <span class="id">traceEq</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">IHstar</span> <span class="kwd">as</span> [<span class="id">t</span>' [<span class="id">A</span> <span class="id">B</span>]].<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">t</span>'; <span class="tactic">split</span>. <span class="tactic">eapply</span> <span class="id">star_left</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">ev</span> :: <span class="id">t0</span> ** <span class="id">t</span>'); <span class="tactic">split</span>. <span class="tactic">eapply</span> <span class="id">star_left</span>; <span class="tactic">eauto</span>. <span class="tactic">rewrite</span> <span class="id">B</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">t</span>'; <span class="tactic">split</span>. <span class="tactic">auto</span>. <span class="tactic">rewrite</span> <span class="id">B</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">atomic_star_star</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span>, <span class="id">Star</span> (<span class="id">atomic</span> <span class="id">L</span>) (<span class="id">E0</span>,<span class="id">s1</span>) <span class="id">t</span> (<span class="id">E0</span>,<span class="id">s2</span>) -&gt; <span class="id">Star</span> <span class="id">L</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof1999')">Proof.</div>
+<div class="proofscript" id="proof1999">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">exploit</span> <span class="id">atomic_star_star_gen</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">t</span>' [<span class="id">A</span> <span class="id">B</span>]].<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="tactic">replace</span> <span class="id">t</span> <span class="kwd">with</span> <span class="id">t</span>'. <span class="tactic">auto</span>. <span class="tactic">subst</span>; <span class="id">traceEq</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">atomic_forever_silent_forever_silent</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span>, <span class="id">Forever_silent</span> (<span class="id">atomic</span> <span class="id">L</span>) <span class="id">s</span> -&gt; <span class="id">Forever_silent</span> <span class="id">L</span> (<span class="id">snd</span> <span class="id">s</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2000')">Proof.</div>
+<div class="proofscript" id="proof2000">
+&nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">forever_silent_intro</span> <span class="kwd">with</span> (<span class="id">snd</span> (<span class="id">E0</span>, <span class="id">s</span>')). <span class="tactic">auto</span>. <span class="tactic">apply</span> <span class="id">COINDHYP</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Remark</span> <span class="id">star_atomic_output_trace</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">t</span> <span class="id">t</span>' <span class="id">s</span>',<br/>
+&nbsp;&nbsp;<span class="id">Star</span> (<span class="id">atomic</span> <span class="id">L</span>) (<span class="id">E0</span>, <span class="id">s</span>) <span class="id">t</span> (<span class="id">t</span>', <span class="id">s</span>') -&gt; <span class="id">output_trace</span> <span class="id">t</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2001')">Proof.</div>
+<div class="proofscript" id="proof2001">
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="kwd">forall</span> <span class="id">ts1</span> <span class="id">t</span> <span class="id">ts2</span>, <span class="id">Star</span> (<span class="id">atomic</span> <span class="id">L</span>) <span class="id">ts1</span> <span class="id">t</span> <span class="id">ts2</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">output_trace</span> (<span class="id">fst</span> <span class="id">ts1</span>) -&gt; <span class="id">output_trace</span> (<span class="id">fst</span> <span class="id">ts2</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>. <span class="tactic">auto</span>. <span class="id">inv</span> <span class="id">H</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHstar</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">IHstar</span>. <span class="id">exploit</span> <span class="id">Lwb</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H2</span>. <span class="tactic">apply</span> <span class="id">IHstar</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">change</span> <span class="id">t</span>' <span class="kwd">with</span> (<span class="id">fst</span> (<span class="id">t</span>',<span class="id">s</span>')). <span class="tactic">eapply</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">atomic_forever_reactive_forever_reactive</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">T</span>, <span class="id">Forever_reactive</span> (<span class="id">atomic</span> <span class="id">L</span>) (<span class="id">E0</span>,<span class="id">s</span>) <span class="id">T</span> -&gt; <span class="id">Forever_reactive</span> <span class="id">L</span> <span class="id">s</span> <span class="id">T</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2002')">Proof.</div>
+<div class="proofscript" id="proof2002">
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="kwd">forall</span> <span class="id">t</span> <span class="id">s</span> <span class="id">T</span>, <span class="id">Forever_reactive</span> (<span class="id">atomic</span> <span class="id">L</span>) (<span class="id">t</span>,<span class="id">s</span>) <span class="id">T</span> -&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">exists</span> <span class="id">T</span>', <span class="id">Forever_reactive</span> (<span class="id">atomic</span> <span class="id">L</span>) (<span class="id">E0</span>,<span class="id">s</span>) <span class="id">T</span>' /\ <span class="id">T</span> = <span class="id">t</span> *** <span class="id">T</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">induction</span> <span class="id">t</span>; <span class="tactic">intros</span>. <span class="id">exists</span> <span class="id">T</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">congruence</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="id">inv</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">IHt</span> <span class="id">s</span> (<span class="id">t2</span>***<span class="id">T0</span>)) <span class="kwd">as</span> [<span class="id">T</span>' [<span class="id">A</span> <span class="id">B</span>]]. <span class="tactic">eapply</span> <span class="id">star_forever_reactive</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">T</span>'; <span class="tactic">split</span>; <span class="tactic">auto</span>. <span class="tactic">simpl</span>. <span class="tactic">congruence</span>.<br/>
+<br/>
+&nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H0</span>. <span class="tactic">destruct</span> <span class="id">s2</span> <span class="kwd">as</span> [<span class="id">t2</span> <span class="id">s2</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H</span> <span class="id">_</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H3</span>) <span class="kwd">as</span> [<span class="id">T</span>' [<span class="id">A</span> <span class="id">B</span>]].<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">Star</span> (<span class="id">atomic</span> <span class="id">L</span>) (<span class="id">E0</span>, <span class="id">s</span>) (<span class="id">t</span>**<span class="id">t2</span>) (<span class="id">E0</span>, <span class="id">s2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">star_trans</span>. <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">atomic_finish</span>. <span class="tactic">eapply</span> <span class="id">star_atomic_output_trace</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">replace</span> (<span class="id">t</span> *** <span class="id">T0</span>) <span class="kwd">with</span> ((<span class="id">t</span> ** <span class="id">t2</span>) *** <span class="id">T</span>'). <span class="tactic">apply</span> <span class="id">forever_reactive_intro</span> <span class="kwd">with</span> <span class="id">s2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">atomic_star_star</span>; <span class="tactic">auto</span>. <span class="tactic">destruct</span> <span class="id">t</span>; <span class="tactic">simpl</span> <span class="kwd">in</span> *; <span class="tactic">unfold</span> <span class="id">E0</span> <span class="kwd">in</span> *; <span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">COINDHYP</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">T0</span>; <span class="id">traceEq</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">atomic_behaviors</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">beh</span>, <span class="id">program_behaves</span> <span class="id">L</span> <span class="id">beh</span> &lt;-&gt; <span class="id">program_behaves</span> (<span class="id">atomic</span> <span class="id">L</span>) <span class="id">beh</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2003')">Proof.</div>
+<div class="proofscript" id="proof2003">
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">split</span>; <span class="tactic">intros</span>.<br/>
+- <span class="comment">(*&nbsp;L&nbsp;-&gt;&nbsp;atomic&nbsp;L&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">forward_simulation_behavior_improves</span>. <span class="tactic">eapply</span> <span class="id">atomic_forward_simulation</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">beh2</span> [<span class="id">A</span> <span class="id">B</span>]]. <span class="tactic">red</span> <span class="kwd">in</span> <span class="id">B</span>. <span class="tactic">destruct</span> <span class="id">B</span> <span class="kwd">as</span> [<span class="id">EQ</span> | [<span class="id">t</span> [<span class="id">C</span> <span class="id">D</span>]]].<br/>
+&nbsp;&nbsp;<span class="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">beh</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="id">inv</span> <span class="id">H1</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">program_runs</span> <span class="kwd">with</span> (<span class="id">E0</span>,<span class="id">s</span>). <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">state_goes_wrong</span> <span class="kwd">with</span> (<span class="id">E0</span>,<span class="id">s</span>'). <span class="tactic">apply</span> <span class="id">star_atomic_star</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="id">inv</span> <span class="id">H</span>. <span class="id">eelim</span> <span class="id">H3</span>; <span class="tactic">eauto</span>. <span class="id">eelim</span> <span class="id">H3</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">eelim</span> <span class="id">H4</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">program_goes_initially_wrong</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H</span>; <span class="tactic">destruct</span> <span class="id">H</span>. <span class="id">eelim</span> <span class="id">H1</span>; <span class="tactic">eauto</span>.<br/>
+- <span class="comment">(*&nbsp;atomic&nbsp;L&nbsp;-&gt;&nbsp;L&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>.<br/>
++ <span class="comment">(*&nbsp;initial&nbsp;state&nbsp;defined&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">s</span> <span class="kwd">as</span> [<span class="id">t</span> <span class="id">s</span>]. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H0</span>. <span class="tactic">destruct</span> <span class="id">H0</span>; <span class="tactic">subst</span> <span class="id">t</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">program_runs</span> <span class="kwd">with</span> <span class="id">s</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H1</span>.<br/>
+* <span class="comment">(*&nbsp;termination&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">s</span>' <span class="kwd">as</span> [<span class="id">t</span>' <span class="id">s</span>']. <span class="tactic">simpl</span> <span class="kwd">in</span> <span class="id">H2</span>; <span class="tactic">destruct</span> <span class="id">H2</span>; <span class="tactic">subst</span> <span class="id">t</span>'.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eapply</span> <span class="id">atomic_star_star</span>; <span class="tactic">eauto</span>. <span class="tactic">auto</span>.<br/>
+* <span class="comment">(*&nbsp;silent&nbsp;divergence&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">s</span>' <span class="kwd">as</span> [<span class="id">t</span>' <span class="id">s</span>'].<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">t</span>' = <span class="id">E0</span>). <span class="id">inv</span> <span class="id">H2</span>. <span class="id">inv</span> <span class="id">H1</span>; <span class="tactic">auto</span>. <span class="tactic">subst</span> <span class="id">t</span>'.<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">eapply</span> <span class="id">atomic_star_star</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id">change</span> <span class="id">s</span>' <span class="kwd">with</span> (<span class="id">snd</span> (<span class="id">E0</span>,<span class="id">s</span>')). <span class="tactic">apply</span> <span class="id">atomic_forever_silent_forever_silent</span>. <span class="tactic">auto</span>.<br/>
+* <span class="comment">(*&nbsp;reactive&nbsp;divergence&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>. <span class="tactic">apply</span> <span class="id">atomic_forever_reactive_forever_reactive</span>. <span class="tactic">auto</span>.<br/>
+* <span class="comment">(*&nbsp;going&nbsp;wrong&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">s</span>' <span class="kwd">as</span> [<span class="id">t</span>' <span class="id">s</span>'].<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">t</span>' = <span class="id">E0</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">t</span>'; <span class="tactic">auto</span>. <span class="id">eelim</span> <span class="id">H2</span>. <span class="tactic">simpl</span>. <span class="tactic">apply</span> <span class="id">atomic_step_continue</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">star_atomic_output_trace</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">subst</span> <span class="id">t</span>'. <span class="id">econstructor</span>. <span class="tactic">apply</span> <span class="id">atomic_star_star</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> <span class="id">t0</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">elim</span> (<span class="id">H2</span> <span class="id">E0</span> (<span class="id">E0</span>,<span class="id">s</span>'0)). <span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">elim</span> (<span class="id">H2</span> (<span class="id">e</span>::<span class="id">nil</span>) (<span class="id">t0</span>,<span class="id">s</span>'0)). <span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">elim</span> (<span class="id">H3</span> <span class="id">r</span>). <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
++ <span class="comment">(*&nbsp;initial&nbsp;state&nbsp;undefined&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">program_goes_initially_wrong</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span>; <span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">elim</span> (<span class="id">H0</span> (<span class="id">E0</span>,<span class="id">s</span>)); <span class="tactic">simpl</span>; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">ATOMIC</span>.<br/>
+<br/>
+<h1> Additional results about infinite reduction sequences </h1>
+<br/>
+<div class="doc">We now show that any infinite sequence of reductions is either of
+  the "reactive" kind or of the "silent" kind (after a finite number
+  of non-silent transitions).  The proof necessitates the axiom of
+  excluded middle.  This result is used below to relate
+  the coinductive big-step semantics for divergence with the
+  small-step notions of divergence. </div>
+<br/>
+<span class="kwd">Unset</span> <span class="kwd">Implicit</span> <span class="id">Arguments</span>.<br/>
+<br/>
+<span class="kwd">Section</span> <span class="id">INF_SEQ_DECOMP</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">genv</span>: <span class="kwd">Type</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">state</span>: <span class="kwd">Type</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">step</span>: <span class="id">genv</span> -&gt; <span class="id">state</span> -&gt; <span class="id">trace</span> -&gt; <span class="id">state</span> -&gt; <span class="kwd">Prop</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">ge</span>: <span class="id">genv</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">tstate</span>: <span class="kwd">Type</span> :=<br/>
+&nbsp;&nbsp;<span class="id">ST</span>: <span class="kwd">forall</span> (<span class="id">s</span>: <span class="id">state</span>) (<span class="id">T</span>: <span class="id">traceinf</span>), <span class="id">forever</span> <span class="id">step</span> <span class="id">ge</span> <span class="id">s</span> <span class="id">T</span> -&gt; <span class="id">tstate</span>.<br/>
+<br/>
+<span class="kwd">Definition</span> <span class="id">state_of_tstate</span> (<span class="id">S</span>: <span class="id">tstate</span>): <span class="id">state</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">S</span> <span class="kwd">with</span> <span class="id">ST</span> <span class="id">s</span> <span class="id">T</span> <span class="id">F</span> =&gt; <span class="id">s</span> <span class="kwd">end</span>.<br/>
+<span class="kwd">Definition</span> <span class="id">traceinf_of_tstate</span> (<span class="id">S</span>: <span class="id">tstate</span>) : <span class="id">traceinf</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">match</span> <span class="id">S</span> <span class="kwd">with</span> <span class="id">ST</span> <span class="id">s</span> <span class="id">T</span> <span class="id">F</span> =&gt; <span class="id">T</span> <span class="kwd">end</span>.<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">tstep</span>: <span class="id">trace</span> -&gt; <span class="id">tstate</span> -&gt; <span class="id">tstate</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">tstep_intro</span>: <span class="kwd">forall</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">T</span> <span class="id">s2</span> <span class="id">S</span> <span class="id">F</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">tstep</span> <span class="id">t</span> (<span class="id">ST</span> <span class="id">s1</span> (<span class="id">t</span> *** <span class="id">T</span>) (@<span class="id">forever_intro</span> <span class="id">genv</span> <span class="id">state</span> <span class="id">step</span> <span class="id">ge</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s2</span> <span class="id">T</span> <span class="id">S</span> <span class="id">F</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">ST</span> <span class="id">s2</span> <span class="id">T</span> <span class="id">F</span>).<br/>
+<br/>
+<span class="kwd">Inductive</span> <span class="id">tsteps</span>: <span class="id">tstate</span> -&gt; <span class="id">tstate</span> -&gt; <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;| <span class="id">tsteps_refl</span>: <span class="kwd">forall</span> <span class="id">S</span>, <span class="id">tsteps</span> <span class="id">S</span> <span class="id">S</span><br/>
+&nbsp;&nbsp;| <span class="id">tsteps_left</span>: <span class="kwd">forall</span> <span class="id">t</span> <span class="id">S1</span> <span class="id">S2</span> <span class="id">S3</span>, <span class="id">tstep</span> <span class="id">t</span> <span class="id">S1</span> <span class="id">S2</span> -&gt; <span class="id">tsteps</span> <span class="id">S2</span> <span class="id">S3</span> -&gt; <span class="id">tsteps</span> <span class="id">S1</span> <span class="id">S3</span>.<br/>
+<br/>
+<span class="kwd">Remark</span> <span class="id">tsteps_trans</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S1</span> <span class="id">S2</span>, <span class="id">tsteps</span> <span class="id">S1</span> <span class="id">S2</span> -&gt; <span class="kwd">forall</span> <span class="id">S3</span>, <span class="id">tsteps</span> <span class="id">S2</span> <span class="id">S3</span> -&gt; <span class="id">tsteps</span> <span class="id">S1</span> <span class="id">S3</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2004')">Proof.</div>
+<div class="proofscript" id="proof2004">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1; <span class="tactic">intros</span>. <span class="tactic">auto</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Let</span> <span class="id">treactive</span> (<span class="id">S</span>: <span class="id">tstate</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S1</span>,<br/>
+&nbsp;&nbsp;<span class="id">tsteps</span> <span class="id">S</span> <span class="id">S1</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">S2</span>, <span class="id">exists</span> <span class="id">S3</span>, <span class="id">exists</span> <span class="id">t</span>, <span class="id">tsteps</span> <span class="id">S1</span> <span class="id">S2</span> /\ <span class="id">tstep</span> <span class="id">t</span> <span class="id">S2</span> <span class="id">S3</span> /\ <span class="id">t</span> &lt;&gt; <span class="id">E0</span>.<br/>
+<br/>
+<span class="kwd">Let</span> <span class="id">tsilent</span> (<span class="id">S</span>: <span class="id">tstate</span>) : <span class="kwd">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S1</span> <span class="id">t</span> <span class="id">S2</span>, <span class="id">tsteps</span> <span class="id">S</span> <span class="id">S1</span> -&gt; <span class="id">tstep</span> <span class="id">t</span> <span class="id">S1</span> <span class="id">S2</span> -&gt; <span class="id">t</span> = <span class="id">E0</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">treactive_or_tsilent</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S</span>, <span class="id">treactive</span> <span class="id">S</span> \/ (<span class="id">exists</span> <span class="id">S</span>', <span class="id">tsteps</span> <span class="id">S</span> <span class="id">S</span>' /\ <span class="id">tsilent</span> <span class="id">S</span>').<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2005')">Proof.</div>
+<div class="proofscript" id="proof2005">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id">classic</span> (<span class="id">exists</span> <span class="id">S</span>', <span class="id">tsteps</span> <span class="id">S</span> <span class="id">S</span>' /\ <span class="id">tsilent</span> <span class="id">S</span>')).<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">left</span>. <span class="tactic">red</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">not_ex_all_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H</span> <span class="id">S1</span>). <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">not_and_or</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H1</span>). <span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">unfold</span> <span class="id">tsilent</span> <span class="kwd">in</span> <span class="id">H2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">not_all_ex_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H2</span>). <span class="tactic">intros</span> [<span class="id">S2</span> <span class="id">A</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">not_all_ex_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">A</span>). <span class="tactic">intros</span> [<span class="id">t</span> <span class="id">B</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">not_all_ex_not</span> <span class="id">_</span> <span class="id">_</span> <span class="id">B</span>). <span class="tactic">intros</span> [<span class="id">S3</span> <span class="id">C</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">imply_to_and</span> <span class="id">_</span> <span class="id">_</span> <span class="id">C</span>). <span class="tactic">intros</span> [<span class="id">D</span> <span class="id">F</span>].<br/>
+&nbsp;&nbsp;<span class="tactic">generalize</span> (<span class="id">imply_to_and</span> <span class="id">_</span> <span class="id">_</span> <span class="id">F</span>). <span class="tactic">intros</span> [<span class="id">G</span> <span class="id">J</span>].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">S2</span>; <span class="id">exists</span> <span class="id">S3</span>; <span class="id">exists</span> <span class="id">t</span>. <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">tsteps_star</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S1</span> <span class="id">S2</span>, <span class="id">tsteps</span> <span class="id">S1</span> <span class="id">S2</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">t</span>, <span class="id">star</span> <span class="id">step</span> <span class="id">ge</span> (<span class="id">state_of_tstate</span> <span class="id">S1</span>) <span class="id">t</span> (<span class="id">state_of_tstate</span> <span class="id">S2</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/\ <span class="id">traceinf_of_tstate</span> <span class="id">S1</span> = <span class="id">t</span> *** <span class="id">traceinf_of_tstate</span> <span class="id">S2</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2006')">Proof.</div>
+<div class="proofscript" id="proof2006">
+&nbsp;&nbsp;<span class="tactic">induction</span> 1.<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">E0</span>; <span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">star_refl</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">H</span>. <span class="tactic">destruct</span> <span class="id">IHtsteps</span> <span class="kwd">as</span> [<span class="id">t</span>' [<span class="id">A</span> <span class="id">B</span>]].<br/>
+&nbsp;&nbsp;<span class="id">exists</span> (<span class="id">t</span> ** <span class="id">t</span>'); <span class="tactic">split</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span>; <span class="tactic">eapply</span> <span class="id">star_left</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="tactic">subst</span> <span class="id">T</span>. <span class="id">traceEq</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">tsilent_forever_silent</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S</span>,<br/>
+&nbsp;&nbsp;<span class="id">tsilent</span> <span class="id">S</span> -&gt; <span class="id">forever_silent</span> <span class="id">step</span> <span class="id">ge</span> (<span class="id">state_of_tstate</span> <span class="id">S</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2007')">Proof.</div>
+<div class="proofscript" id="proof2007">
+&nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intro</span> <span class="id">S</span>. <span class="tactic">case</span> <span class="id">S</span>. <span class="tactic">intros</span> <span class="id">until</span> <span class="id">f</span>. <span class="tactic">simpl</span>. <span class="tactic">case</span> <span class="id">f</span>. <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">tstep</span> <span class="id">t</span> (<span class="id">ST</span> <span class="id">s1</span> (<span class="id">t</span> *** <span class="id">T0</span>) (<span class="id">forever_intro</span> <span class="id">s1</span> <span class="id">t</span> <span class="id">s0</span> <span class="id">f0</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id">ST</span> <span class="id">s2</span> <span class="id">T0</span> <span class="id">f0</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">assert</span> (<span class="id">t</span> = <span class="id">E0</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="tactic">red</span> <span class="kwd">in</span> <span class="id">H</span>. <span class="tactic">eapply</span> <span class="id">H</span>; <span class="tactic">eauto</span>. <span class="tactic">apply</span> <span class="id">tsteps_refl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">forever_silent_intro</span> <span class="kwd">with</span> (<span class="id">state_of_tstate</span> (<span class="id">ST</span> <span class="id">s2</span> <span class="id">T0</span> <span class="id">f0</span>)).<br/>
+&nbsp;&nbsp;<span class="tactic">rewrite</span> &lt;- <span class="id">H1</span>. <span class="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">COINDHYP</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">eapply</span> <span class="id">H</span>. <span class="tactic">eapply</span> <span class="id">tsteps_left</span>; <span class="tactic">eauto</span>. <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">treactive_forever_reactive</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">S</span>,<br/>
+&nbsp;&nbsp;<span class="id">treactive</span> <span class="id">S</span> -&gt; <span class="id">forever_reactive</span> <span class="id">step</span> <span class="id">ge</span> (<span class="id">state_of_tstate</span> <span class="id">S</span>) (<span class="id">traceinf_of_tstate</span> <span class="id">S</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2008')">Proof.</div>
+<div class="proofscript" id="proof2008">
+&nbsp;&nbsp;<span class="id">cofix</span> <span class="id">COINDHYP</span>; <span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">H</span> <span class="id">S</span>) <span class="kwd">as</span> [<span class="id">S1</span> [<span class="id">S2</span> [<span class="id">t</span> [<span class="id">A</span> [<span class="id">B</span> <span class="id">C</span>]]]]]. <span class="tactic">apply</span> <span class="id">tsteps_refl</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">tsteps_star</span> <span class="id">_</span> <span class="id">_</span> <span class="id">A</span>) <span class="kwd">as</span> [<span class="id">t</span>' [<span class="id">P</span> <span class="id">Q</span>]].<br/>
+&nbsp;&nbsp;<span class="id">inv</span> <span class="id">B</span>. <span class="tactic">simpl</span> <span class="kwd">in</span> *. <span class="tactic">rewrite</span> <span class="id">Q</span>. <span class="tactic">rewrite</span> &lt;- <span class="id">Eappinf_assoc</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">forever_reactive_intro</span> <span class="kwd">with</span> <span class="id">s2</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">star_right</span>; <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">destruct</span> (<span class="id">Eapp_E0_inv</span> <span class="id">_</span> <span class="id">_</span> <span class="id">H0</span>). <span class="id">contradiction</span>.<br/>
+&nbsp;&nbsp;<span class="id">change</span> (<span class="id">forever_reactive</span> <span class="id">step</span> <span class="id">ge</span> (<span class="id">state_of_tstate</span> (<span class="id">ST</span> <span class="id">s2</span> <span class="id">T</span> <span class="id">F</span>)) (<span class="id">traceinf_of_tstate</span> (<span class="id">ST</span> <span class="id">s2</span> <span class="id">T</span> <span class="id">F</span>))).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">COINDHYP</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">red</span>; <span class="tactic">intros</span>. <span class="tactic">apply</span> <span class="id">H</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">tsteps_trans</span>. <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">eapply</span> <span class="id">tsteps_left</span>. <span class="id">constructor</span>. <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Theorem</span> <span class="id">forever_silent_or_reactive</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">s</span> <span class="id">T</span>,<br/>
+&nbsp;&nbsp;<span class="id">forever</span> <span class="id">step</span> <span class="id">ge</span> <span class="id">s</span> <span class="id">T</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">forever_reactive</span> <span class="id">step</span> <span class="id">ge</span> <span class="id">s</span> <span class="id">T</span> \/<br/>
+&nbsp;&nbsp;<span class="id">exists</span> <span class="id">t</span>, <span class="id">exists</span> <span class="id">s</span>', <span class="id">exists</span> <span class="id">T</span>',<br/>
+&nbsp;&nbsp;<span class="id">star</span> <span class="id">step</span> <span class="id">ge</span> <span class="id">s</span> <span class="id">t</span> <span class="id">s</span>' /\ <span class="id">forever_silent</span> <span class="id">step</span> <span class="id">ge</span> <span class="id">s</span>' /\ <span class="id">T</span> = <span class="id">t</span> *** <span class="id">T</span>'.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2009')">Proof.</div>
+<div class="proofscript" id="proof2009">
+&nbsp;&nbsp;<span class="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> (<span class="id">treactive_or_tsilent</span> (<span class="id">ST</span> <span class="id">s</span> <span class="id">T</span> <span class="id">H</span>)).<br/>
+&nbsp;&nbsp;<span class="id">left</span>.<br/>
+&nbsp;&nbsp;<span class="id">change</span> (<span class="id">forever_reactive</span> <span class="id">step</span> <span class="id">ge</span> (<span class="id">state_of_tstate</span> (<span class="id">ST</span> <span class="id">s</span> <span class="id">T</span> <span class="id">H</span>)) (<span class="id">traceinf_of_tstate</span> (<span class="id">ST</span> <span class="id">s</span> <span class="id">T</span> <span class="id">H</span>))).<br/>
+&nbsp;&nbsp;<span class="tactic">apply</span> <span class="id">treactive_forever_reactive</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">destruct</span> <span class="id">H0</span> <span class="kwd">as</span> [<span class="id">S</span>' [<span class="id">A</span> <span class="id">B</span>]].<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">tsteps_star</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">t</span> [<span class="id">C</span> <span class="id">D</span>]]. <span class="tactic">simpl</span> <span class="kwd">in</span> *.<br/>
+&nbsp;&nbsp;<span class="id">right</span>. <span class="id">exists</span> <span class="id">t</span>; <span class="id">exists</span> (<span class="id">state_of_tstate</span> <span class="id">S</span>'); <span class="id">exists</span> (<span class="id">traceinf_of_tstate</span> <span class="id">S</span>').<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">split</span>. <span class="tactic">apply</span> <span class="id">tsilent_forever_silent</span>. <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">INF_SEQ_DECOMP</span>.<br/>
+<br/>
+<span class="kwd">Set</span> <span class="kwd">Implicit</span> <span class="id">Arguments</span>.<br/>
+<br/>
+<h1> Big-step semantics and program behaviors </h1>
+<br/>
+<span class="kwd">Section</span> <span class="id">BIGSTEP_BEHAVIORS</span>.<br/>
+<br/>
+<span class="kwd">Variable</span> <span class="id">B</span>: <span class="id">bigstep_semantics</span>.<br/>
+<span class="kwd">Variable</span> <span class="id">L</span>: <span class="id">semantics</span>.<br/>
+<span class="kwd">Hypothesis</span> <span class="id">sound</span>: <span class="id">bigstep_sound</span> <span class="id">B</span> <span class="id">L</span>.<br/>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">behavior_bigstep_terminates</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">t</span> <span class="id">r</span>,<br/>
+&nbsp;&nbsp;<span class="id">bigstep_terminates</span> <span class="id">B</span> <span class="id">t</span> <span class="id">r</span> -&gt; <span class="id">program_behaves</span> <span class="id">L</span> (<span class="id">Terminates</span> <span class="id">t</span> <span class="id">r</span>).<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2010')">Proof.</div>
+<div class="proofscript" id="proof2010">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">exploit</span> (<span class="id">bigstep_terminates_sound</span> <span class="id">sound</span>); <span class="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="tactic">intros</span> [<span class="id">s1</span> [<span class="id">s2</span> [<span class="id">P</span> [<span class="id">Q</span> <span class="id">R</span>]]]].<br/>
+&nbsp;&nbsp;<span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">Lemma</span> <span class="id">behavior_bigstep_diverges</span>:<br/>
+&nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">T</span>,<br/>
+&nbsp;&nbsp;<span class="id">bigstep_diverges</span> <span class="id">B</span> <span class="id">T</span> -&gt;<br/>
+&nbsp;&nbsp;<span class="id">program_behaves</span> <span class="id">L</span> (<span class="id">Reacts</span> <span class="id">T</span>)<br/>
+&nbsp;&nbsp;\/ <span class="id">exists</span> <span class="id">t</span>, <span class="id">program_behaves</span> <span class="id">L</span> (<span class="id">Diverges</span> <span class="id">t</span>) /\ <span class="id">traceinf_prefix</span> <span class="id">t</span> <span class="id">T</span>.<br/>
+<div class="toggleproof" onclick="toggleDisplay('proof2011')">Proof.</div>
+<div class="proofscript" id="proof2011">
+&nbsp;&nbsp;<span class="tactic">intros</span>. <span class="id">exploit</span> (<span class="id">bigstep_diverges_sound</span> <span class="id">sound</span>); <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">s1</span> [<span class="id">P</span> <span class="id">Q</span>]].<br/>
+&nbsp;&nbsp;<span class="id">exploit</span> <span class="id">forever_silent_or_reactive</span>; <span class="tactic">eauto</span>. <span class="tactic">intros</span> [<span class="id">X</span> | [<span class="id">t</span> [<span class="id">s</span>' [<span class="id">T</span>' [<span class="id">X</span> [<span class="id">Y</span> <span class="id">Z</span>]]]]]].<br/>
+&nbsp;&nbsp;<span class="id">left</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="id">constructor</span>; <span class="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id">right</span>. <span class="id">exists</span> <span class="id">t</span>; <span class="tactic">split</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="id">econstructor</span>; <span class="tactic">eauto</span>. <span class="id">exists</span> <span class="id">T</span>'; <span class="tactic">auto</span>.<br/>
+Qed.</div>
+<br/>
+<span class="kwd">End</span> <span class="id">BIGSTEP_BEHAVIORS</span>.<br/>
+</div>
+<div class="footer"><hr/>Generated by coq2html</div>
+</body>
+</html>
