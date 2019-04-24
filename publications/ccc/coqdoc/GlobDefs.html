@@ -23,9 +23,15 @@
 <br/>
 <div class="doc">This file defines the runtime global states. 
     The global world consists of:
-    - <span class="bracket"><span class="id">GlobEnv</span></span>: environment containing module code and freelists
-    - <span class="bracket"><span class="id">ProgConfig</span></span>: runtime state 
- </div>
+<ul>
+<li>
+ <span class="bracket"><span class="id">GlobEnv</span></span>: environment containing module code and freelists
+</li>
+<li>
+ <span class="bracket"><span class="id">ProgConfig</span></span>: runtime state 
+ </li>
+</ul>
+</div>
 <br/>
 <br/>
 <div class="doc">thread id </div>
@@ -39,8 +45,14 @@
 <span class="kwd">Module</span> <span class="id"><a name="FLists">FLists</a></span>.<br/>
 <br/>
 <div class="doc">Freelists consists of
-      - <span class="bracket"><span class="id">flist_content</span></span>: mapping from freelist id <span class="bracket"><span class="id">fid</span></span> to the actual freelists of type <span class="bracket"><span class="id">Stream</span> <span class="id">block</span></span>
-      - <span class="bracket"><span class="id">thread_flmap</span></span>: a stream of freelist ids allocated for each thread </div>
+<ul>
+<li>
+ <span class="bracket"><span class="id">flist_content</span></span>: mapping from freelist id <span class="bracket"><span class="id">fid</span></span> to the actual freelists of type <span class="bracket"><span class="id">Stream</span> <span class="id">block</span></span>
+</li>
+<li>
+ <span class="bracket"><span class="id">thread_flmap</span></span>: a stream of freelist ids allocated for each thread </li>
+</ul>
+</div>
 &nbsp;&nbsp;<br/>
 &nbsp;&nbsp;<span class="kwd">Record</span> <span class="id"><a name="FLists.t">t</a></span>: <span class="kwd">Type</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id"><a name="FLists.flist_content">flist_content</a></span>: <span class="id"><a href="GlobDefs.html#fid">fid</a></span> -&gt; <span class="id"><a href="MemAux.html#freelist">freelist</a></span>;<br/>
@@ -48,12 +60,22 @@
 &nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
 <br/>
 <div class="doc">We always assume freelists are <span class="bracket"><span class="id">wd</span></span>, i.e.
-      - <span class="bracket"><span class="id">flist_norep</span></span>: each freelist itself has no duplicated block
-      - <span class="bracket"><span class="id">flist_disj</span></span>: any two freelists are disjoint
-      - <span class="bracket"><span class="id">thread_fl_norep</span></span>: threads' freelist id stream is not duplicated
-      - <span class="bracket"><span class="id">thread_fl_disj</span></span>: threads are not assigned with have duplicated freelists 
+<ul>
+<li>
+ <span class="bracket"><span class="id">flist_norep</span></span>: each freelist itself has no duplicated block
+</li>
+<li>
+ <span class="bracket"><span class="id">flist_disj</span></span>: any two freelists are disjoint
+</li>
+<li>
+ <span class="bracket"><span class="id">thread_fl_norep</span></span>: threads' freelist id stream is not duplicated
+</li>
+<li>
+ <span class="bracket"><span class="id">thread_fl_disj</span></span>: threads are not assigned with have duplicated freelists 
       In this way, any two different runtime <span class="bracket"><span class="id">Core.t</span></span>s could be guaranteed assigned with disjoint freelist.
-   </div>
+   </li>
+</ul>
+</div>
 &nbsp;&nbsp;<span class="kwd">Record</span> <span class="id"><a name="FLists.wd">wd</a></span> (<span class="id">fls</span>: <span class="id"><a href="GlobDefs.html#FLists.t">t</a></span>) : <span class="kwd">Prop</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="FLists.flist_norep">flist_norep</a></span>: <span class="kwd">forall</span> <span class="id">f</span>, <span class="id"><a href="MemAux.html#norep">norep</a></span> (<span class="id"><a href="GlobDefs.html#FLists.flist_content">flist_content</a></span> <span class="id"><a href="GlobDefs.html#fls">fls</a></span> <span class="id"><a href="GlobDefs.html#f">f</a></span>);      <br/>
@@ -1015,10 +1037,18 @@ Qed.</div>
 <br/>
 <h2> Realtion on initial memories </h2>
 <div class="doc">We require:
-    - sgm injects tgm w.r.t. some block inject function
-    - domain of sgm tgm matches
-    - locs of sgm tgm matches
- </div>
+<ul>
+<li>
+ sgm injects tgm w.r.t. some block inject function
+</li>
+<li>
+ domain of sgm tgm matches
+</li>
+<li>
+ locs of sgm tgm matches
+ </li>
+</ul>
+</div>
 <span class="kwd">Record</span> <span class="id"><a name="InitRel">InitRel</a></span> (<span class="id">mu</span>: <span class="id"><a href="Injections.html#Mu">Mu</a></span>) (<span class="id">SGE</span> <span class="id">TGE</span>: <span class="id"><a href="GlobDefs.html#t">GlobEnv.t</a></span>) (<span class="id">sgm</span> <span class="id">tgm</span>: <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) : <span class="kwd">Prop</span> :=<br/>
 &nbsp;&nbsp;{<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="ir_inject">ir_inject</a></span>: <span class="id"><a href="GMemory.html#GMem.Binject_weak">GMem.Binject_weak</a></span> (<span class="id"><a href="Injections.html#inj">inj</a></span> <span class="id"><a href="GlobDefs.html#mu">mu</a></span>) <span class="id"><a href="GlobDefs.html#sgm">sgm</a></span> <span class="id"><a href="GlobDefs.html#tgm">tgm</a></span>;<br/>

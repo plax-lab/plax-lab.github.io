@@ -23,20 +23,42 @@
 <div class="doc">This file defines abstract module languages as interaction semantics. </div>
 <br/>
 <div class="doc">An interaction semantics has these interfaces:
-    - <span class="bracket"><span class="id">F</span></span>, <span class="bracket"><span class="id">V</span></span>, <span class="bracket"><span class="id">G</span></span>: 
-    types of function definition, variable information (e.g. Clight types), and global envirionment
-    - <span class="bracket"><span class="id">comp_unit</span></span>: type of compilation unit
-    - <span class="bracket"><span class="id">core</span></span>: type of internal "core" state
-    - <span class="bracket"><span class="id">init_core</span></span>: initialize runtime core w.r.t. an entry and arguments, used on thread creation or external calls
-    - <span class="bracket"><span class="id">halt</span></span>: core halts, a returning value is also required for supporting external calls
-    - <span class="bracket"><span class="id">step</span></span>: internal steps of the core
-    - <span class="bracket"><span class="id">at_external</span></span>: genrates events (EntAtom/ExtAtom/Print or an external callwith arguments) and yield control
-    The EnvAtom/ExtAtom/Print events are encoded as special external functions with fixed function idents defined in GAST.v
-    - <span class="bracket"><span class="id">after_external</span></span>: get back control, a returning value is required for supporting external calls
-    - <span class="bracket"><span class="id">internal_fn</span></span>: generate a function table (for generaing function-module mapping), we need an interface for internal function list 
-    - <span class="bracket"><span class="id">init_genv</span></span>, <span class="bracket"><span class="id">init_gmem</span></span>: Because we do not instantiate a concrete initial state or symbol binding, we give language extensional checkings for proper initial genv and memory
+<ul>
+<li>
+ <span class="bracket"><span class="id">F</span></span>, <span class="bracket"><span class="id">V</span></span>, <span class="bracket"><span class="id">G</span></span>: 
+types of function definition, variable information (e.g. Clight types), and global envirionment
+</li>
+<li>
+ <span class="bracket"><span class="id">comp_unit</span></span>: type of compilation unit
+</li>
+<li>
+ <span class="bracket"><span class="id">core</span></span>: type of internal "core" state
+</li>
+<li>
+ <span class="bracket"><span class="id">init_core</span></span>: initialize runtime core w.r.t. an entry and arguments, used on thread creation or external calls
+</li>
+<li>
+ <span class="bracket"><span class="id">halt</span></span>: core halts, a returning value is also required for supporting external calls
+</li>
+<li>
+ <span class="bracket"><span class="id">step</span></span>: internal steps of the core
+</li>
+<li>
+ <span class="bracket"><span class="id">at_external</span></span>: genrates events (EntAtom/ExtAtom/Print or an external callwith arguments) and yield control
+The EnvAtom/ExtAtom/Print events are encoded as special external functions with fixed function idents defined in GAST.v
+</li>
+<li>
+ <span class="bracket"><span class="id">after_external</span></span>: get back control, a returning value is required for supporting external calls
+</li>
+<li>
+ <span class="bracket"><span class="id">internal_fn</span></span>: generate a function table (for generaing function-module mapping), we need an interface for internal function list 
+</li>
+<li>
+ <span class="bracket"><span class="id">init_genv</span></span>, <span class="bracket"><span class="id">init_gmem</span></span>: Because we do not instantiate a concrete initial state or symbol binding, we give language extensional checkings for proper initial genv and memory
     
- </div>
+ </li>
+</ul>
+</div>
 <br/>
 <span class="kwd">Record</span> <span class="id"><a name="Language">Language</a></span> :=<br/>
 &nbsp;&nbsp;{ <br/>
@@ -156,11 +178,21 @@
 <div class="doc">This property characterizes that the extensional memory effect 
       between <span class="bracket"><span class="id">m_before</span></span> and <span class="bracket"><span class="id">m_after</span></span> is captured by footprint <span class="bracket"><span class="id">fp</span></span>,
       which means 
-      - <span class="bracket"><span class="id">MemContentPreserve</span></span> : the memory contents stays unchanged outside <span class="bracket"><span class="id">effects</span> <span class="id">fp</span></span>
-      - <span class="bracket"><span class="id">MemPermPreserve</span></span> : the memory permissions stay unchanged outside <span class="bracket"><span class="id">frees</span> <span class="id">fp</span></span>
-      - <span class="bracket"><span class="id">PermEffect</span></span> : redundant field, could be implied from <span class="bracket"><span class="id">MemPermPreserve</span></span>, will be deleted in the future
-      - <span class="bracket"><span class="id">ValidityPreserve</span></span> : the <span class="bracket"><span class="id">validblocks</span></span> set could only be enlarged
-   </div>
+<ul>
+<li>
+ <span class="bracket"><span class="id">MemContentPreserve</span></span> : the memory contents stays unchanged outside <span class="bracket"><span class="id">effects</span> <span class="id">fp</span></span>
+</li>
+<li>
+ <span class="bracket"><span class="id">MemPermPreserve</span></span> : the memory permissions stay unchanged outside <span class="bracket"><span class="id">frees</span> <span class="id">fp</span></span>
+</li>
+<li>
+ <span class="bracket"><span class="id">PermEffect</span></span> : redundant field, could be implied from <span class="bracket"><span class="id">MemPermPreserve</span></span>, will be deleted in the future
+</li>
+<li>
+ <span class="bracket"><span class="id">ValidityPreserve</span></span> : the <span class="bracket"><span class="id">validblocks</span></span> set could only be enlarged
+   </li>
+</ul>
+</div>
 &nbsp;&nbsp;<span class="kwd">Record</span> <span class="id"><a name="MemEffect">MemEffect</a></span> (<span class="id">m_before</span> <span class="id">m_after</span>: <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) (<span class="id">fp</span>: <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>): <span class="kwd">Prop</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="MemContentPreserve">MemContentPreserve</a></span>:<br/>
@@ -183,10 +215,18 @@
 <br/>
 <div class="doc">This property characterizes the relation between two memory states such that 
       they are equivalent modulo <span class="bracket"><span class="id">fp</span></span> 
-      - <span class="bracket"><span class="id">ReadMemEq</span></span>: memory contents of location in <span class="bracket"><span class="id">reads</span></span> are equal
-      - <span class="bracket"><span class="id">CmpMemPermExists</span></span>: memory permissions of location in <span class="bracket"><span class="id">cmps</span></span> are equal
-      - <span class="bracket"><span class="id">EffectPermEqPre</span></span>: memory permissions of location in <span class="bracket"><span class="id">writes</span></span> or <span class="bracket"><span class="id">frees</span></span> are equal
-   </div>
+<ul>
+<li>
+ <span class="bracket"><span class="id">ReadMemEq</span></span>: memory contents of location in <span class="bracket"><span class="id">reads</span></span> are equal
+</li>
+<li>
+ <span class="bracket"><span class="id">CmpMemPermExists</span></span>: memory permissions of location in <span class="bracket"><span class="id">cmps</span></span> are equal
+</li>
+<li>
+ <span class="bracket"><span class="id">EffectPermEqPre</span></span>: memory permissions of location in <span class="bracket"><span class="id">writes</span></span> or <span class="bracket"><span class="id">frees</span></span> are equal
+   </li>
+</ul>
+</div>
 &nbsp;&nbsp;<span class="kwd">Record</span> <span class="id"><a name="MemPre">MemPre</a></span>  (<span class="id">m_before</span> <span class="id">m_before</span>': <span class="id"><a href="GMemory.html#gmem">gmem</a></span>) (<span class="id">fp</span>: <span class="id"><a href="Footprint.html#FP.t">FP.t</a></span>) : <span class="kwd">Prop</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;{<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="ReadMemEq">ReadMemEq</a></span>:<br/>
@@ -1090,11 +1130,21 @@ apply&nbsp;perm_order'_''&nbsp;in&nbsp;H5.*)</span>&nbsp;&nbsp;&nbsp;&nbsp;<span
 <span class="kwd">End</span> <span class="id"><a href="InteractionSemantics.html#LangProp">LangProp</a></span>.<br/>
 <br/>
 <div class="doc">The well-defined language (Def. 1) in paper 
-    - <span class="bracket"><span class="id">mem_enlarge</span></span>: Def.1 (1) 
-    - <span class="bracket"><span class="id">mem_unchg_outside_writes</span></span>: Def.1 (2) 
-    - <span class="bracket"><span class="id">step_sim_pre_post</span></span>: Def.1 (3) 
-    - <span class="bracket"><span class="id">step_nondet_equiv</span></span>: Def.1 (4) 
- </div>
+<ul>
+<li>
+ <span class="bracket"><span class="id">mem_enlarge</span></span>: Def.1 (1) 
+</li>
+<li>
+ <span class="bracket"><span class="id">mem_unchg_outside_writes</span></span>: Def.1 (2) 
+</li>
+<li>
+ <span class="bracket"><span class="id">step_sim_pre_post</span></span>: Def.1 (3) 
+</li>
+<li>
+ <span class="bracket"><span class="id">step_nondet_equiv</span></span>: Def.1 (4) 
+ </li>
+</ul>
+</div>
 <span class="kwd">Record</span> <span class="id"><a name="wdFP">wdFP</a></span> (<span class="id">L</span>: <span class="id"><a href="InteractionSemantics.html#Language">Language</a></span>): <span class="kwd">Prop</span> :=<br/>
 &nbsp;&nbsp;{<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id"><a name="mem_enlarge">mem_enlarge</a></span>: <span class="id"><a href="InteractionSemantics.html#corestep_forward">corestep_forward</a></span> (<span class="id"><a href="InteractionSemantics.html#step">step</a></span> <span class="id"><a href="InteractionSemantics.html#L">L</a></span>);<br/>

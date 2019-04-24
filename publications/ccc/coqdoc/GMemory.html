@@ -29,22 +29,38 @@
    <span class="bracket"><span class="id">forward</span></span> property is defined here </div>
 <br/>
 <div class="doc">We followed the CompCert memory definition, 
-    with the only different on the way recording valid blocks and doing allocation:
-    - CompCert: keep track of <span class="bracket"><span class="id">nextblock</span></span>, 
+    with the only difference on the way recording valid blocks and doing allocation:
+<ul>
+<li>
+ CompCert: keep track of <span class="bracket"><span class="id">nextblock</span></span>, 
     block &lt; <span class="bracket"><span class="id">nextblock</span></span> are valid, 
     allocation takes <span class="bracket"><span class="id">nextblock</span></span> as the new block
-    - GMem in this file: keep track of <span class="bracket"><span class="id">validblocks</span></span>, 
+</li>
+</ul>
+<ul>
+<li>
+ GMem in this file: keep track of <span class="bracket"><span class="id">validblocks</span></span>, 
     a list of blocks recorded as valid,
     allocation takes a block from thread local freelist, and add to <span class="bracket"><span class="id">validblocks</span></span>.
+</li>
+</ul>
     This is to support thread local allocation and avoid racing on <span class="bracket"><span class="id">nextblock</span></span>.
 </div>
 <br/>
 <br/>
 <div class="doc">There are three basic memory fields:
-    - <span class="bracket"><span class="id">content</span></span>:     contains memory contents
-    - <span class="bracket"><span class="id">access</span></span>:      records which location is accessible, i.e. <span class="bracket"><span class="id">locs</span>(<span class="id">m</span>)</span>
-    - <span class="bracket"><span class="id">validblocks</span></span>: records validity of blocks, i.e. <span class="bracket"><span class="id">dom</span>(<span class="id">m</span>)</span> 
+<ul>
+<li>
+ <span class="bracket"><span class="id">content</span></span>:     contains memory contents
+</li>
+<li>
+ <span class="bracket"><span class="id">access</span></span>:      records which location is accessible, i.e. <span class="bracket"><span class="id">locs</span>(<span class="id">m</span>)</span>
+</li>
+<li>
+ <span class="bracket"><span class="id">validblocks</span></span>: records validity of blocks, i.e. <span class="bracket"><span class="id">dom</span>(<span class="id">m</span>)</span> 
     Memory could be inferred as <span class="bracket"><span class="id">block</span> -&gt; <span class="id">offset</span> -&gt; <span class="id">content</span></span>
+</li>
+</ul>
     Others fields are assumptions on memory permissions and default memory contents,
     as assumed by CompCert
  </div>
