@@ -36,15 +36,13 @@
     block &lt; <span class="bracket"><span class="id">nextblock</span></span> are valid, 
     allocation takes <span class="bracket"><span class="id">nextblock</span></span> as the new block
 </li>
-</ul>
-<ul>
 <li>
  GMem in this file: keep track of <span class="bracket"><span class="id">validblocks</span></span>, 
     a list of blocks recorded as valid,
     allocation takes a block from thread local freelist, and add to <span class="bracket"><span class="id">validblocks</span></span>.
+    This is to support thread local allocation and avoid racing on <span class="bracket"><span class="id">nextblock</span></span>.
 </li>
 </ul>
-    This is to support thread local allocation and avoid racing on <span class="bracket"><span class="id">nextblock</span></span>.
 </div>
 <br/>
 <br/>

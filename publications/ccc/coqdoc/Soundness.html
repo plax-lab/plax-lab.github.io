@@ -21,7 +21,7 @@
 <br/>
 <h2> Framework Final Theorem </h2>
 <br/>
-<div class="doc">This file defines the final theorem <span class="bracket"><span class="id">framework_final_theorem</span></span> of our framework (Thm. 10), 
+<div class="doc">This file defines the final theorem <span class="bracket"><span class="id">framework_final_theorem</span></span> of our framework (Thm. 12), 
     in which languages are parameterized. </div>
 <br/>
 <div class="doc">The main result is that if we have a <span class="bracket"><span class="id">safe</span></span> and <span class="bracket"><span class="id">DRF</span></span> source program
@@ -204,10 +204,18 @@ Qed.</div>
 <div class="doc">Framework final theorem:
     for any sequential compilers <span class="bracket"><span class="id">comps</span></span>, 
     if 
-    - <span class="bracket"><span class="id">wd_comps_langs</span> <span class="id">comps</span></span>: source and target languages of compilers are well defined,
-    - <span class="bracket"><span class="id">det_comps_tgt_langs</span> <span class="id">comps</span></span>: target languages are deterministic,
-    - <span class="bracket"><span class="id">seqs_correct</span></span>: sequential compilers are correct w.r.t. our correctness creteria,
-    then <span class="bracket"><span class="id">gcorrect</span> <span class="id">comps</span></span>: the sequential compilers are correct as a whole for compiling concurrent programs </div>
+<ul>
+<li>
+ <span class="bracket"><span class="id">wd_comps_langs</span> <span class="id">comps</span></span>: source and target languages of compilers are well defined,
+</li>
+<li>
+ <span class="bracket"><span class="id">det_comps_tgt_langs</span> <span class="id">comps</span></span>: target languages are deterministic,
+</li>
+<li>
+ <span class="bracket"><span class="id">seqs_correct</span></span>: sequential compilers are correct w.r.t. our correctness creteria,
+    then <span class="bracket"><span class="id">gcorrect</span> <span class="id">comps</span></span>: the sequential compilers are correct as a whole for compiling concurrent programs </li>
+</ul>
+</div>
 <br/>
 <span class="kwd">Theorem</span> <span class="id"><a name="framework_final_theorem">framework_final_theorem</a></span>:<br/>
 &nbsp;&nbsp;<span class="kwd">forall</span> <span class="id">NL</span> <span class="id">L</span> (<span class="id">comps</span>: @<span class="id"><a href="GAST.html#gcomp">gcomp</a></span> <span class="id"><a href="Soundness.html#NL">NL</a></span> <span class="id"><a href="Soundness.html#L">L</a></span>),<br/>

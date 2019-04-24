@@ -211,7 +211,7 @@
 <span class="kwd">End</span> <span class="id"><a href="FinalTheoremExt.html#ClightSC_Compilation_correctness">ClightSC_Compilation_correctness</a></span>.<br/>
 <br/>
 <span class="kwd">Check</span> <span class="id"><a href="FinalTheoremExt.html#refinement_tso_clight">refinement_tso_clight</a></span>.<br/>
-<div class="doc">Theorem 13 in Sec. 7. </div>
+<div class="doc">Theorem 15 in Sec. 7. </div>
 <br/>
 <div class="doc"><span class="bracket"><span class="id">rc_cunits</span></span> : 
     source modules are reach-closed </div>
@@ -243,7 +243,7 @@
        (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> : <span class="id">tid</span>), <span class="id">UBImplies</span> (<span class="id">Io</span> <span class="id">ge</span>) (<span class="id">Ro</span> <span class="id">ge</span> <span class="id">t</span>)) -&gt;
        <span class="id">objcu_sim</span> <span class="id">Ro</span> <span class="id">Go</span> <span class="id">Io</span> <span class="id">spec_unit</span> <span class="id">impl_unit</span></span>
        :         
-       object correctness (4. in Thm. 13) </div>
+       object correctness (4. in Thm. 15) </div>
 <br/>
 <div class="doc"><span class="bracket"><span class="id">init_config</span> (<span class="id">cl_units</span> ++ <span class="id">spec_unit</span> :: <span class="id">nil</span>, <span class="id">e</span>) <span class="id">sgm</span> <span class="id">sge</span> <span class="id">spc</span> <span class="id">ts</span></span>
     <span class="bracket"><span class="id">init_config</span> (<span class="id">compiled_units</span> ++ <span class="id">spec_unit</span> :; <span class="id">nil</span>, <span class="id">e</span>) <span class="id">sgm</span>' <span class="id">sge</span>' <span class="id">spc</span>' <span class="id">ts</span>'</span>
@@ -262,7 +262,7 @@
 <br/>
 <br/>
 <span class="kwd">Check</span> <span class="id"><a href="FinalTheoremExt.html#refinement_tso_asm_sc">refinement_tso_asm_sc</a></span>.<br/>
-<div class="doc">Lemma 14 in Sec. 7, object module replaced by lock impl. </div>
+<div class="doc">Lemma 16 in Sec. 7, object module replaced by lock impl. </div>
 <br/>
 <div class="doc"><span class="bracket"><span class="id">client_id</span> <span class="id">compiled_units</span> <span class="id">client_units</span></span>:
     <span class="bracket"><span class="id">client_units</span></span> are x86TSO units that is identical to <span class="bracket"><span class="id">compiled_units</span></span> </div>
@@ -279,7 +279,7 @@
        (<span class="kwd">forall</span> (<span class="id">ge</span> : <span class="id">ASM_local.genv</span>) (<span class="id">t</span> : <span class="id">tid</span>), <span class="id">UBImplies</span> (<span class="id">Io</span> <span class="id">ge</span>) (<span class="id">Ro</span> <span class="id">ge</span> <span class="id">t</span>)) -&gt;
        <span class="id">objcu_sim</span> <span class="id">Ro</span> <span class="id">Go</span> <span class="id">Io</span> <span class="id">spec_unit</span> <span class="id">impl_unit</span></span>
        :
-       object correctness (2. in Lem. 14 </div>
+       object correctness (2. in Lem. 16 </div>
 <br/>
 <div class="doc"><span class="bracket"><span class="id">safe_prog</span> (<span class="id">spec_unit</span> :: <span class="id">compiled_units</span>, <span class="id">e</span>)</span>
     SC program is safe </div>
