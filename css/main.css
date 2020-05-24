@@ -40,4 +40,5 @@ ul.posts {
 
 ul.posts li {
     list-style: none;
+	margin-bottom:20px;
 }
