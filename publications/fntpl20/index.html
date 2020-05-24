@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Progress of Concurrent Objects</title>
+		<!-- link to main stylesheet -->
+		<link rel="stylesheet" type="text/css" href="/css/main.css">
+	</head>
+	<body>
+		<nav>
+    		<ul>
+        		<li><a href="/">Home</a></li>
+	        	<!-- <li><a href="/about">About</a></li> -->
+	        	<li><a href="/members/">Members</a></li>
+        		<li><a href="/publications/">Publications</a></li>
+    		</ul>
+		</nav>
+		<div class="container">
+    		<div class="blurb">
+        		<h2>Progress of Concurrent Objects</h2>
+                        <h3>Abstract:</h3>
+						
+				        <p>Implementations of concurrent objects should guarantee linearizability and a progress property such as wait-freedom, lock-freedom, starvation-freedom, or deadlock-freedom. These progress properties describe conditions under which a method call is guaranteed to complete. However, they fail to describe how clients are affected, making it difficult to utilize them in layered and modular program verification. Also we lack verification techniques for starvation-free or deadlock-free objects. They are challenging to verify because the fairness assumption introduces complicated interdependencies among progress of threads. Even worse, none of the existing results applies to concurrent objects with partial methods, i.e., methods that are supposed not to return under certain circumstances. A typical example is the lock_acquire method, which must not return when the lock has already been acquired.</p>
+
+
+			            <p>In this tutorial we examine the progress properties of concurrent objects. We formulate each progress property (together with linearizability as a basic correctness requirement) in terms of contextual refinement. This essentially gives us progress-aware abstraction for concurrent objects. Thus, when verifying clients of the objects, we can soundly replace the concrete object implementations with their abstractions, achieving modular verification. For concurrent objects with partial methods, we formulate two new progress properties, partial starvation-freedom (PSF) and partial deadlock-freedom (PDF). We also design four patterns to write abstractions for PSF or PDF objects under strongly or weakly fair scheduling, so that these objects contextually refine their abstractions. Finally, we introduce a rely-guarantee style program logic LiLi for verifying linearizability and progress together for concurrent objects. It unifies thread-modular reasoning about all the six progress properties (wait-freedom, lock-freedom, starvation-freedom, deadlock-freedom, PSF and PDF) in one framework. We have successfully applied LiLi to verify starvation-freedom or deadlock-freedom of representative algorithms such as lock-coupling lists, optimistic lists and lazy lists, and PSF or PDF of lock algorithms.</p>
+			
+			<h3>Authors:</h3>
+                          <a href="http://cs.nju.edu.cn/hongjin/">Hongjin Liang</a><br>
+                          <a href="http://cs.nju.edu.cn/xyfeng/">Xinyu Feng</a><br>
+
+			<h3>Published:</h3>
+			       <cite>Foundations and Trends® in Programming Languages</cite>, Volume 5, Issue 4, pages 282-414, May 2020.
+    		          <ul>
+        		    <li><a href="fntpl20-progress.pdf">Paper</a></li>
+	                  </ul>
+				   <img style="width:80px;height:120px;float:left" alt="" src="fntpl20-progress.jpg" />
+			       Also in the form of a book 
+				   <a href="https://www.nowpublishers.com/article/Details/PGL-041">@nowpublishers</a>.
+    		</div><!-- /.blurb -->
+		</div><!-- /.container -->
+		<footer>
+    		<ul>
+        		<li><a href="mailto:plax.lab@gmail.com">email</a></li>
+        		<li><a href="https://plax-lab.github.io">https://plax-lab.github.io</a></li>
+			</ul>
+		</footer>
+	</body>
+</html>
