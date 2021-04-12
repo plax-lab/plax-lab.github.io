@@ -17,9 +17,9 @@
 		<div class="container">
     		<div class="blurb">
         		<h2>Abstraction for Conflict-Free Replicated Data Types</h2>
-                        <h3>Abstract:</h3>
+                        <h3>Abstract:</h3>		        
 						
-				        <p></p>
+				        <p>Strong eventual consistency (SEC) has been used as a classic notion of correctness for Conflict-Free Replicated Data Types (CRDTs). However, it does not give proper abstractions of functionality, thus is not helpful for modular verification of client programs using CRDTs. We propose a new correctness formulation for CRDTs, called Abstract Converging Consistency (ACC), to specify both data consistency and functional correctness. ACC gives abstract atomic specifications (as an abstraction) to CRDT operations, and establishes consistency between the concrete execution traces and the execution using the abstract atomic operations. The abstraction allows us to verify the CRDT implementation and its client programs separately, resulting in more modular and elegant proofs than monolithic approaches for whole program verification. We give a generic proof method to verify ACC of CRDT implementations, and a rely-guarantee style program logic to verify client programs. Our Abstraction theorem shows that ACC is equivalent to contextual refinement, linking the verification of CRDT implementations and clients together to derive functional correctness of whole programs.</p>
 			
 			<h3>Authors:</h3>
                           <a href="http://cs.nju.edu.cn/hongjin/">Hongjin Liang</a><br>
@@ -28,10 +28,10 @@
 			<h3>Published:</h3>
 			    In <cite>Proc. 42nd 
 					  ACM SIGPLAN Conference on Programming Language Design and Implementation (<b>PLDI'21</b>)</cite>, 
-					  Virtual, conditionally accepted, June 2021.
+					  Virtual, pages to appear, June 2021.
     		          <ul>
         		    <li><a href="crdt-paper.pdf">Paper</a></li>
-        		    <li><a href="crdt-tr.pdf">Technical Report (extended version)</a></li>
+        		    <li><a href="crdt-tr.pdf">Technical Report</a></li>
 	                  </ul>
     		</div><!-- /.blurb -->
 		</div><!-- /.container -->
