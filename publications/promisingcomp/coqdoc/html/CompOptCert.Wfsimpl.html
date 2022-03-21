@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>CompOptCert.Wfsimpl</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library CompOptCert.Wfsimpl</h1>
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+Defining recursive functions by Noetherian induction.  This is a simplified
+  interface to the <span class="inlinecode"><span class="id" title="library">Wf</span></span> module of Coq's standard library, where the functions
+  to be defined have non-dependent types, and function extensionality is assumed. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Axioms.html#"><span class="id" title="library">Axioms</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Wf.html#"><span class="id" title="library">Init.Wf</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Arith.Wf_nat.html#"><span class="id" title="library">Wf_nat</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set Implicit Arguments</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="FIX" class="idref" href="#FIX"><span class="id" title="section">FIX</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variables</span> <a id="FIX.A" class="idref" href="#FIX.A"><span class="id" title="variable">A</span></a> <a id="FIX.B" class="idref" href="#FIX.B"><span class="id" title="variable">B</span></a>: <span class="id" title="keyword">Type</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="FIX.R" class="idref" href="#FIX.R"><span class="id" title="variable">R</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="FIX.Rwf" class="idref" href="#FIX.Rwf"><span class="id" title="variable">Rwf</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Wf.html#well_founded"><span class="id" title="definition">well_founded</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.R"><span class="id" title="variable">R</span></a>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="FIX.F" class="idref" href="#FIX.F"><span class="id" title="variable">F</span></a>: <span class="id" title="keyword">∀</span> (<a id="x:5" class="idref" href="#x:5"><span class="id" title="binder">x</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.A"><span class="id" title="variable">A</span></a>), <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> (<a id="y:6" class="idref" href="#y:6"><span class="id" title="binder">y</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.A"><span class="id" title="variable">A</span></a>), <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.R"><span class="id" title="variable">R</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#y:6"><span class="id" title="variable">y</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#x:5"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.B"><span class="id" title="variable">B</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.B"><span class="id" title="variable">B</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="Fix" class="idref" href="#Fix"><span class="id" title="definition">Fix</span></a> (<a id="x:8" class="idref" href="#x:8"><span class="id" title="binder">x</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.A"><span class="id" title="variable">A</span></a>) : <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.B"><span class="id" title="variable">B</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Wf.html#Fix"><span class="id" title="definition">Wf.Fix</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.Rwf"><span class="id" title="variable">Rwf</span></a> (<span class="id" title="keyword">fun</span> (<a id="x:9" class="idref" href="#x:9"><span class="id" title="binder">x</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.A"><span class="id" title="variable">A</span></a>) ⇒ <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.B"><span class="id" title="variable">B</span></a>) <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.F"><span class="id" title="variable">F</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#x:8"><span class="id" title="variable">x</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <a id="unroll_Fix" class="idref" href="#unroll_Fix"><span class="id" title="lemma">unroll_Fix</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="x:10" class="idref" href="#x:10"><span class="id" title="binder">x</span></a>, <a class="idref" href="CompOptCert.Wfsimpl.html#Fix"><span class="id" title="definition">Fix</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#x:10"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.F"><span class="id" title="variable">F</span></a> (<span class="id" title="keyword">fun</span> (<a id="y:11" class="idref" href="#y:11"><span class="id" title="binder">y</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.A"><span class="id" title="variable">A</span></a>) (<a id="P:12" class="idref" href="#P:12"><span class="id" title="binder">P</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.R"><span class="id" title="variable">R</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#y:11"><span class="id" title="variable">y</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#x:10"><span class="id" title="variable">x</span></a>) ⇒ <a class="idref" href="CompOptCert.Wfsimpl.html#Fix"><span class="id" title="definition">Fix</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#y:11"><span class="id" title="variable">y</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.Wfsimpl.html#Fix"><span class="id" title="definition">Fix</span></a>; <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Wf.html#Fix_eq"><span class="id" title="lemma">Wf.Fix_eq</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">P</span> := <span class="id" title="keyword">fun</span> (<a id="x:14" class="idref" href="#x:14"><span class="id" title="binder">x</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.A"><span class="id" title="variable">A</span></a>) ⇒ <a class="idref" href="CompOptCert.Wfsimpl.html#FIX.B"><span class="id" title="variable">B</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">assert</span> (<span class="id" title="var">f</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="var">g</span>). <span class="id" title="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.FunctionalExtensionality.html#functional_extensionality_dep"><span class="id" title="axiom">functional_extensionality_dep</span></a>; <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.FunctionalExtensionality.html#functional_extensionality"><span class="id" title="lemma">functional_extensionality</span></a>; <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">subst</span> <span class="id" title="var">g</span>; <span class="id" title="tactic">auto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Wfsimpl.html#FIX"><span class="id" title="section">FIX</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Same, with a nonnegative measure instead of a well-founded ordering 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="FIXM" class="idref" href="#FIXM"><span class="id" title="section">FIXM</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variables</span> <a id="FIXM.A" class="idref" href="#FIXM.A"><span class="id" title="variable">A</span></a> <a id="FIXM.B" class="idref" href="#FIXM.B"><span class="id" title="variable">B</span></a>: <span class="id" title="keyword">Type</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="FIXM.measure" class="idref" href="#FIXM.measure"><span class="id" title="variable">measure</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="FIXM.F" class="idref" href="#FIXM.F"><span class="id" title="variable">F</span></a>: <span class="id" title="keyword">∀</span> (<a id="x:18" class="idref" href="#x:18"><span class="id" title="binder">x</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a>), <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> (<a id="y:19" class="idref" href="#y:19"><span class="id" title="binder">y</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a>), <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.measure"><span class="id" title="variable">measure</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#y:19"><span class="id" title="variable">y</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Peano.html#::nat_scope:x_'&lt;'_x"><span class="id" title="notation">&lt;</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.measure"><span class="id" title="variable">measure</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#x:18"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.B"><span class="id" title="variable">B</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.B"><span class="id" title="variable">B</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="Fixm" class="idref" href="#Fixm"><span class="id" title="definition">Fixm</span></a> (<a id="x:21" class="idref" href="#x:21"><span class="id" title="binder">x</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a>) : <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.B"><span class="id" title="variable">B</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Wf.html#Fix"><span class="id" title="definition">Wf.Fix</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Arith.Wf_nat.html#well_founded_ltof"><span class="id" title="lemma">well_founded_ltof</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.measure"><span class="id" title="variable">measure</span></a>) (<span class="id" title="keyword">fun</span> (<a id="x:22" class="idref" href="#x:22"><span class="id" title="binder">x</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a>) ⇒ <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.B"><span class="id" title="variable">B</span></a>) <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.F"><span class="id" title="variable">F</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#x:21"><span class="id" title="variable">x</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <a id="unroll_Fixm" class="idref" href="#unroll_Fixm"><span class="id" title="lemma">unroll_Fixm</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="x:23" class="idref" href="#x:23"><span class="id" title="binder">x</span></a>, <a class="idref" href="CompOptCert.Wfsimpl.html#Fixm"><span class="id" title="definition">Fixm</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#x:23"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.F"><span class="id" title="variable">F</span></a> (<span class="id" title="keyword">fun</span> (<a id="y:24" class="idref" href="#y:24"><span class="id" title="binder">y</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a>) (<a id="P:25" class="idref" href="#P:25"><span class="id" title="binder">P</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.measure"><span class="id" title="variable">measure</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#y:24"><span class="id" title="variable">y</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Peano.html#::nat_scope:x_'&lt;'_x"><span class="id" title="notation">&lt;</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.measure"><span class="id" title="variable">measure</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#x:23"><span class="id" title="variable">x</span></a>) ⇒ <a class="idref" href="CompOptCert.Wfsimpl.html#Fixm"><span class="id" title="definition">Fixm</span></a> <a class="idref" href="CompOptCert.Wfsimpl.html#y:24"><span class="id" title="variable">y</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.Wfsimpl.html#Fixm"><span class="id" title="definition">Fixm</span></a>; <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Wf.html#Fix_eq"><span class="id" title="lemma">Wf.Fix_eq</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">P</span> := <span class="id" title="keyword">fun</span> (<a id="x:27" class="idref" href="#x:27"><span class="id" title="binder">x</span></a>: <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a>) ⇒ <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.B"><span class="id" title="variable">B</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">assert</span> (<span class="id" title="var">f</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="var">g</span>). <span class="id" title="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.FunctionalExtensionality.html#functional_extensionality_dep"><span class="id" title="axiom">functional_extensionality_dep</span></a>; <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.FunctionalExtensionality.html#functional_extensionality"><span class="id" title="lemma">functional_extensionality</span></a>; <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">subst</span> <span class="id" title="var">g</span>; <span class="id" title="tactic">auto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Wfsimpl.html#FIXM"><span class="id" title="section">FIXM</span></a>.<br/>
+
+<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

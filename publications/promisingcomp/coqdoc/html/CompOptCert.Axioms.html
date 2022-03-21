@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>CompOptCert.Axioms</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library CompOptCert.Axioms</h1>
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+This file collects some axioms used throughout the CompCert development. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.ClassicalFacts.html#"><span class="id" title="library">ClassicalFacts</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.FunctionalExtensionality.html#"><span class="id" title="library">FunctionalExtensionality</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab1"></a><h1 class="section">Extensionality axioms</h1>
+
+<div class="paragraph"> </div>
+
+ The <span class="inlinecode"><span class="id" title="keyword">Require</span></span> <span class="inlinecode"><span class="id" title="library">FunctionalExtensionality</span></span> gives us functional
+    extensionality for dependent function types: 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="functional_extensionality_dep" class="idref" href="#functional_extensionality_dep"><span class="id" title="lemma">functional_extensionality_dep</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> {<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>} {<a id="B:2" class="idref" href="#B:2"><span class="id" title="binder">B</span></a> : <a class="idref" href="CompOptCert.Axioms.html#A:1"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>} (<a id="f:4" class="idref" href="#f:4"><span class="id" title="binder">f</span></a> <a id="g:5" class="idref" href="#g:5"><span class="id" title="binder">g</span></a> : <span class="id" title="keyword">∀</span> <a id="x:3" class="idref" href="#x:3"><span class="id" title="binder">x</span></a> : <a class="idref" href="CompOptCert.Axioms.html#A:1"><span class="id" title="variable">A</span></a>, <a class="idref" href="CompOptCert.Axioms.html#B:2"><span class="id" title="variable">B</span></a> <a class="idref" href="CompOptCert.Axioms.html#x:3"><span class="id" title="variable">x</span></a>),<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="x:6" class="idref" href="#x:6"><span class="id" title="binder">x</span></a>, <a class="idref" href="CompOptCert.Axioms.html#f:4"><span class="id" title="variable">f</span></a> <a class="idref" href="CompOptCert.Axioms.html#x:6"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Axioms.html#g:5"><span class="id" title="variable">g</span></a> <a class="idref" href="CompOptCert.Axioms.html#x:6"><span class="id" title="variable">x</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Axioms.html#f:4"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Axioms.html#g:5"><span class="id" title="variable">g</span></a>.<br/>
+<span class="id" title="keyword">Proof</span> @<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.FunctionalExtensionality.html#functional_extensionality_dep"><span class="id" title="axiom">FunctionalExtensionality.functional_extensionality_dep</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+and, as a corollary, functional extensionality for non-dependent functions:
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="functional_extensionality" class="idref" href="#functional_extensionality"><span class="id" title="lemma">functional_extensionality</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> {<a id="A:7" class="idref" href="#A:7"><span class="id" title="binder">A</span></a> <a id="B:8" class="idref" href="#B:8"><span class="id" title="binder">B</span></a>: <span class="id" title="keyword">Type</span>} (<a id="f:9" class="idref" href="#f:9"><span class="id" title="binder">f</span></a> <a id="g:10" class="idref" href="#g:10"><span class="id" title="binder">g</span></a> : <a class="idref" href="CompOptCert.Axioms.html#A:7"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Axioms.html#B:8"><span class="id" title="variable">B</span></a>), <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="x:11" class="idref" href="#x:11"><span class="id" title="binder">x</span></a>, <a class="idref" href="CompOptCert.Axioms.html#f:9"><span class="id" title="variable">f</span></a> <a class="idref" href="CompOptCert.Axioms.html#x:11"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Axioms.html#g:10"><span class="id" title="variable">g</span></a> <a class="idref" href="CompOptCert.Axioms.html#x:11"><span class="id" title="variable">x</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Axioms.html#f:9"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Axioms.html#g:10"><span class="id" title="variable">g</span></a>.<br/>
+<span class="id" title="keyword">Proof</span> @<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.FunctionalExtensionality.html#functional_extensionality"><span class="id" title="lemma">FunctionalExtensionality.functional_extensionality</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+For compatibility with earlier developments, <span class="inlinecode"><span class="id" title="tactic">extensionality</span></span>
+  is an alias for <span class="inlinecode"><a class="idref" href="CompOptCert.Axioms.html#functional_extensionality"><span class="id" title="lemma">functional_extensionality</span></a></span>. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="extensionality" class="idref" href="#extensionality"><span class="id" title="lemma">extensionality</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> {<a id="A:12" class="idref" href="#A:12"><span class="id" title="binder">A</span></a> <a id="B:13" class="idref" href="#B:13"><span class="id" title="binder">B</span></a>: <span class="id" title="keyword">Type</span>} (<a id="f:14" class="idref" href="#f:14"><span class="id" title="binder">f</span></a> <a id="g:15" class="idref" href="#g:15"><span class="id" title="binder">g</span></a> : <a class="idref" href="CompOptCert.Axioms.html#A:12"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Axioms.html#B:13"><span class="id" title="variable">B</span></a>),  <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><span class="id" title="keyword">∀</span> <a id="x:16" class="idref" href="#x:16"><span class="id" title="binder">x</span></a>, <a class="idref" href="CompOptCert.Axioms.html#f:14"><span class="id" title="variable">f</span></a> <a class="idref" href="CompOptCert.Axioms.html#x:16"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Axioms.html#g:15"><span class="id" title="variable">g</span></a> <a class="idref" href="CompOptCert.Axioms.html#x:16"><span class="id" title="variable">x</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Axioms.html#f:14"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Axioms.html#g:15"><span class="id" title="variable">g</span></a>.<br/>
+<span class="id" title="keyword">Proof</span> @<a class="idref" href="CompOptCert.Axioms.html#functional_extensionality"><span class="id" title="lemma">functional_extensionality</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab2"></a><h1 class="section">Proof irrelevance</h1>
+
+<div class="paragraph"> </div>
+
+ We also use proof irrelevance. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Axiom</span> <a id="proof_irr" class="idref" href="#proof_irr"><span class="id" title="axiom">proof_irr</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.ClassicalFacts.html#proof_irrelevance"><span class="id" title="definition">ClassicalFacts.proof_irrelevance</span></a>.<br/>
+
+<br/>
+<span class="id" title="var">Arguments</span> <a class="idref" href="CompOptCert.Axioms.html#proof_irr"><span class="id" title="axiom">proof_irr</span></a> [<span class="id" title="var">A</span>].<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.Classical.html#"><span class="id" title="library">Classical</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.ClassicalChoice.html#"><span class="id" title="library">ClassicalChoice</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.FunctionalExtensionality.html#"><span class="id" title="library">FunctionalExtensionality</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
