@@ -1,0 +1,141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>CompOptCert.NPThread</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library CompOptCert.NPThread</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Language.html#"><span class="id" title="library">Language</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Event.html#"><span class="id" title="library">Event</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Time.html#"><span class="id" title="library">Time</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.View.html#"><span class="id" title="library">View</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Cell.html#"><span class="id" title="library">Cell</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Memory.html#"><span class="id" title="library">Memory</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.TView.html#"><span class="id" title="library">TView</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Local.html#"><span class="id" title="library">Local</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Thread.html#"><span class="id" title="library">Thread</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Language.html#"><span class="id" title="library">Language</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab141"></a><h1 class="section">Thread Step in the Non-preemptive Semantics</h1>
+
+<div class="paragraph"> </div>
+
+ This file define the thread step in the non-preemptive semantics (in Figure 10 in paper). 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="NPAuxThread" class="idref" href="#NPAuxThread"><span class="id" title="module">NPAuxThread</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="NPAuxThread.NPAuxThread" class="idref" href="#NPAuxThread.NPAuxThread"><span class="id" title="section">NPAuxThread</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Variable</span> (<a id="NPAuxThread.NPAuxThread.lang" class="idref" href="#NPAuxThread.NPAuxThread.lang"><span class="id" title="variable">lang</span></a>: <a class="idref" href="CompOptCert.Language.html#language"><span class="id" title="definition">language</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Thread state in the non-preemptive semantics. It includes:
+<ul class="doclist">
+<li> The thread state <span class="inlinecode"><a class="idref" href="CompOptCert.optimizer.Kildall.html#Dataflow_Solver.state"><span class="id" title="record">state</span></a></span> in PS2.1, including
+              thread-local state, thread view and promise set;
+
+</li>
+<li> A 'switch bit' <span class="inlinecode"><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a></span> indicate whether a switch step is allowed
+              + <span class="inlinecode"><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a></span>: a switch step is allowed
+              + <span class="inlinecode"><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a></span>: a switch step is disallowed. 
+
+</li>
+</ul>
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Structure</span> <a id="NPAuxThread.t" class="idref" href="#NPAuxThread.t"><span class="id" title="record">t</span></a> := <a id="NPAuxThread.mk" class="idref" href="#NPAuxThread.mk"><span class="id" title="constructor">mk</span></a> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="NPAuxThread.state" class="idref" href="#NPAuxThread.state"><span class="id" title="projection">state</span></a>: (<a class="idref" href="CompOptCert.Thread.html#Thread.t"><span class="id" title="record">Thread.t</span></a> <a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.NPAuxThread.lang"><span class="id" title="variable">lang</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="NPAuxThread.preempt" class="idref" href="#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+After non-atomic step, the switch step is disallowed <span class="inlinecode"><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a></span>.  
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="NPAuxThread.na_step" class="idref" href="#NPAuxThread.na_step"><span class="id" title="definition">na_step</span></a> (<a id="lo:5" class="idref" href="#lo:5"><span class="id" title="binder">lo</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.LocOrdMap"><span class="id" title="definition">Ordering.LocOrdMap</span></a>) (<a id="e1:6" class="idref" href="#e1:6"><span class="id" title="binder">e1</span></a> <a id="e2:7" class="idref" href="#e2:7"><span class="id" title="binder">e2</span></a>:<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.t"><span class="id" title="record">t</span></a>): <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.na_step"><span class="id" title="inductive">Thread.na_step</span></a> <a class="idref" href="CompOptCert.NPThread.html#lo:5"><span class="id" title="variable">lo</span></a> (<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.state"><span class="id" title="projection">state</span></a> <a class="idref" href="CompOptCert.NPThread.html#e1:6"><span class="id" title="variable">e1</span></a>) (<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.state"><span class="id" title="projection">state</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:7"><span class="id" title="variable">e2</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:7"><span class="id" title="variable">e2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+After atomic step, the switch step is allowed <span class="inlinecode"><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a></span>.  
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="NPAuxThread.at_step" class="idref" href="#NPAuxThread.at_step"><span class="id" title="definition">at_step</span></a> (<a id="lo:8" class="idref" href="#lo:8"><span class="id" title="binder">lo</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.LocOrdMap"><span class="id" title="definition">Ordering.LocOrdMap</span></a>) (<a id="e1:9" class="idref" href="#e1:9"><span class="id" title="binder">e1</span></a> <a id="e2:10" class="idref" href="#e2:10"><span class="id" title="binder">e2</span></a>:<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.t"><span class="id" title="record">t</span></a>): <span class="id" title="keyword">Prop</span> := <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.at_step"><span class="id" title="inductive">Thread.at_step</span></a> <a class="idref" href="CompOptCert.NPThread.html#lo:8"><span class="id" title="variable">lo</span></a> (<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.state"><span class="id" title="projection">state</span></a> <a class="idref" href="CompOptCert.NPThread.html#e1:9"><span class="id" title="variable">e1</span></a>) (<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.state"><span class="id" title="projection">state</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:10"><span class="id" title="variable">e2</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:10"><span class="id" title="variable">e2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+After output step, the switch step is allowed <span class="inlinecode"><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a></span>.  
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="NPAuxThread.out_step" class="idref" href="#NPAuxThread.out_step"><span class="id" title="definition">out_step</span></a> (<a id="lo:11" class="idref" href="#lo:11"><span class="id" title="binder">lo</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.LocOrdMap"><span class="id" title="definition">Ordering.LocOrdMap</span></a>) (<a id="e:12" class="idref" href="#e:12"><span class="id" title="binder">e</span></a>: <a class="idref" href="CompOptCert.Event.html#Event.t"><span class="id" title="record">Event.t</span></a>) (<a id="e1:13" class="idref" href="#e1:13"><span class="id" title="binder">e1</span></a> <a id="e2:14" class="idref" href="#e2:14"><span class="id" title="binder">e2</span></a>:<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.t"><span class="id" title="record">t</span></a>): <span class="id" title="keyword">Prop</span> := <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.out_step"><span class="id" title="inductive">Thread.out_step</span></a> <a class="idref" href="CompOptCert.NPThread.html#lo:11"><span class="id" title="variable">lo</span></a> <a class="idref" href="CompOptCert.NPThread.html#e:12"><span class="id" title="variable">e</span></a> (<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.state"><span class="id" title="projection">state</span></a> <a class="idref" href="CompOptCert.NPThread.html#e1:13"><span class="id" title="variable">e1</span></a>) (<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.state"><span class="id" title="projection">state</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:14"><span class="id" title="variable">e2</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:14"><span class="id" title="variable">e2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The promise/reservation and cancel steps are only permitted to occur when <span class="inlinecode"><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a></span>.  In our paper, for simply preservation, we weakened the non-preemptive semantics definition
+            but it does not influence our result,
+            and allowed the cancel step to take when <span class="inlinecode"><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="NPAuxThread.prc_step" class="idref" href="#NPAuxThread.prc_step"><span class="id" title="definition">prc_step</span></a> (<a id="lo:15" class="idref" href="#lo:15"><span class="id" title="binder">lo</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.LocOrdMap"><span class="id" title="definition">Ordering.LocOrdMap</span></a>) (<a id="e1:16" class="idref" href="#e1:16"><span class="id" title="binder">e1</span></a> <a id="e2:17" class="idref" href="#e2:17"><span class="id" title="binder">e2</span></a>:<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.t"><span class="id" title="record">t</span></a>): <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.prc_step"><span class="id" title="inductive">Thread.prc_step</span></a> <a class="idref" href="CompOptCert.NPThread.html#lo:15"><span class="id" title="variable">lo</span></a> (<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.state"><span class="id" title="projection">state</span></a> <a class="idref" href="CompOptCert.NPThread.html#e1:16"><span class="id" title="variable">e1</span></a>) (<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.state"><span class="id" title="projection">state</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:17"><span class="id" title="variable">e2</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a> <a class="idref" href="CompOptCert.NPThread.html#e1:16"><span class="id" title="variable">e1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.preempt"><span class="id" title="projection">preempt</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:17"><span class="id" title="variable">e2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="NPAuxThread.tau_step" class="idref" href="#NPAuxThread.tau_step"><span class="id" title="definition">tau_step</span></a> (<a id="lo:18" class="idref" href="#lo:18"><span class="id" title="binder">lo</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.LocOrdMap"><span class="id" title="definition">Ordering.LocOrdMap</span></a>) (<a id="e1:19" class="idref" href="#e1:19"><span class="id" title="binder">e1</span></a> <a id="e2:20" class="idref" href="#e2:20"><span class="id" title="binder">e2</span></a>:<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.t"><span class="id" title="record">t</span></a>): <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.na_step"><span class="id" title="definition">na_step</span></a> <a class="idref" href="CompOptCert.NPThread.html#lo:18"><span class="id" title="variable">lo</span></a> <a class="idref" href="CompOptCert.NPThread.html#e1:19"><span class="id" title="variable">e1</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:20"><span class="id" title="variable">e2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">∨</span></a> <a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.at_step"><span class="id" title="definition">at_step</span></a> <a class="idref" href="CompOptCert.NPThread.html#lo:18"><span class="id" title="variable">lo</span></a> <a class="idref" href="CompOptCert.NPThread.html#e1:19"><span class="id" title="variable">e1</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:20"><span class="id" title="variable">e2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">∨</span></a> <a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.prc_step"><span class="id" title="definition">prc_step</span></a> <a class="idref" href="CompOptCert.NPThread.html#lo:18"><span class="id" title="variable">lo</span></a> <a class="idref" href="CompOptCert.NPThread.html#e1:19"><span class="id" title="variable">e1</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:20"><span class="id" title="variable">e2</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="NPAuxThread.consistent" class="idref" href="#NPAuxThread.consistent"><span class="id" title="definition">consistent</span></a> := <a class="idref" href="CompOptCert.Thread.html#Thread.consistent_nprm"><span class="id" title="definition">Thread.consistent_nprm</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="NPAuxThread.all_step" class="idref" href="#NPAuxThread.all_step"><span class="id" title="definition">all_step</span></a> (<a id="lo:21" class="idref" href="#lo:21"><span class="id" title="binder">lo</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.LocOrdMap"><span class="id" title="definition">Ordering.LocOrdMap</span></a>) (<a id="e1:22" class="idref" href="#e1:22"><span class="id" title="binder">e1</span></a> <a id="e2:23" class="idref" href="#e2:23"><span class="id" title="binder">e2</span></a>:<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.t"><span class="id" title="record">t</span></a>): <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.tau_step"><span class="id" title="definition">tau_step</span></a> <a class="idref" href="CompOptCert.NPThread.html#lo:21"><span class="id" title="variable">lo</span></a> <a class="idref" href="CompOptCert.NPThread.html#e1:22"><span class="id" title="variable">e1</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:23"><span class="id" title="variable">e2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">∨</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">∃</span></a> <a id="e:24" class="idref" href="#e:24"><span class="id" title="binder">e</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.out_step"><span class="id" title="definition">out_step</span></a> <a class="idref" href="CompOptCert.NPThread.html#lo:21"><span class="id" title="variable">lo</span></a> <a class="idref" href="CompOptCert.NPThread.html#e:24"><span class="id" title="variable">e</span></a> <a class="idref" href="CompOptCert.NPThread.html#e1:22"><span class="id" title="variable">e1</span></a> <a class="idref" href="CompOptCert.NPThread.html#e2:23"><span class="id" title="variable">e2</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.NPThread.html#NPAuxThread.NPAuxThread"><span class="id" title="section">NPAuxThread</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.NPThread.html#NPAuxThread"><span class="id" title="module">NPAuxThread</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

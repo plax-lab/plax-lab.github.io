@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>CompOptCert.VerifiedOpt</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library CompOptCert.VerifiedOpt</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.sflib.html#"><span class="id" title="library">sflib</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Axioms.html#"><span class="id" title="library">Axioms</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Basic.html#"><span class="id" title="library">Basic</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.DataStructure.html#"><span class="id" title="library">DataStructure</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Loc.html#"><span class="id" title="library">Loc</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Language.html#"><span class="id" title="library">Language</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Time.html#"><span class="id" title="library">Time</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Event.html#"><span class="id" title="library">Event</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.View.html#"><span class="id" title="library">View</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Cell.html#"><span class="id" title="library">Cell</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Memory.html#"><span class="id" title="library">Memory</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.TView.html#"><span class="id" title="library">TView</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Local.html#"><span class="id" title="library">Local</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Thread.html#"><span class="id" title="library">Thread</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Configuration.html#"><span class="id" title="library">Configuration</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.ww_RF.html#"><span class="id" title="library">ww_RF</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Behavior.html#"><span class="id" title="library">Behavior</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.LocalSim.html#"><span class="id" title="library">LocalSim</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.CorrectOpt.html#"><span class="id" title="library">CorrectOpt</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.ConstProp.html#"><span class="id" title="library">ConstProp</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.ConstPropProof.html#"><span class="id" title="library">ConstPropProof</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.CSE.html#"><span class="id" title="library">CSE</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#"><span class="id" title="library">CSEProof</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.DCE.html#"><span class="id" title="library">DCE</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.DCEProof.html#"><span class="id" title="library">DCEProof</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.LICM.html#"><span class="id" title="library">LICM</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.LICMProof.html#"><span class="id" title="library">LICMProof</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab131"></a><h1 class="section">Correct ConstProp, CSE, DCE and LICM</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Theorem</span> <a id="Correct_optimizers" class="idref" href="#Correct_optimizers"><span class="id" title="lemma">Correct_optimizers</span></a>:<br/>
+&nbsp;&nbsp;<a class="idref" href="CompOptCert.CorrectOpt.html#Correct"><span class="id" title="definition">Correct</span></a>(<a class="idref" href="CompOptCert.optimizer.ConstProp.html#constprop_optimizer"><span class="id" title="definition">constprop_optimizer</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <a class="idref" href="CompOptCert.CorrectOpt.html#Correct"><span class="id" title="definition">Correct</span></a>(<a class="idref" href="CompOptCert.optimizer.CSE.html#cse_optimizer"><span class="id" title="definition">cse_optimizer</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="CompOptCert.CorrectOpt.html#Correct"><span class="id" title="definition">Correct</span></a>(<a class="idref" href="CompOptCert.optimizer.DCE.html#dce_optimizer"><span class="id" title="definition">dce_optimizer</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <a class="idref" href="CompOptCert.CorrectOpt.html#Correct"><span class="id" title="definition">Correct</span></a> (<a class="idref" href="CompOptCert.optimizer.LICM.html#licm"><span class="id" title="definition">licm</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">splits</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.ConstPropProof.html#correct_constprop"><span class="id" title="lemma">correct_constprop</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#correct_cse"><span class="id" title="lemma">correct_cse</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.DCEProof.html#correct_dce"><span class="id" title="lemma">correct_dce</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.LICMProof.html#correct_licm"><span class="id" title="lemma">correct_licm</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

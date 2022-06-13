@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>CompOptCert.optimizer.Lib_MsgMapping</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library CompOptCert.optimizer.Lib_MsgMapping</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#"><span class="id" title="library">List</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.sflib.html#"><span class="id" title="library">sflib</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Paco</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">paco</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Basic.html#"><span class="id" title="library">Basic</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Axioms.html#"><span class="id" title="library">Axioms</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Loc.html#"><span class="id" title="library">Loc</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.LibTactics.html#"><span class="id" title="library">LibTactics</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Integers.html#"><span class="id" title="library">Integers</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Language.html#"><span class="id" title="library">Language</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="library">ZArith</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Maps.html#"><span class="id" title="library">Maps</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.FSets.FSets.html#"><span class="id" title="library">FSets</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.FSets.FSetInterface.html#"><span class="id" title="library">FSetInterface</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Lattice.html#"><span class="id" title="library">Lattice</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Event.html#"><span class="id" title="library">Event</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Syntax.html#"><span class="id" title="library">Syntax</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Semantics.html#"><span class="id" title="library">Semantics</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.Kildall.html#"><span class="id" title="library">Kildall</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.LiveAnalysis.html#"><span class="id" title="library">LiveAnalysis</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.CorrectOpt.html#"><span class="id" title="library">CorrectOpt</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.DCE.html#"><span class="id" title="library">DCE</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Language.html#"><span class="id" title="library">Language</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Time.html#"><span class="id" title="library">Time</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Event.html#"><span class="id" title="library">Event</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.View.html#"><span class="id" title="library">View</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Cell.html#"><span class="id" title="library">Cell</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Memory.html#"><span class="id" title="library">Memory</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.TView.html#"><span class="id" title="library">TView</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Local.html#"><span class="id" title="library">Local</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Thread.html#"><span class="id" title="library">Thread</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Configuration.html#"><span class="id" title="library">Configuration</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.MsgMapping.html#"><span class="id" title="library">MsgMapping</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab318"></a><h1 class="section">Message Mapping</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="TMapInj_lower" class="idref" href="#TMapInj_lower"><span class="id" title="lemma">TMapInj_lower</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="inj:1" class="idref" href="#inj:1"><span class="id" title="binder">inj</span></a> <a id="tm:2" class="idref" href="#tm:2"><span class="id" title="binder">tm</span></a> <a id="tm':3" class="idref" href="#tm':3"><span class="id" title="binder">tm'</span></a> <a id="loc:4" class="idref" href="#loc:4"><span class="id" title="binder">loc</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="CLOSED_TM:5" class="idref" href="#CLOSED_TM:5"><span class="id" title="binder">CLOSED_TM</span></a>: <a class="idref" href="CompOptCert.MsgMapping.html#closed_TMapInj"><span class="id" title="definition">closed_TMapInj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#inj:1"><span class="id" title="variable">inj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#tm:2"><span class="id" title="variable">tm</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="TM_INJ:6" class="idref" href="#TM_INJ:6"><span class="id" title="binder">TM_INJ</span></a>: <a class="idref" href="CompOptCert.MsgMapping.html#TMapInj"><span class="id" title="definition">TMapInj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#inj:1"><span class="id" title="variable">inj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#tm:2"><span class="id" title="variable">tm</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#tm':3"><span class="id" title="variable">tm'</span></a>):<br/>
+&nbsp;&nbsp;<a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#inj:1"><span class="id" title="variable">inj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#loc:4"><span class="id" title="variable">loc</span></a> (<a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#tm:2"><span class="id" title="variable">tm</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#loc:4"><span class="id" title="variable">loc</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#tm':3"><span class="id" title="variable">tm'</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#loc:4"><span class="id" title="variable">loc</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.MsgMapping.html#closed_TMapInj"><span class="id" title="definition">closed_TMapInj</span></a> <span class="id" title="tactic">in</span> ×. <span class="id" title="tactic">specialize</span> (<span class="id" title="var">CLOSED_TM</span> <span class="id" title="var">loc</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="var">des</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.MsgMapping.html#TMapInj"><span class="id" title="definition">TMapInj</span></a> <span class="id" title="tactic">in</span> ×.<br/>
+&nbsp;&nbsp;<span class="id" title="var">exploit</span> <span class="id" title="var">TM_INJ</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="var">ii</span>; <span class="id" title="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="MsgInj_add_src_concrete_prsv" class="idref" href="#MsgInj_add_src_concrete_prsv"><span class="id" title="lemma">MsgInj_add_src_concrete_prsv</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="inj:7" class="idref" href="#inj:7"><span class="id" title="binder">inj</span></a> <a id="mem_tgt:8" class="idref" href="#mem_tgt:8"><span class="id" title="binder">mem_tgt</span></a> <a id="mem_src:9" class="idref" href="#mem_src:9"><span class="id" title="binder">mem_src</span></a> <a id="mem_src':10" class="idref" href="#mem_src':10"><span class="id" title="binder">mem_src'</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="loc:11" class="idref" href="#loc:11"><span class="id" title="binder">loc</span></a> <a id="from:12" class="idref" href="#from:12"><span class="id" title="binder">from</span></a> <a id="to:13" class="idref" href="#to:13"><span class="id" title="binder">to</span></a> <a id="msg:14" class="idref" href="#msg:14"><span class="id" title="binder">msg</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="MSG_INJ:15" class="idref" href="#MSG_INJ:15"><span class="id" title="binder">MSG_INJ</span></a>: <a class="idref" href="CompOptCert.MsgMapping.html#MsgInj"><span class="id" title="inductive">MsgInj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#inj:7"><span class="id" title="variable">inj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#mem_tgt:8"><span class="id" title="variable">mem_tgt</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#mem_src:9"><span class="id" title="variable">mem_src</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="ADD:16" class="idref" href="#ADD:16"><span class="id" title="binder">ADD</span></a>: <a class="idref" href="CompOptCert.Memory.html#Memory.add"><span class="id" title="inductive">Memory.add</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#mem_src:9"><span class="id" title="variable">mem_src</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#loc:11"><span class="id" title="variable">loc</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#from:12"><span class="id" title="variable">from</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#to:13"><span class="id" title="variable">to</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#msg:14"><span class="id" title="variable">msg</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#mem_src':10"><span class="id" title="variable">mem_src'</span></a>):<br/>
+&nbsp;&nbsp;<a class="idref" href="CompOptCert.MsgMapping.html#MsgInj"><span class="id" title="inductive">MsgInj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#inj:7"><span class="id" title="variable">inj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#mem_tgt:8"><span class="id" title="variable">mem_tgt</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#mem_src':10"><span class="id" title="variable">mem_src'</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">MSG_INJ</span>. <span class="id" title="var">econs</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">ii</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">SOUND</span> <span class="id" title="tactic">in</span> <span class="id" title="var">MSG</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="var">des</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">do</span> 3 <span class="id" title="tactic">eexists</span>. <span class="id" title="var">splits</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.Memory.html#Memory.add_get1"><span class="id" title="lemma">Memory.add_get1</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="inj_sc_fence_tm_closed" class="idref" href="#inj_sc_fence_tm_closed"><span class="id" title="lemma">inj_sc_fence_tm_closed</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="sc_tgt:17" class="idref" href="#sc_tgt:17"><span class="id" title="binder">sc_tgt</span></a> <a id="mem_tgt:18" class="idref" href="#mem_tgt:18"><span class="id" title="binder">mem_tgt</span></a> <a id="sc_src:19" class="idref" href="#sc_src:19"><span class="id" title="binder">sc_src</span></a> <a id="mem_src:20" class="idref" href="#mem_src:20"><span class="id" title="binder">mem_src</span></a> <a id="inj:21" class="idref" href="#inj:21"><span class="id" title="binder">inj</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="INJ_SC:22" class="idref" href="#INJ_SC:22"><span class="id" title="binder">INJ_SC</span></a>: <a class="idref" href="CompOptCert.MsgMapping.html#TMapInj"><span class="id" title="definition">TMapInj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#inj:21"><span class="id" title="variable">inj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#sc_tgt:17"><span class="id" title="variable">sc_tgt</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#sc_src:19"><span class="id" title="variable">sc_src</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="MSG_INJ:23" class="idref" href="#MSG_INJ:23"><span class="id" title="binder">MSG_INJ</span></a>: <a class="idref" href="CompOptCert.MsgMapping.html#MsgInj"><span class="id" title="inductive">MsgInj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#inj:21"><span class="id" title="variable">inj</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#mem_tgt:18"><span class="id" title="variable">mem_tgt</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#mem_src:20"><span class="id" title="variable">mem_src</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="CLOSED_SC:24" class="idref" href="#CLOSED_SC:24"><span class="id" title="binder">CLOSED_SC</span></a>: <a class="idref" href="CompOptCert.Memory.html#Memory.closed_timemap"><span class="id" title="definition">Memory.closed_timemap</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#sc_tgt:17"><span class="id" title="variable">sc_tgt</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#mem_tgt:18"><span class="id" title="variable">mem_tgt</span></a>):<br/>
+&nbsp;&nbsp;<a class="idref" href="CompOptCert.Memory.html#Memory.closed_timemap"><span class="id" title="definition">Memory.closed_timemap</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#sc_src:19"><span class="id" title="variable">sc_src</span></a> <a class="idref" href="CompOptCert.optimizer.Lib_MsgMapping.html#mem_src:20"><span class="id" title="variable">mem_src</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.Memory.html#Memory.closed_timemap"><span class="id" title="definition">Memory.closed_timemap</span></a> <span class="id" title="tactic">in</span> ×.<br/>
+&nbsp;&nbsp;<span class="id" title="var">ii</span>. <span class="id" title="tactic">specialize</span> (<span class="id" title="var">CLOSED_SC</span> <span class="id" title="var">loc</span>). <span class="id" title="var">des</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">MSG_INJ</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">exploit</span> <span class="id" title="var">SOUND</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="var">ii</span>; <span class="id" title="var">des</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.MsgMapping.html#TMapInj"><span class="id" title="definition">TMapInj</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">INJ_SC</span>. <span class="id" title="tactic">specialize</span> (<span class="id" title="var">INJ_SC</span> <span class="id" title="var">loc</span> <span class="id" title="var">t'</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="var">exploit</span> <span class="id" title="var">INJ_SC</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="var">ii</span>; <span class="id" title="tactic">subst</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>CompOptCert.Iteration</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library CompOptCert.Iteration</h1>
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+Bounded and unbounded iterators 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Axioms.html#"><span class="id" title="library">Axioms</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Coqlib.html#"><span class="id" title="library">Coqlib</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Wfsimpl.html#"><span class="id" title="library">Wfsimpl</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">Asymmetric</span> <span class="id" title="var">Patterns</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+This modules defines several Coq encodings of a general "while" loop.
+  The loop is presented in functional style as the iteration
+  of a <span class="inlinecode"><a class="idref" href="CompOptCert.optimizer.Kildall.html#Dataflow_Solver.step"><span class="id" title="definition">step</span></a></span> function of type <span class="inlinecode"><a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a></span> <span class="inlinecode">→</span> <span class="inlinecode"><a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.B"><span class="id" title="variable">B</span></a></span> <span class="inlinecode">+</span> <span class="inlinecode"><a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a></span>:
+<pre>
+        let rec iterate step a =
+          match step a with
+          | inl b -&gt; b
+          | inr a' -&gt; iterate step a'
+</pre>
+  This iteration cannot be defined directly in Coq using <span class="inlinecode"><span class="id" title="keyword">Fixpoint</span></span>,
+  because Coq is a logic of total functions, and therefore we must
+  guarantee termination of the loop.
+
+<div class="paragraph"> </div>
+
+<a id="lab40"></a><h1 class="section">Terminating iteration</h1>
+
+<div class="paragraph"> </div>
+
+ We first implement the case where termination is guaranteed because
+  the current state <span class="inlinecode"><span class="id" title="var">a</span></span> decreases at each iteration. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="WfIter" class="idref" href="#WfIter"><span class="id" title="module">WfIter</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="WfIter.ITERATION" class="idref" href="#WfIter.ITERATION"><span class="id" title="section">ITERATION</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variables</span> <a id="WfIter.ITERATION.A" class="idref" href="#WfIter.ITERATION.A"><span class="id" title="variable">A</span></a> <a id="WfIter.ITERATION.B" class="idref" href="#WfIter.ITERATION.B"><span class="id" title="variable">B</span></a>: <span class="id" title="keyword">Type</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="WfIter.ITERATION.step" class="idref" href="#WfIter.ITERATION.step"><span class="id" title="variable">step</span></a>: <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.B"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e03f39daf98516fa530d3f6f5a1b4d92"><span class="id" title="notation">+</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.A"><span class="id" title="variable">A</span></a>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="WfIter.ITERATION.ord" class="idref" href="#WfIter.ITERATION.ord"><span class="id" title="variable">ord</span></a>: <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="WfIter.ITERATION.ord_wf" class="idref" href="#WfIter.ITERATION.ord_wf"><span class="id" title="variable">ord_wf</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Wf.html#well_founded"><span class="id" title="definition">well_founded</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.ord"><span class="id" title="variable">ord</span></a>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="WfIter.ITERATION.step_decr" class="idref" href="#WfIter.ITERATION.step_decr"><span class="id" title="variable">step_decr</span></a>: <span class="id" title="keyword">∀</span> <a id="a:6" class="idref" href="#a:6"><span class="id" title="binder">a</span></a> <a id="a':7" class="idref" href="#a':7"><span class="id" title="binder">a'</span></a>, <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.step"><span class="id" title="variable">step</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:6"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">_</span> <a class="idref" href="CompOptCert.Iteration.html#a':7"><span class="id" title="variable">a'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.ord"><span class="id" title="variable">ord</span></a> <a class="idref" href="CompOptCert.Iteration.html#a':7"><span class="id" title="variable">a'</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:6"><span class="id" title="variable">a</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="WfIter.step_info" class="idref" href="#WfIter.step_info"><span class="id" title="definition">step_info</span></a> (<a id="a:9" class="idref" href="#a:9"><span class="id" title="binder">a</span></a>: <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.A"><span class="id" title="variable">A</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#bc4528e836ab0e91ea7e942fb09e898f"><span class="id" title="notation">{</span></a><a id="b:10" class="idref" href="#b:10"><span class="id" title="binder">b</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#bc4528e836ab0e91ea7e942fb09e898f"><span class="id" title="notation">|</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.step"><span class="id" title="variable">step</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:9"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">_</span> <a class="idref" href="CompOptCert.Iteration.html#b:10"><span class="id" title="variable">b</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#bc4528e836ab0e91ea7e942fb09e898f"><span class="id" title="notation">}</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e03f39daf98516fa530d3f6f5a1b4d92"><span class="id" title="notation">+</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#c0bbd202248f4def7aaf0c316cf2c29e"><span class="id" title="notation">{</span></a><a id="a':12" class="idref" href="#a':12"><span class="id" title="binder">a'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#c0bbd202248f4def7aaf0c316cf2c29e"><span class="id" title="notation">|</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.step"><span class="id" title="variable">step</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:9"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">_</span> <a class="idref" href="CompOptCert.Iteration.html#a':11"><span class="id" title="variable">a'</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#c0bbd202248f4def7aaf0c316cf2c29e"><span class="id" title="notation">&amp;</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.ord"><span class="id" title="variable">ord</span></a> <a class="idref" href="CompOptCert.Iteration.html#a':12"><span class="id" title="variable">a'</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:9"><span class="id" title="variable">a</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#c0bbd202248f4def7aaf0c316cf2c29e"><span class="id" title="notation">}</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">caseEq</span> (<a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.step"><span class="id" title="variable">step</span></a> <span class="id" title="var">a</span>); <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">left</span>; <span class="id" title="tactic">∃</span> <span class="id" title="var">b</span>; <span class="id" title="tactic">auto</span>. <span class="id" title="tactic">right</span>; <span class="id" title="tactic">∃</span> <span class="id" title="var">a0</span>; <span class="id" title="tactic">auto</span>.<br/>
+<span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="WfIter.iterate_F" class="idref" href="#WfIter.iterate_F"><span class="id" title="definition">iterate_F</span></a> (<a id="a:13" class="idref" href="#a:13"><span class="id" title="binder">a</span></a>: <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.A"><span class="id" title="variable">A</span></a>) (<a id="rec:15" class="idref" href="#rec:15"><span class="id" title="binder">rec</span></a>: <span class="id" title="keyword">∀</span> <a id="a':14" class="idref" href="#a':14"><span class="id" title="binder">a'</span></a>, <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.ord"><span class="id" title="variable">ord</span></a> <a class="idref" href="CompOptCert.Iteration.html#a':14"><span class="id" title="variable">a'</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:13"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.B"><span class="id" title="variable">B</span></a>) : <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.B"><span class="id" title="variable">B</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Iteration.html#WfIter.step_info"><span class="id" title="definition">step_info</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:13"><span class="id" title="variable">a</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#exist"><span class="id" title="constructor">exist</span></a> <span class="id" title="var">b</span> <span class="id" title="var">P</span>) ⇒ <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#exist2"><span class="id" title="constructor">exist2</span></a> <span class="id" title="var">a'</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span>) ⇒ <a class="idref" href="CompOptCert.Iteration.html#rec:15"><span class="id" title="variable">rec</span></a> <span class="id" title="var">a'</span> <span class="id" title="var">Q</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="WfIter.iterate" class="idref" href="#WfIter.iterate"><span class="id" title="definition">iterate</span></a> (<a id="a:16" class="idref" href="#a:16"><span class="id" title="binder">a</span></a>: <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.A"><span class="id" title="variable">A</span></a>) : <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.B"><span class="id" title="variable">B</span></a> := <a class="idref" href="CompOptCert.Wfsimpl.html#Fix"><span class="id" title="definition">Fix</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.ord_wf"><span class="id" title="variable">ord_wf</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.iterate_F"><span class="id" title="definition">iterate_F</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:16"><span class="id" title="variable">a</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+We now prove an invariance property <span class="inlinecode"><a class="idref" href="CompOptCert.Iteration.html#PrimIter.iterate_prop"><span class="id" title="lemma">iterate_prop</span></a></span>, similar to the Hoare
+  logic rule for "while" loops. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="WfIter.ITERATION.P" class="idref" href="#WfIter.ITERATION.P"><span class="id" title="variable">P</span></a>: <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="WfIter.ITERATION.Q" class="idref" href="#WfIter.ITERATION.Q"><span class="id" title="variable">Q</span></a>: <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.B"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="WfIter.ITERATION.step_prop" class="idref" href="#WfIter.ITERATION.step_prop"><span class="id" title="variable">step_prop</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="a:19" class="idref" href="#a:19"><span class="id" title="binder">a</span></a> : <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.A"><span class="id" title="variable">A</span></a>, <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.P"><span class="id" title="variable">P</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:19"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.step"><span class="id" title="variable">step</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:19"><span class="id" title="variable">a</span></a> <span class="id" title="keyword">with</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">b</span> ⇒ <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.Q"><span class="id" title="variable">Q</span></a> <span class="id" title="var">b</span> | <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">a'</span> ⇒ <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.P"><span class="id" title="variable">P</span></a> <span class="id" title="var">a'</span> <span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="WfIter.iterate_prop" class="idref" href="#WfIter.iterate_prop"><span class="id" title="lemma">iterate_prop</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="a:21" class="idref" href="#a:21"><span class="id" title="binder">a</span></a>, <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.P"><span class="id" title="variable">P</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:21"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.Q"><span class="id" title="variable">Q</span></a> (<a class="idref" href="CompOptCert.Iteration.html#WfIter.iterate"><span class="id" title="definition">iterate</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:21"><span class="id" title="variable">a</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">a0</span>. <span class="id" title="tactic">pattern</span> <span class="id" title="var">a0</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Wf.html#well_founded_ind"><span class="id" title="lemma">well_founded_ind</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">R</span> := <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.ord"><span class="id" title="variable">ord</span></a>). <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.Iteration.html#WfIter.iterate"><span class="id" title="definition">iterate</span></a>; <span class="id" title="tactic">rewrite</span> <a class="idref" href="CompOptCert.Wfsimpl.html#unroll_Fix"><span class="id" title="lemma">unroll_Fix</span></a>. <span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.Iteration.html#WfIter.iterate_F"><span class="id" title="definition">iterate_F</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="CompOptCert.Iteration.html#WfIter.step_info"><span class="id" title="definition">step_info</span></a> <span class="id" title="var">x</span>) <span class="id" title="keyword">as</span> [[<span class="id" title="var">b</span> <span class="id" title="var">U</span>] | [<span class="id" title="var">a'</span> <span class="id" title="var">U</span> <span class="id" title="var">V</span>]].<br/>
+&nbsp;&nbsp;<span class="id" title="var">exploit</span> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.step_prop"><span class="id" title="variable">step_prop</span></a>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">U</span>; <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">auto</span>. <span class="id" title="var">exploit</span> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION.step_prop"><span class="id" title="variable">step_prop</span></a>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">U</span>; <span class="id" title="tactic">auto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Iteration.html#WfIter.ITERATION"><span class="id" title="section">ITERATION</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Iteration.html#WfIter"><span class="id" title="module">WfIter</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab41"></a><h1 class="section">Bounded iteration</h1>
+
+<div class="paragraph"> </div>
+
+ The presentation of iteration shown above is predicated on the existence
+  of a well-founded ordering that decreases at each step of the iteration.
+  In several parts of the CompCert development, it is very painful to define
+  such a well-founded ordering and to prove decrease, even though we know our
+  iterations always terminate.
+
+<div class="paragraph"> </div>
+
+  In the presentation below, we choose instead to bound the number of iterations
+  by an arbitrary constant.  <span class="inlinecode"><a class="idref" href="CompOptCert.Iteration.html#PrimIter.iterate"><span class="id" title="definition">iterate</span></a></span> then becomes a function that can fail,
+  of type <span class="inlinecode"><a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.A"><span class="id" title="variable">A</span></a></span> <span class="inlinecode">→</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a></span> <span class="inlinecode"><a class="idref" href="CompOptCert.Wfsimpl.html#FIXM.B"><span class="id" title="variable">B</span></a></span>.  The <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a></span> result denotes failure to reach
+  a result in the number of iterations prescribed, or, in other terms,
+  failure to find a solution to the dataflow problem.  The compiler
+  passes that exploit dataflow analysis (the <span class="inlinecode"><span class="id" title="var">Constprop</span></span>, <span class="inlinecode"><span class="id" title="library">CSE</span></span> and
+  <span class="inlinecode"><span class="id" title="var">Allocation</span></span> passes) will, in this case, either fail (<span class="inlinecode"><span class="id" title="var">Allocation</span></span>)
+  or turn off the optimization pass (<span class="inlinecode"><span class="id" title="var">Constprop</span></span> and <span class="inlinecode"><span class="id" title="library">CSE</span></span>).
+
+<div class="paragraph"> </div>
+
+  Since we know (informally) that our computations terminate, we can
+  take a very large constant as the maximal number of iterations.
+  Failure will therefore never happen in practice, but of
+  course our proofs also cover the failure case and show that
+  nothing bad happens in this hypothetical case either.  
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="PrimIter" class="idref" href="#PrimIter"><span class="id" title="module">PrimIter</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="PrimIter.ITERATION" class="idref" href="#PrimIter.ITERATION"><span class="id" title="section">ITERATION</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variables</span> <a id="PrimIter.ITERATION.A" class="idref" href="#PrimIter.ITERATION.A"><span class="id" title="variable">A</span></a> <a id="PrimIter.ITERATION.B" class="idref" href="#PrimIter.ITERATION.B"><span class="id" title="variable">B</span></a>: <span class="id" title="keyword">Type</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="PrimIter.ITERATION.step" class="idref" href="#PrimIter.ITERATION.step"><span class="id" title="variable">step</span></a>: <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.B"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e03f39daf98516fa530d3f6f5a1b4d92"><span class="id" title="notation">+</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.A"><span class="id" title="variable">A</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="PrimIter.num_iterations" class="idref" href="#PrimIter.num_iterations"><span class="id" title="definition">num_iterations</span></a> := 1000000000000%<span class="id" title="var">positive</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The simple definition of bounded iteration is:
+<pre>
+Fixpoint iterate (niter: nat) (a: A) {struct niter} : option B :=
+  match niter with
+  | O =&gt; None
+  | S niter' =&gt;
+      match step a with
+      | inl b =&gt; b
+      | inr a' =&gt; iterate niter' a'
+      end
+  end.
+</pre>
+  This function is structural recursive over the parameter <span class="inlinecode"><span class="id" title="var">niter</span></span>
+  (number of iterations), represented here as a Peano integer (type <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a></span>).
+  However, we want to use very large values of <span class="inlinecode"><span class="id" title="var">niter</span></span>.  As Peano integers,
+  these values would be much too large to fit in memory.  Therefore,
+  we must express iteration counts as a binary integer (type <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a></span>).
+  However, Peano induction over type <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a></span> is not structural recursion,
+  so we cannot define <span class="inlinecode"><a class="idref" href="CompOptCert.Iteration.html#PrimIter.iterate"><span class="id" title="definition">iterate</span></a></span> as a Coq fixpoint and must use
+  Noetherian recursion instead. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="PrimIter.iter_step" class="idref" href="#PrimIter.iter_step"><span class="id" title="definition">iter_step</span></a> (<a id="x:25" class="idref" href="#x:25"><span class="id" title="binder">x</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="next:27" class="idref" href="#next:27"><span class="id" title="binder">next</span></a>: <span class="id" title="keyword">∀</span> <a id="y:26" class="idref" href="#y:26"><span class="id" title="binder">y</span></a>, <a class="idref" href="CompOptCert.Coqlib.html#Plt"><span class="id" title="definition">Plt</span></a> <a class="idref" href="CompOptCert.Iteration.html#y:26"><span class="id" title="variable">y</span></a> <a class="idref" href="CompOptCert.Iteration.html#x:25"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.B"><span class="id" title="variable">B</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="s:28" class="idref" href="#s:28"><span class="id" title="binder">s</span></a>: <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.A"><span class="id" title="variable">A</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.B"><span class="id" title="variable">B</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Coqlib.html#peq"><span class="id" title="definition">peq</span></a> <a class="idref" href="CompOptCert.Iteration.html#x:25"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Numbers.BinNums.html#xH"><span class="id" title="constructor">xH</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#left"><span class="id" title="constructor">left</span></a> <span class="id" title="var">EQ</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#right"><span class="id" title="constructor">right</span></a> <span class="id" title="var">NOTEQ</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.step"><span class="id" title="variable">step</span></a> <a class="idref" href="CompOptCert.Iteration.html#s:28"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">res</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">res</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">s'</span>  ⇒ <a class="idref" href="CompOptCert.Iteration.html#next:27"><span class="id" title="variable">next</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.PArith.BinPos.html#Pos.pred"><span class="id" title="definition">Pos.pred</span></a> <a class="idref" href="CompOptCert.Iteration.html#x:25"><span class="id" title="variable">x</span></a>) (<a class="idref" href="CompOptCert.Coqlib.html#Ppred_Plt"><span class="id" title="lemma">Ppred_Plt</span></a> <a class="idref" href="CompOptCert.Iteration.html#x:25"><span class="id" title="variable">x</span></a> <span class="id" title="var">NOTEQ</span>) <span class="id" title="var">s'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="PrimIter.iter" class="idref" href="#PrimIter.iter"><span class="id" title="definition">iter</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.B"><span class="id" title="variable">B</span></a> := <a class="idref" href="CompOptCert.Wfsimpl.html#Fix"><span class="id" title="definition">Fix</span></a> <a class="idref" href="CompOptCert.Coqlib.html#Plt_wf"><span class="id" title="lemma">Plt_wf</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.iter_step"><span class="id" title="definition">iter_step</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><a class="idref" href="CompOptCert.Iteration.html#PrimIter.iterate"><span class="id" title="definition">iterate</span></a></span> function is defined as <span class="inlinecode"><a class="idref" href="CompOptCert.Iteration.html#PrimIter.iter"><span class="id" title="definition">iter</span></a></span> up to
+    <span class="inlinecode"><a class="idref" href="CompOptCert.Iteration.html#PrimIter.num_iterations"><span class="id" title="definition">num_iterations</span></a></span> through the loop. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="PrimIter.iterate" class="idref" href="#PrimIter.iterate"><span class="id" title="definition">iterate</span></a> := <a class="idref" href="CompOptCert.Iteration.html#PrimIter.iter"><span class="id" title="definition">iter</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.num_iterations"><span class="id" title="definition">num_iterations</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+We now prove the invariance property <span class="inlinecode"><a class="idref" href="CompOptCert.Iteration.html#PrimIter.iterate_prop"><span class="id" title="lemma">iterate_prop</span></a></span>. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="PrimIter.ITERATION.P" class="idref" href="#PrimIter.ITERATION.P"><span class="id" title="variable">P</span></a>: <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="PrimIter.ITERATION.Q" class="idref" href="#PrimIter.ITERATION.Q"><span class="id" title="variable">Q</span></a>: <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.B"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Prop</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="PrimIter.ITERATION.step_prop" class="idref" href="#PrimIter.ITERATION.step_prop"><span class="id" title="variable">step_prop</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="a:31" class="idref" href="#a:31"><span class="id" title="binder">a</span></a> : <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.A"><span class="id" title="variable">A</span></a>, <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.P"><span class="id" title="variable">P</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:31"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.step"><span class="id" title="variable">step</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:31"><span class="id" title="variable">a</span></a> <span class="id" title="keyword">with</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">b</span> ⇒ <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.Q"><span class="id" title="variable">Q</span></a> <span class="id" title="var">b</span> | <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">a'</span> ⇒ <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.P"><span class="id" title="variable">P</span></a> <span class="id" title="var">a'</span> <span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="PrimIter.iter_prop" class="idref" href="#PrimIter.iter_prop"><span class="id" title="lemma">iter_prop</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="n:33" class="idref" href="#n:33"><span class="id" title="binder">n</span></a> <a id="a:34" class="idref" href="#a:34"><span class="id" title="binder">a</span></a> <a id="b:35" class="idref" href="#b:35"><span class="id" title="binder">b</span></a>, <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.P"><span class="id" title="variable">P</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:34"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.iter"><span class="id" title="definition">iter</span></a> <a class="idref" href="CompOptCert.Iteration.html#n:33"><span class="id" title="variable">n</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:34"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="CompOptCert.Iteration.html#b:35"><span class="id" title="variable">b</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.Q"><span class="id" title="variable">Q</span></a> <a class="idref" href="CompOptCert.Iteration.html#b:35"><span class="id" title="variable">b</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Wf.html#well_founded_ind"><span class="id" title="lemma">well_founded_ind</span></a> <a class="idref" href="CompOptCert.Coqlib.html#Plt_wf"><span class="id" title="lemma">Plt_wf</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">fun</span> <a id="p:39" class="idref" href="#p:39"><span class="id" title="binder">p</span></a> ⇒ <span class="id" title="keyword">∀</span> <a id="a:40" class="idref" href="#a:40"><span class="id" title="binder">a</span></a> <a id="b:41" class="idref" href="#b:41"><span class="id" title="binder">b</span></a>, <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.P"><span class="id" title="variable">P</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:37"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.iter"><span class="id" title="definition">iter</span></a> <a class="idref" href="CompOptCert.Iteration.html#p:36"><span class="id" title="variable">p</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:37"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="CompOptCert.Iteration.html#b:38"><span class="id" title="variable">b</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.Q"><span class="id" title="variable">Q</span></a> <a class="idref" href="CompOptCert.Iteration.html#b:38"><span class="id" title="variable">b</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.iter"><span class="id" title="definition">iter</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H1</span>. <span class="id" title="tactic">rewrite</span> <a class="idref" href="CompOptCert.Wfsimpl.html#unroll_Fix"><span class="id" title="lemma">unroll_Fix</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H1</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.iter_step"><span class="id" title="definition">iter_step</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="CompOptCert.Coqlib.html#peq"><span class="id" title="definition">peq</span></a> <span class="id" title="var">x</span> 1). <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">specialize</span> (<a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.step_prop"><span class="id" title="variable">step_prop</span></a> <span class="id" title="var">a</span> <span class="id" title="var">H0</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.step"><span class="id" title="variable">step</span></a> <span class="id" title="var">a</span>) <span class="id" title="keyword">as</span> [<span class="id" title="var">b'</span>|<span class="id" title="var">a'</span>] <span class="id" title="var">eqn</span>:?.<br/>
+&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">H1</span>. <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">H</span> <span class="id" title="keyword">with</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.PArith.BinPos.html#Pos.pred"><span class="id" title="definition">Pos.pred</span></a> <span class="id" title="var">x</span>) <span class="id" title="var">a'</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="CompOptCert.Coqlib.html#Ppred_Plt"><span class="id" title="lemma">Ppred_Plt</span></a>; <span class="id" title="tactic">auto</span>. <span class="id" title="tactic">auto</span>. <span class="id" title="tactic">auto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="PrimIter.iterate_prop" class="idref" href="#PrimIter.iterate_prop"><span class="id" title="lemma">iterate_prop</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="a:42" class="idref" href="#a:42"><span class="id" title="binder">a</span></a> <a id="b:43" class="idref" href="#b:43"><span class="id" title="binder">b</span></a>, <a class="idref" href="CompOptCert.Iteration.html#PrimIter.iterate"><span class="id" title="definition">iterate</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:42"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="CompOptCert.Iteration.html#b:43"><span class="id" title="variable">b</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.P"><span class="id" title="variable">P</span></a> <a class="idref" href="CompOptCert.Iteration.html#a:42"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION.Q"><span class="id" title="variable">Q</span></a> <a class="idref" href="CompOptCert.Iteration.html#b:43"><span class="id" title="variable">b</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.iter_prop"><span class="id" title="lemma">iter_prop</span></a> <span class="id" title="keyword">with</span> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.num_iterations"><span class="id" title="definition">num_iterations</span></a> <span class="id" title="var">a</span>; <span class="id" title="tactic">assumption</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Iteration.html#PrimIter.ITERATION"><span class="id" title="section">ITERATION</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Iteration.html#PrimIter"><span class="id" title="module">PrimIter</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

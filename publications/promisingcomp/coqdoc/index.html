@@ -1,0 +1,605 @@
+<!DOCTYPE html><html><head>
+      <title>index</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:////home/jpzha/.vscode/extensions/shd101wyy.markdown-preview-enhanced-0.6.3/node_modules/@shd101wyy/mume/dependencies/katex/katex.min.css">
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      <style>
+      /**
+ * prism.js Github theme based on GitHub's theme.
+ * @author Sam Clarke
+ */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #333;
+  background: none;
+  font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.4;
+
+  -moz-tab-size: 8;
+  -o-tab-size: 8;
+  tab-size: 8;
+
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+  padding: .8em;
+  overflow: auto;
+  /* border: 1px solid #ddd; */
+  border-radius: 3px;
+  /* background: #fff; */
+  background: #f5f5f5;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+  padding: .1em;
+  border-radius: .3em;
+  white-space: normal;
+  background: #f5f5f5;
+}
+
+.token.comment,
+.token.blockquote {
+  color: #969896;
+}
+
+.token.cdata {
+  color: #183691;
+}
+
+.token.doctype,
+.token.punctuation,
+.token.variable,
+.token.macro.property {
+  color: #333;
+}
+
+.token.operator,
+.token.important,
+.token.keyword,
+.token.rule,
+.token.builtin {
+  color: #a71d5d;
+}
+
+.token.string,
+.token.url,
+.token.regex,
+.token.attr-value {
+  color: #183691;
+}
+
+.token.property,
+.token.number,
+.token.boolean,
+.token.entity,
+.token.atrule,
+.token.constant,
+.token.symbol,
+.token.command,
+.token.code {
+  color: #0086b3;
+}
+
+.token.tag,
+.token.selector,
+.token.prolog {
+  color: #63a35c;
+}
+
+.token.function,
+.token.namespace,
+.token.pseudo-element,
+.token.class,
+.token.class-name,
+.token.pseudo-class,
+.token.id,
+.token.url-reference .token.variable,
+.token.attr-name {
+  color: #795da3;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+.token.title,
+.token.title .token.punctuation {
+  font-weight: bold;
+  color: #1d3e81;
+}
+
+.token.list {
+  color: #ed6a43;
+}
+
+.token.inserted {
+  background-color: #eaffea;
+  color: #55a532;
+}
+
+.token.deleted {
+  background-color: #ffecec;
+  color: #bd2c00;
+}
+
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+
+/* JSON */
+.language-json .token.property {
+  color: #183691;
+}
+
+.language-markup .token.tag .token.punctuation {
+  color: #333;
+}
+
+/* CSS */
+code.language-css,
+.language-css .token.function {
+  color: #0086b3;
+}
+
+/* YAML */
+.language-yaml .token.atrule {
+  color: #63a35c;
+}
+
+code.language-yaml {
+  color: #183691;
+}
+
+/* Ruby */
+.language-ruby .token.function {
+  color: #333;
+}
+
+/* Markdown */
+.language-markdown .token.url {
+  color: #795da3;
+}
+
+/* Makefile */
+.language-makefile .token.symbol {
+  color: #795da3;
+}
+
+.language-makefile .token.variable {
+  color: #183691;
+}
+
+.language-makefile .token.builtin {
+  color: #0086b3;
+}
+
+/* Bash */
+.language-bash .token.keyword {
+  color: #0086b3;
+}
+
+/* highlight */
+pre[data-line] {
+  position: relative;
+  padding: 1em 0 1em 3em;
+}
+pre[data-line] .line-highlight-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: transparent;
+  display: block;
+  width: 100%;
+}
+
+pre[data-line] .line-highlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: inherit 0;
+  margin-top: 1em;
+  background: hsla(24, 20%, 50%,.08);
+  background: linear-gradient(to right, hsla(24, 20%, 50%,.1) 70%, hsla(24, 20%, 50%,0));
+  pointer-events: none;
+  line-height: inherit;
+  white-space: pre;
+}
+
+pre[data-line] .line-highlight:before, 
+pre[data-line] .line-highlight[data-end]:after {
+  content: attr(data-start);
+  position: absolute;
+  top: .4em;
+  left: .6em;
+  min-width: 1em;
+  padding: 0 .5em;
+  background-color: hsla(24, 20%, 50%,.4);
+  color: hsl(24, 20%, 95%);
+  font: bold 65%/1.5 sans-serif;
+  text-align: center;
+  vertical-align: .3em;
+  border-radius: 999px;
+  text-shadow: none;
+  box-shadow: 0 1px white;
+}
+
+pre[data-line] .line-highlight[data-end]:after {
+  content: attr(data-end);
+  top: auto;
+  bottom: .4em;
+}html body{font-family:"Helvetica Neue",Helvetica,"Segoe UI",Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ul,html body>ol{margin-bottom:16px}html body ul,html body ol{padding-left:2em}html body ul.no-list,html body ol.no-list{padding:0;list-style-type:none}html body ul ul,html body ul ol,html body ol ol,html body ol ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:bold;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:bold}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em !important;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::before,html body code::after{letter-spacing:-0.2em;content:"\00a0"}html body pre>code{padding:0;margin:0;font-size:.85em !important;word-break:normal;white-space:pre;background:transparent;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;font-size:.85em !important;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:before,html body pre tt:before,html body pre code:after,html body pre tt:after{content:normal}html body p,html body blockquote,html body ul,html body ol,html body dl,html body pre{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body pre,html body code{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview .pagebreak,.markdown-preview .newpage{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center !important}.markdown-preview:not([for="preview"]) .code-chunk .btn-group{display:none}.markdown-preview:not([for="preview"]) .code-chunk .status{display:none}.markdown-preview:not([for="preview"]) .code-chunk .output-div{margin-bottom:16px}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,0.66);border:4px solid rgba(150,150,150,0.66);background-clip:content-box}html body[for="html-export"]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for="html-export"]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0}@media screen and (min-width:914px){html body[for="html-export"]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for="html-export"]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for="html-export"]:not([data-presentation-mode]) .markdown-preview{font-size:14px !important;padding:1em}}@media print{html body[for="html-export"]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for="html-export"]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,0.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,0.66);border:4px solid rgba(150,150,150,0.66);background-clip:content-box}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc ul{padding:0 1.6em;margin-top:.8em}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc li{margin-bottom:.8em}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc ul{list-style-type:none}html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% -  300px);padding:2em calc(50% - 457px -  150px);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for="html-export"]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for="html-export"]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for="html-export"]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+    </head>
+    <body for="html-export">
+      <div class="mume markdown-preview  ">
+      <h1 class="mume-header" id="verifying-optimizations-of-concurrent-programs-in-the-promising-semantics">Verifying Optimizations of Concurrent Programs in the Promising Semantics</h1>
+
+<p>This is the mechanized proof of &quot;Verifying Optimizations for Concurrent Programs in the Promising Semantics 2.1&quot; in the Coq proof assistent.<br>
+Below we list contents of the mechanized proof. All mechanized proofs are under <mark>src/</mark> subdirectory.</p>
+<hr>
+<h2 class="mume-header" id="structure">Structure</h2>
+
+<h3 class="mume-header" id="promising-semantics-ps21">Promising semantics (PS2.1)</h3>
+
+<p><mark>src/promising</mark><br>
+contains the definition of promising semantics 2.1 (PS2.1) and its corresponding properties.</p>
+<ul>
+<li><mark>promising/lang</mark><br>
+the definition of promising semantics 2.1 (PS2.1). Below, we list the Coq implementation of some important components in PS2.1.
+<ul>
+<li><a href="./html/CompOptCert.Memory.html">Memory.v</a>: Memory in PS2.1. The memory in PS2.1 is a message pool (in Figure 8 in paper).</li>
+<li><a href="./html/CompOptCert.Thread.html">Thread.v</a>: Thread steps in PS2.1 (in Figure 8 in paper).</li>
+<li><a href="./html/CompOptCert.Configuration.html">Configuration.v</a>: Program steps (or machine steps) in promising semantics (in Figure 8 in paper). It also contains the definition of the program configuration (or machine states in Figure 5 in paper).</li>
+<li><a href="./html/CompOptCert.Behavior.html">Behavior.v</a>: behaviors of program in promising semantics.</li>
+</ul>
+</li>
+<li><mark>promising/prop</mark><br>
+some properties about PS2.1.</li>
+<li><mark>promising/wwrf</mark><br>
+the definition of the write-write race freedom.
+<ul>
+<li><a href="./html/CompOptCert.ww_RF.html">ww_RF.v</a>: Write-write race freedom in PS2.1, which is defined in Figure 11 in paper. We also define the write-write race freedom in the non-preemptive semantics in this file.</li>
+</ul>
+</li>
+</ul>
+<h3 class="mume-header" id="non-preemptive-semantics">Non-preemptive semantics</h3>
+
+<p><mark>src/non-preemptive</mark><br>
+contains the definition of the non-preemptive semantics (Section 4 in paper).</p>
+<ul>
+<li><a href="./html/CompOptCert.NPThread.html">NPThread.v</a>: thread steps in the non-preemptive semantics (in Figure 10 in paper).</li>
+<li><a href="./html/CompOptCert.NPConfiguration.html">NPConfiguration.v</a>: Program steps (or machine steps) in the non-preemptive semantics (in Figure 10 in paper).</li>
+<li><a href="./html/CompOptCert.NPBehavior.html">NPBehavior.v</a>: behaviors of the program in the non-preemptive semantics.</li>
+</ul>
+<h3 class="mume-header" id="csimplrtl-language">CSimplRTL language</h3>
+
+<p><mark>src/rtl</mark><br>
+the syntax and semantics of concurrent programming language CSimplRTL introduced in Section 3 in paper.</p>
+<ul>
+<li><a href="./html/CompOptCert.Syntax.html">Syntax.v</a>: Syntax of CSimplRTL language (in Figure 8 in paper).</li>
+<li><a href="./html/CompOptCert.Semantics.html">Semantics.v</a>: Semantics of CSimplRTL language (or transition on the thread-local state), whose definition is omitted in paper.</li>
+</ul>
+<h3 class="mume-header" id="simulation">Simulation</h3>
+
+<p><mark>src/simulation</mark><br>
+the definitions of the thread-local upward simulation (in Section 6 in paper) and the whole program simulation.</p>
+<ul>
+<li><a href="./html/CompOptCert.DelaySet.html">DelayedSet.v</a>: Delayed write set and some operations about delayed write set (in Figure 13 in paper).</li>
+<li><a href="./html/CompOptCert.MsgMapping.html">MsgMapping.v</a>: Timestamp mapping (defined as TMap) in Figure 12 in paper).</li>
+<li><a href="./html/CompOptCert.LocalSim.html">LocalSim.v</a>: Thread-local upward simulation. It covers the most of the definitions in Section 6 in paper.
+<ol>
+<li><a href="./html/CompOptCert.LocalSim.html#Invariant">Invariant parameter</a>: invariant for shared state;</li>
+<li><a href="./html/CompOptCert.LocalSim.html#SI">Step invariant</a>: step invariant that holds at every simulation step;</li>
+<li><a href="./html/CompOptCert.LocalSim.html#Rely">Rely condition</a>: rely condition;</li>
+<li><a href="./html/CompOptCert.LocalSim.html#local_sim">Thread-local simulation</a>: thread-local upward simulation (Definition 6.1 in paper);</li>
+</ol>
+</li>
+<li><a href="./html/CompOptCert.GlobSim.html">GlobSim.v</a>: whole program simulation (or global simulation). The theorem <a href="./html/CompOptCert.GlobSim.html#glob_sim_implies_refinement">glob_sim_implies_refinement</a> in this file shows that, if the whole target and source programs are simulated, they have refinement relation, and corresponds to the step (4) in Figure 6 (Our proof path) in paper.</li>
+</ul>
+<h3 class="mume-header" id="proofs">Proofs</h3>
+
+<ul>
+<li><mark>src/proofs</mark><br>
+contains most of the proofs of the soundness proof of our verification framework shown in Figure 6 (Our proof path) in paper.
+<ul>
+<li><mark>src/proofs/general-prop</mark>: general lemmas in soundness proof.</li>
+<li><mark>src/proofs/ps-np-equivalence</mark>:<br>
+contains the proof of the semantics equivalence of PS2.1 and the non-preemptive semantics, and the equivalence of the write-write race freedoms in PS2.1 and the non-preemptive semantics. Below we list the main results.
+<ul>
+<li><a href="./html/CompOptCert.SemaEq.html">SemaEq.v</a>: The semantics equivalence (Theorem 4.1 in paper) proof of the promising semantics 2.1 (PS2.1) and the non-preemptive semantics. Theorem <a href="./html/CompOptCert.SemaEq.html#sema_eq_ps_nps">sema_eq_ps_nps</a> in this file is the top-level theorem to show semantics equivalence and corresponds to the step (5) in Figure 6 (Our proof path) in paper.</li>
+<li><a href="./html/CompOptCert.wwRFEq.html">wwRFEq.v</a>: The proof of the equivalence of the write-write race freedoms (Lemma 5.1 in paper) in PS2.1 and the non-preemptive semantics. Theorem <a href="./html/CompOptCert.wwRFEq.html#ww_RF_eq">ww_RF_eq</a> in this file is the top-level theorem to the write-write race freedom equivalence and corresponds to the step (1) in Figure 6 (Our proof path) in paper.</li>
+</ul>
+</li>
+<li><mark>src/proofs/sim-compositionality</mark> and <mark>src/proofs/wwRF-preservation</mark>:<br>
+contains the proof of Lemma 6.2 (Compositionality and ww-RF Preserving) in paper. It corresponds to the step (3) in Figure 6 (Our proof path) in paper. In the Coq proof, we divide the proof of Lemma 6.2 (Compositionality and ww-RF Preserving) in paper into two lemmas: compositionality and write-write race freedom preservation.
+<ul>
+<li><a href="./html/CompOptCert.Compositionality.html">Compositionality.v</a>: Thread-local upward simulation is compositional. Theorem <a href="./html/CompOptCert.Compositionality.html#compositionality">compositionality</a> in this file is the top-level theorem to show such conclusion.</li>
+<li><a href="./html/CompOptCert.wwRFPrsv.html">wwRFPrsv.v</a>: thread-local upward simulation is able to preserve write-write race freedom in the source program. The theorem <a href="./html/CompOptCert.wwRFPrsv.html#ww_RF_preservation">ww_RF_preservation</a> in this file is the top-level theorem to show such conclusion.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><mark>src/result</mark>
+<ul>
+<li><a href="./html/CompOptCert.CorrectOpt.html">CorrectOpt.v</a>: The top-level theorem shows the soundness of our verification framework. This file has the following main contents.
+<ol>
+<li><a href="./html/CompOptCert.CorrectOpt.html#Correct">Correct Optimizer</a>: The correctness of an optimizer (Definition 6.4 in paper);</li>
+<li><a href="./html/CompOptCert.CorrectOpt.html#Verif">Verified Optimizer</a>: An optimizer is verified (Definition 6.3 in paper), if we can always establish the thread-local simulation between the target and source code.</li>
+<li><a href="./html/CompOptCert.CorrectOpt.html#Verif_implies_Correctness">Verified Optimizer is correct</a>: An optimizer is correct if it is verified (Theorem 6.5 in paper). It is the top-level proof of the soundness proof of our verification framework and includes the proof of the step (2) in Figure 6 (Our proof path).</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<h3 class="mume-header" id="verified-optimizations">Verified Optimizations</h3>
+
+<p><mark>src/rtl/optimizer</mark><br>
+four verified common optimizations: constant propagation (ConstProp), dead code elimination (DCE), common subexpression elimination (CSE), loop invariant code motion (LICM).</p>
+<table>
+<thead>
+<tr>
+<th>Optimizer</th>
+<th>Analyzer in Opt</th>
+<th>Translation in Opt</th>
+<th>Correctness Proof</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ConstProp</td>
+<td>Value Analysis (<a href="./html/CompOptCert.optimizer.ValAnalysis.html">ValAnalysis.v</a>)</td>
+<td><a href="./html/CompOptCert.optimizer.ConstProp.html">ConstProp.v</a></td>
+<td><a href="./html/CompOptCert.optimizer.ConstPropProof.html">ConstPropProof.v</a></td>
+</tr>
+<tr>
+<td>DCE</td>
+<td>Liveness Analysis (<a href="./html/CompOptCert.optimizer.LiveAnalysis.html">LiveAnalysis.v</a>)</td>
+<td><a href="./html/CompOptCert.optimizer.DCE.html">DCE.v</a></td>
+<td><a href="./html/CompOptCert.optimizer.DCEProof.html">DCEProof.v</a></td>
+</tr>
+<tr>
+<td>CSE</td>
+<td>Available expression analysis (<a href="./html/CompOptCert.optimizer.AveAnalysis.html">AveAnalysis.v</a>)</td>
+<td><a href="./html/CompOptCert.optimizer.CSE.html">CSE.v</a></td>
+<td><a href="./html/CompOptCert.optimizer.CSEProof.html">CSEProof.v</a></td>
+</tr>
+<tr>
+<td>LICM</td>
+<td>Detecting Loop Invariants (<a href="./html/CompOptCert.optimizer.DetLoop.html">DetLoop.v</a>)</td>
+<td><a href="./html/CompOptCert.optimizer.LICM.html">LICM.v</a></td>
+<td><a href="./html/CompOptCert.optimizer.LICMProof.html">LICMProof.v</a></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 class="mume-header" id="theorems-lemmas-and-definitions-referenced-in-paper">Theorems, lemmas and definitions referenced in paper</h2>
+
+<p>We list the relevant theorems, lemmas and definitions mentioned in the paper by section.</p>
+<h3 class="mume-header" id="section-3">Section 3</h3>
+
+<table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>Coq file</th>
+<th>Coq_name (related name in paper)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Syntax of the CSimpRTL language (Fig. 7)</td>
+<td><a href="./html/CompOptCert.Syntax.html">Syntax.v</a></td>
+<td><a href="./html/CompOptCert.Syntax.html#Inst">Inst</a> (Instr), <a href="./html/CompOptCert.Syntax.html#BBlock">BBlock</a> (BBlock), <a href="./html/CompOptCert.Syntax.html#CodeHeap">CodeHeap</a> (Cdhp), <a href="./html/CompOptCert.Syntax.html#Func">Func</a> (Code), <a href="./html/CompOptCert.Syntax.html#Code">Code</a> (Prog)</td>
+</tr>
+<tr>
+<td>Machine states and events (Fig. 8)</td>
+<td><a href="./html/CompOptCert.Memory.html">Memory.v</a>, <a href="./html/CompOptCert.Thread.html">Thread.v</a>, <a href="./html/CompOptCert.Configuration.html">Configuration.v</a>, <a href="./html/CompOptCert.Local.html">Local.v</a>, <a href="./html/CompOptCert.Event.html">Event.v</a>, <a href="./html/CompOptCert.Behavior.html">Behavior.v</a></td>
+<td><a href="./html/CompOptCert.Memory.html#Memory.t">Memory.t</a> (Mem), <a href="./html/CompOptCert.Thread.html#Thread.t">Thread.t</a> (ThrdState), <a href="html/CompOptCert.Configuration.html#Configuration.t">Configuration.t</a> (World), <a href="./html/CompOptCert.Local.html#ThreadEvent.t">ThreadEvent.t</a> (ThrdEvt), <a href="./html/CompOptCert.Event.html#MachineEvent.t">MachineEvent.t</a> (ProgEvt), <a href="./html/CompOptCert.Behavior.html#conf_behaviors">conf_behaviors</a> (EvtTrace)</td>
+</tr>
+<tr>
+<td>Interleaving machine steps (Fig. 9)</td>
+<td><a href="./html/CompOptCert.Configuration.html">Configuration.v</a></td>
+<td><a href="./html/CompOptCert.Configuration.html#Configuration.init">Configuration.init</a> (init), <a href="html/CompOptCert.Configuration.html#Configuration.step">Configuration.step</a> (*-step and t-term), <a href="./html/CompOptCert.Configuration.html#Configuration.abort_config">Configuration.abort_config</a> (abort), <a href="./html/CompOptCert.Configuration.html#Configuration.is_done">Configuration.is_done</a> (prog-done)</td>
+</tr>
+<tr>
+<td>Event trace refinement and equivalence</td>
+<td><a href="./html/CompOptCert.Behavior.html">Behavior.v</a></td>
+<td><a href="./html/CompOptCert.Behavior.html#evttr_refinement">evttr_refinement</a> (event trace refinement), <a href="./html/CompOptCert.Behavior.html#evttr_equivalence">evttr_equivalence</a> (event trace equivalence)</td>
+</tr>
+</tbody>
+</table>
+<h3 class="mume-header" id="section-4">Section 4</h3>
+
+<table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>Coq file</th>
+<th>Coq_name (related name in paper)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Non-preemptive semantics rules (Fig. 10)</td>
+<td><a href="./html/CompOptCert.NPThread.html">NPThread.v</a>, <a href="./html/CompOptCert.NPConfiguration.html">NPConfiguration.v</a></td>
+<td><a href="html/CompOptCert.NPThread.html#NPAuxThread">NPThread</a>, <a href="./html/CompOptCert.NPConfiguration.html#NPConfiguration.t">NPConfiguration.t</a> (NPWorld), <a href="./html/CompOptCert.NPConfiguration.html#NPConfiguration.step">NPConfiguration.step</a></td>
+</tr>
+<tr>
+<td>Semantics Equivalence (Thm 4.1)</td>
+<td><a href="./html/CompOptCert.SemaEq.html">SemaEq.v</a></td>
+<td><a href="./html/CompOptCert.SemaEq.html#sema_eq_ps_nps">sema_eq_ps_nps</a> (Thm. 4.1)</td>
+</tr>
+</tbody>
+</table>
+<h3 class="mume-header" id="section-5">Section 5</h3>
+
+<table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>Coq file</th>
+<th>Coq_name (related name in paper)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Write-write race freedom in PS2.1 (ww-RF in Fig. 11)</td>
+<td><a href="./html/CompOptCert.ww_RF.html">ww_RF.v</a></td>
+<td><a href="./html/CompOptCert.ww_RF.html#ww_rf">ww_rf</a> (ww-RF in Fig. 11)</td>
+</tr>
+<tr>
+<td>Write-write race freedom in the non-preemptive semantics</td>
+<td><a href="./html/CompOptCert.ww_RF.html">ww_RF.v</a></td>
+<td><a href="./html/CompOptCert.ww_RF.html#ww_rf_np">ww_rf_np</a> (ww-NPRF)</td>
+</tr>
+<tr>
+<td>ww-RF Equivalence (Lm. 5.1)</td>
+<td><a href="./html/CompOptCert.wwRFEq.html">wwRFEq.v</a></td>
+<td><a href="./html/CompOptCert.wwRFEq.html#ww_RF_eq">ww_RF_eq</a> (Lm. 5.1)</td>
+</tr>
+</tbody>
+</table>
+<h3 class="mume-header" id="section-6">Section 6</h3>
+
+<table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>Coq file</th>
+<th>Coq_name (related name in paper)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Well-formed timestamp mapping</td>
+<td><a href="./html/CompOptCert.MsgMapping.html">MsgMapping.v</a></td>
+<td><a href="./html/CompOptCert.MsgMapping.html#weak_MsgInj">weak_MsgInj</a></td>
+</tr>
+<tr>
+<td>Invariant parameter (Inv in Fig. 12)</td>
+<td><a href="./html/CompOptCert.LocalSim.html">LocalSim.v</a></td>
+<td><a href="./html/CompOptCert.LocalSim.html#Invariant">Invariant</a>(Inv in Fig. 12)</td>
+</tr>
+<tr>
+<td>Rely condition</td>
+<td><a href="./html/CompOptCert.LocalSim.html">LocalSim.v</a></td>
+<td><a href="./html/CompOptCert.LocalSim.html#Rely">Rely</a></td>
+</tr>
+<tr>
+<td>Delayed write set (Fig. 13)</td>
+<td><a href="./html/CompOptCert.DelaySet.html">DelayedSet.v</a></td>
+<td><a href="./html/CompOptCert.DelaySet.html#DelaySet">DelaySet</a> (DlySet)</td>
+</tr>
+<tr>
+<td>Step invariant</td>
+<td><a href="./html/CompOptCert.LocalSim.html">Step invariant</a></td>
+<td><a href="./html/CompOptCert.LocalSim.html#SI">SI</a></td>
+</tr>
+<tr>
+<td>Thread-local upward simulation (Def. 6.1)</td>
+<td><a href="./html/CompOptCert.LocalSim.html">LocalSim.v</a></td>
+<td><a href="./html/CompOptCert.LocalSim.html#local_sim">local_sim</a> (Def. 6.1), <a href="./html/CompOptCert.LocalSim.html#local_sim_state">local_sim_state</a></td>
+</tr>
+<tr>
+<td>Safe program in PS2.1</td>
+<td><a href="./html/CompOptCert.Configuration.html">Configuration.v</a></td>
+<td><a href="./html/CompOptCert.Configuration.html#Configuration.safe">Configuration.safe</a> (Safe)</td>
+</tr>
+<tr>
+<td>Safe program in the non-preemptive semantics</td>
+<td><a href="./html/CompOptCert.NPConfiguration.html">NPConfiguration.v</a></td>
+<td><a href="./html/CompOptCert.NPConfiguration.html#NPConfiguration.safe">NPConfiguration.safe</a> (Safe)</td>
+</tr>
+<tr>
+<td>Whole program simulation</td>
+<td><a href="./html/CompOptCert.GlobSim.html">GlobSim.v</a></td>
+<td><a href="./html/CompOptCert.GlobSim.html#glob_sim">glob_sim</a></td>
+</tr>
+<tr>
+<td>Compositionality and ww-RF Preservation (Lm. 6.2)</td>
+<td><a href="./html/CompOptCert.Compositionality.html">Compositionality.v</a>, <a href="./html/CompOptCert.wwRFPrsv.html">wwRFPrsv.v</a></td>
+<td><a href="./html/CompOptCert.Compositionality.html#compositionality">compositionality</a> and <a href="./html/CompOptCert.wwRFPrsv.html#ww_RF_preservation">ww_RF_preservation</a> (Lm. 6.2)</td>
+</tr>
+<tr>
+<td>Correctness of optimizer (Def. 6.4)</td>
+<td><a href="./html/CompOptCert.CorrectOpt.html">CorrectOpt.v</a></td>
+<td><a href="./html/CompOptCert.CorrectOpt.html#Correct">Correct</a> (Def. 6.4)</td>
+</tr>
+<tr>
+<td>Optimization correctness theorem (Thm. 6.5)</td>
+<td><a href="./html/CompOptCert.CorrectOpt.html">CorrectOpt.v</a></td>
+<td><a href="./html/CompOptCert.CorrectOpt.html#Verif_implies_Correctness">Verif_implies_Correctness</a> (Thm. 6.5)</td>
+</tr>
+<tr>
+<td>Correct Optimizers (Thm. 6.6)</td>
+<td><a href="./html/CompOptCert.VerifiedOpt.html">VerifiedOpt.v</a></td>
+<td><a href="./html/CompOptCert.VerifiedOpt.html#Correct_optimizers">Correct_optimizers</a> (Thm. 6.6)</td>
+</tr>
+</tbody>
+</table>
+<h3 class="mume-header" id="section-7">Section 7</h3>
+
+<table>
+<thead>
+<tr>
+<th>Paper</th>
+<th>Coq file</th>
+<th>Coq_name (related name in paper)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I_dce (invariant in DCE proof)</td>
+<td><a href="./html/CompOptCert.optimizer.DCEProofMState.html">DCEProofMState.v</a></td>
+<td><a href="./html/CompOptCert.optimizer.DCEProofMState.html#I_dce">I_dce</a></td>
+</tr>
+<tr>
+<td>DCE is verified</td>
+<td><a href="./html/CompOptCert.optimizer.DCEProof.html">DCEProof.v</a></td>
+<td><a href="./html/CompOptCert.optimizer.DCEProof.html#verif_dce">verif_dce</a> (Lm. 7.1)</td>
+</tr>
+</tbody>
+</table>
+
+      </div>
+      
+      
+    
+    
+    
+    
+    
+    
+    
+    
+  
+    </body></html>

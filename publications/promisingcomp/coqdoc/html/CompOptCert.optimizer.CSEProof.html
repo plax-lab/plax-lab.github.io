@@ -1,0 +1,813 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>CompOptCert.optimizer.CSEProof</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library CompOptCert.optimizer.CSEProof</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Classes.RelationClasses.html#"><span class="id" title="library">RelationClasses</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#"><span class="id" title="library">List</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Program.Basics.html#"><span class="id" title="library">Basics</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Coqlib.html#"><span class="id" title="library">Coqlib</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.sflib.html#"><span class="id" title="library">sflib</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Paco</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">paco</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Basic.html#"><span class="id" title="library">Basic</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Axioms.html#"><span class="id" title="library">Axioms</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Loc.html#"><span class="id" title="library">Loc</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.DenseOrder.html#"><span class="id" title="library">DenseOrder</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Language.html#"><span class="id" title="library">Language</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.ZArith.ZArith.html#"><span class="id" title="library">ZArith</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Maps.html#"><span class="id" title="library">Maps</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.FSets.FSets.html#"><span class="id" title="library">FSets</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.FSets.FSetInterface.html#"><span class="id" title="library">FSetInterface</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Lattice.html#"><span class="id" title="library">Lattice</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Event.html#"><span class="id" title="library">Event</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Syntax.html#"><span class="id" title="library">Syntax</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Semantics.html#"><span class="id" title="library">Semantics</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Memory.html#"><span class="id" title="library">Memory</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Cell.html#"><span class="id" title="library">Cell</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Time.html#"><span class="id" title="library">Time</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Thread.html#"><span class="id" title="library">Thread</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Local.html#"><span class="id" title="library">Local</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.CompAuxDef.html#"><span class="id" title="library">CompAuxDef</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.Kildall.html#"><span class="id" title="library">Kildall</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#"><span class="id" title="library">AveAnalysis</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.CorrectOpt.html#"><span class="id" title="library">CorrectOpt</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.MsgMapping.html#"><span class="id" title="library">MsgMapping</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.CSE.html#"><span class="id" title="library">CSE</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.LocalSim.html#"><span class="id" title="library">LocalSim</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.LibTactics.html#"><span class="id" title="library">LibTactics</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Event.html#"><span class="id" title="library">Event</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.View.html#"><span class="id" title="library">View</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.TView.html#"><span class="id" title="library">TView</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.CSEProofAux.html#"><span class="id" title="library">CSEProofAux</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#"><span class="id" title="library">CSEProofMState</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.optimizer.CSEProofStep.html#"><span class="id" title="library">CSEProofStep</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab255"></a><h1 class="section">Correctness Proof of Common subexpression elimination</h1>
+
+<div class="paragraph"> </div>
+
+ Top level proofs for Common Subexpression Elimination's correctness 
+<div class="paragraph"> </div>
+
+ the top lemma organizes individual transition's correctness 
+</div>
+<div class="code">
+<span class="id" title="keyword">Theorem</span> <a id="cse_match_state_implies_sim" class="idref" href="#cse_match_state_implies_sim"><span class="id" title="lemma">cse_match_state_implies_sim</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="inj:1" class="idref" href="#inj:1"><span class="id" title="binder">inj</span></a> <a id="lo:2" class="idref" href="#lo:2"><span class="id" title="binder">lo</span></a> <a id="e_tgt:3" class="idref" href="#e_tgt:3"><span class="id" title="binder">e_tgt</span></a> <a id="e_src:4" class="idref" href="#e_src:4"><span class="id" title="binder">e_src</span></a> <a id="b:5" class="idref" href="#b:5"><span class="id" title="binder">b</span></a>,<br/>
+&nbsp;&nbsp;<a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_match_state"><span class="id" title="inductive">cse_match_state</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#inj:1"><span class="id" title="variable">inj</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#lo:2"><span class="id" title="variable">lo</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#e_tgt:3"><span class="id" title="variable">e_tgt</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#e_src:4"><span class="id" title="variable">e_src</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#b:5"><span class="id" title="variable">b</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> @<a class="idref" href="CompOptCert.LocalSim.html#local_sim_state"><span class="id" title="inductive">local_sim_state</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Peano.html#lt"><span class="id" title="definition">lt</span></a> <a class="idref" href="CompOptCert.Semantics.html#rtl_lang"><span class="id" title="definition">rtl_lang</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_invariant"><span class="id" title="definition">cse_invariant</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#lo:2"><span class="id" title="variable">lo</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#inj:1"><span class="id" title="variable">inj</span></a> <a class="idref" href="CompOptCert.DelaySet.html#dset_init"><span class="id" title="definition">DelaySet.dset_init</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#b:5"><span class="id" title="variable">b</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#e_tgt:3"><span class="id" title="variable">e_tgt</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#e_src:4"><span class="id" title="variable">e_src</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">cofix</span> <span class="id" title="var">COFIX</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">e_tgt</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_tgt</span>, <span class="id" title="var">lc_tgt</span>, <span class="id" title="var">sc_tgt</span>, <span class="id" title="var">mem_tgt</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">EqETgt</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">e_src</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_src</span>, <span class="id" title="var">lc_src</span>, <span class="id" title="var">sc_src</span>, <span class="id" title="var">mem_src</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">EqESrc</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.Classical_Prop.html#classic"><span class="id" title="axiom">classic</span></a> (<a class="idref" href="CompOptCert.Local.html#Local.promise_consistent"><span class="id" title="definition">Local.promise_consistent</span></a> <span class="id" title="var">lc_tgt</span>)).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H0</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">CsstTgt</span>|<span class="id" title="var">NotCsstTgt</span>].<br/>
+&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.LocalSim.html#local_sim_state_tgt_not_prm_consistent_intro"><span class="id" title="constructor">local_sim_state_tgt_not_prm_consistent_intro</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.Classical_Prop.html#classic"><span class="id" title="axiom">classic</span></a> (<a class="idref" href="CompOptCert.Thread.html#Thread.is_abort"><span class="id" title="definition">Thread.is_abort</span></a> <span class="id" title="var">e_tgt</span> <span class="id" title="var">lo</span>)).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H0</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">NotAbort</span>].<br/>
+&nbsp;&nbsp;{ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.LocalSim.html#local_sim_state_abort_intro"><span class="id" title="constructor">local_sim_state_abort_intro</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofStep.html#cse_match_state_implies_abort_preserving"><span class="id" title="lemma">cse_match_state_implies_abort_preserving</span></a>. <span class="id" title="var">splits</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">EqETgt</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H0</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;} <br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.LocalSim.html#local_sim_state_step_intro"><span class="id" title="constructor">local_sim_state_step_intro</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofStep.html#cse_match_state_implies_si"><span class="id" title="lemma">cse_match_state_implies_si</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;4: { </div>
+
+<div class="doc">
+case: abort step -&gt; sim. proved. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intro</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">EqETgt</span> <span class="id" title="tactic">in</span> <span class="id" title="var">NotAbort</span>. <span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;3: { </div>
+
+<div class="doc">
+case: done step -&gt; sim 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.Classical_Prop.html#classic"><span class="id" title="axiom">classic</span></a> (<a class="idref" href="CompOptCert.Thread.html#Thread.is_done"><span class="id" title="definition">Thread.is_done</span></a> <span class="id" title="var">e_tgt</span>)).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H0</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">Done</span>|<span class="id" title="var">NotDone</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">EqETgt</span> <span class="id" title="tactic">in</span> <span class="id" title="var">DONE</span>. <span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+case: done. straightforward. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">clear</span> <span class="id" title="var">DONE</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>. <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> <span class="id" title="var">e_src</span>; <span class="id" title="tactic">∃</span> <span class="id" title="var">inj'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+na_steps 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">EqESrc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.Basic.html#rtc_refl"><span class="id" title="lemma">rtc_refl</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">econs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2: { </div>
+
+<div class="doc">
+trivial incr_inj 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">PREEMPT</span> <span class="id" title="keyword">as</span> [(<span class="id" title="var">_</span>&amp;<span class="id" title="var">EQ_INJ</span>) | (<span class="id" title="var">_</span>&amp;<span class="id" title="var">INCR_INJ</span>)].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="CompOptCert.MsgMapping.html#eq_inj_implies_incr"><span class="id" title="definition">eq_inj_implies_incr</span></a>; <span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2: { </div>
+
+<div class="doc">
+trivial invariant 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">EqESrc</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+tgt done -&gt; src done 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">Thread.is_done</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">Done</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">IsTermTgt</span> &amp; <span class="id" title="var">NoPrmTgt</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: { </div>
+
+<div class="doc">
+src promise free 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">EqESrc</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">EqETgt</span> <span class="id" title="tactic">in</span> <span class="id" title="var">NoPrmTgt</span>. <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">H</span>. <span class="id" title="var">inv</span> <span class="id" title="var">MATCH_LOCAL</span>. <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">PROMISES_EQ</span>. <span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+src done 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">Language.is_terminal</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">State.is_terminal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">IsTermTgt</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">RetTgt</span> &amp; <span class="id" title="var">ContDoneTgt</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">MATCH_LOCAL</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">MATCH_RTL_STATE</span>. <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">MATCH_FRAME</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> (<a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveAI.br_from_i"><span class="id" title="definition">AveAI.br_from_i</span></a> <span class="id" title="var">analysis</span> <a class="idref" href="CompOptCert.Maps.html#296632fb4990639c1b4cd78e3f181771"><span class="id" title="notation">!!</span></a> <span class="id" title="var">l</span> <span class="id" title="var">i</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">ai</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">RetTgt</span> <span class="id" title="tactic">in</span> <span class="id" title="var">TRANSF_BLK</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSE.html#ret_transformed_by_ret"><span class="id" title="lemma">ret_transformed_by_ret</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">MATCH_CONT</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">DONE</span>; <span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">ContDoneTgt</span> <span class="id" title="tactic">in</span> <span class="id" title="var">CONT_T</span>; <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;2: { </div>
+
+<div class="doc">
+case: rely step -&gt; sim 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intro</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+I still holds 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">H</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">PREEMPT</span> <span class="id" title="keyword">as</span> [(<span class="id" title="var">_</span>&amp;<span class="id" title="var">EQ_INJ</span>) | (<span class="id" title="var">B</span>&amp;<span class="id" title="var">INCR_INJ</span>)].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: { <span class="id" title="tactic">discriminate</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#eq_inj_implies_invariant"><span class="id" title="lemma">eq_inj_implies_invariant</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.MsgMapping.html#eq_inj_sym"><span class="id" title="lemma">eq_inj_sym</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">OUT_ATMBLK</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofStep.html#cse_match_state_preserving_rely"><span class="id" title="lemma">cse_match_state_preserving_rely</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc">
+case: thread step -&gt; sim 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">splits</span>.<br/>
+&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+case: at step -&gt; sim 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">e_tgt'</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_tgt'</span>, <span class="id" title="var">lc_tgt'</span>, <span class="id" title="var">sc_tgt'</span>, <span class="id" title="var">mem_tgt'</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">EqETgt'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofStep.html#cse_match_state_preserving_at"><span class="id" title="lemma">cse_match_state_preserving_at</span></a> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span> (<span class="id" title="var">st_tgt'</span> := <span class="id" title="var">st_tgt'</span>) (<span class="id" title="var">lc_tgt'</span> := <span class="id" title="var">lc_tgt'</span>) <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">sc_tgt'</span> := <span class="id" title="var">sc_tgt'</span>) (<span class="id" title="var">mem_tgt'</span> := <span class="id" title="var">mem_tgt'</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">STEP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+at is not prc 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">STEP0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">ThreadEvent.is_at_or_out_step</span>. <span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_src'</span> &amp; <span class="id" title="var">lc_src'</span> &amp; <span class="id" title="var">sc_src'</span> &amp; <span class="id" title="var">mem_src'</span> &amp; <span class="id" title="var">inj'</span> &amp; <span class="id" title="var">H</span> &amp; <span class="id" title="var">H1</span> &amp; <span class="id" title="var">H2</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.state"><span class="id" title="projection">Thread.state</span></a> := <span class="id" title="var">st_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.local"><span class="id" title="projection">Thread.local</span></a> := <span class="id" title="var">lc_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.sc"><span class="id" title="projection">Thread.sc</span></a> := <span class="id" title="var">sc_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.memory"><span class="id" title="projection">Thread.memory</span></a> := <span class="id" title="var">mem_src'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|} <span class="id" title="keyword">as</span> <span class="id" title="var">e_src'</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> <span class="id" title="var">e_src</span>. <span class="id" title="tactic">∃</span> <span class="id" title="var">e_src'</span>. <span class="id" title="tactic">∃</span> <span class="id" title="var">inj'</span>. <span class="id" title="tactic">∃</span> <span class="id" title="var">te</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">EqESrc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">EqESrc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.LocalSim.html#thrdevt_eq_refl"><span class="id" title="lemma">thrdevt_eq_refl</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+case: na step -&gt; sim 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">e_tgt'</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_tgt'</span>, <span class="id" title="var">lc_tgt'</span>, <span class="id" title="var">sc_tgt'</span>, <span class="id" title="var">mem_tgt'</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">EqETgt'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.Classical_Prop.html#classic"><span class="id" title="axiom">classic</span></a> (<a class="idref" href="CompOptCert.Local.html#ThreadEvent.is_na_access"><span class="id" title="definition">ThreadEvent.is_na_access</span></a> <span class="id" title="var">te</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H0</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">IS_NA_ACCESS</span> | <span class="id" title="var">NOT_NA_ACCESS</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+is na access 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofStep.html#cse_match_state_preserving_na_access"><span class="id" title="lemma">cse_match_state_preserving_na_access</span></a> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span> (<span class="id" title="var">st_tgt'</span> := <span class="id" title="var">st_tgt'</span>) (<span class="id" title="var">lc_tgt'</span> := <span class="id" title="var">lc_tgt'</span>) <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">sc_tgt'</span> := <span class="id" title="var">sc_tgt'</span>) (<span class="id" title="var">mem_tgt'</span> := <span class="id" title="var">mem_tgt'</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_src'</span> &amp; <span class="id" title="var">lc_src'</span> &amp; <span class="id" title="var">sc_src'</span> &amp; <span class="id" title="var">mem_src'</span> &amp; <span class="id" title="var">H1</span> &amp; <span class="id" title="var">H2</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">STEP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">STEP0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">ThreadEvent.is_at_or_out_step</span>. <span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.state"><span class="id" title="projection">Thread.state</span></a> := <span class="id" title="var">st_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.local"><span class="id" title="projection">Thread.local</span></a> := <span class="id" title="var">lc_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.sc"><span class="id" title="projection">Thread.sc</span></a> := <span class="id" title="var">sc_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.memory"><span class="id" title="projection">Thread.memory</span></a> := <span class="id" title="var">mem_src'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|} <span class="id" title="keyword">as</span> <span class="id" title="var">e_src'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.Classical_Prop.html#classic"><span class="id" title="axiom">classic</span></a> (<a class="idref" href="CompOptCert.Local.html#ThreadEvent.is_na_write"><span class="id" title="definition">ThreadEvent.is_na_write</span></a> <span class="id" title="var">te</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">IS_NA_WRITE</span> | <span class="id" title="var">NOT_NA_WRITE</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: { </div>
+
+<div class="doc">
+na read 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> <span class="id" title="var">e_src'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">do</span> 3 <span class="id" title="tactic">∃</span> (@<a class="idref" href="CompOptCert.DelaySet.html#dset_init"><span class="id" title="definition">DelaySet.dset_init</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">ThreadEvent.is_na_write</span>; <span class="id" title="var">unfolds</span> <span class="id" title="var">ThreadEvent.is_na_access</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">te</span>; <span class="id" title="var">simpls</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">contradiction</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">ord</span>; <span class="id" title="var">simpls</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">contradiction</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.DelaySet.html#dset_become_na_read"><span class="id" title="constructor">DelaySet.dset_become_na_read</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.DelaySet.html#na_steps_dset_read"><span class="id" title="constructor">DelaySet.na_steps_dset_read</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">dset</span>:=<a class="idref" href="CompOptCert.DelaySet.html#dset_init"><span class="id" title="definition">DelaySet.dset_init</span></a>) <span class="id" title="tactic">in</span> <span class="id" title="var">H1</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Relations.Operators_Properties.html#clos_rt1n_step"><span class="id" title="lemma">Operators_Properties.clos_rt1n_step</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H6</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.Basic.html#rtc_refl"><span class="id" title="lemma">rtc_refl</span></a>. <span class="id" title="var">econs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simpls</span>. <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="CompOptCert.DelaySet.html#dset_gempty"><span class="id" title="lemma">DelaySet.dset_gempty</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}           <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.DelaySet.html#dset_reduce_init"><span class="id" title="lemma">DelaySet.dset_reduce_init</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H6</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H2</span>. <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+is na write 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">ThreadEvent.is_na_write</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">te</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">contradiction</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">ord</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">contradiction</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> <span class="id" title="var">e_src'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> (<a class="idref" href="CompOptCert.DelaySet.html#dset_add"><span class="id" title="definition">DelaySet.dset_add</span></a> <span class="id" title="var">loc</span> <span class="id" title="var">to</span> 0 <a class="idref" href="CompOptCert.DelaySet.html#dset_init"><span class="id" title="definition">DelaySet.dset_init</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">do</span> 2 <span class="id" title="tactic">∃</span> (@<a class="idref" href="CompOptCert.DelaySet.html#dset_init"><span class="id" title="definition">DelaySet.dset_init</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.DelaySet.html#dset_become_na_write"><span class="id" title="constructor">DelaySet.dset_become_na_write</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.DelaySet.html#na_steps_dset_write"><span class="id" title="constructor">DelaySet.na_steps_dset_write</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H1</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">right</span>. <span class="id" title="tactic">∃</span> <span class="id" title="var">to</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="CompOptCert.DelaySet.html#dset_remove_add"><span class="id" title="lemma">DelaySet.dset_remove_add</span></a>. <span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.DelaySet.html#dset_reduce_init"><span class="id" title="lemma">DelaySet.dset_reduce_init</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+is na silent 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">ThreadEvent.is_na_access</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">ThreadEvent.is_na_step</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">te</span> <span class="id" title="var">eqn</span>:<span class="id" title="var">EqTe</span>; <span class="id" title="var">simpls</span>; <span class="id" title="tactic">eauto</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">clear</span> <span class="id" title="var">NA_STEP</span>; <span class="id" title="tactic">clear</span> <span class="id" title="var">NOT_NA_ACCESS</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofStep.html#cse_match_state_preserving_na_silent"><span class="id" title="lemma">cse_match_state_preserving_na_silent</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span> (<span class="id" title="var">st_tgt'</span> := <span class="id" title="var">st_tgt'</span>) (<span class="id" title="var">lc_tgt'</span> := <span class="id" title="var">lc_tgt'</span>) <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">sc_tgt'</span> := <span class="id" title="var">sc_tgt'</span>) (<span class="id" title="var">mem_tgt'</span> := <span class="id" title="var">mem_tgt'</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">STEP</span>. <span class="id" title="tactic">inversion</span> <span class="id" title="var">STEP0</span>. <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_src'</span> &amp; <span class="id" title="var">lc_src'</span> &amp; <span class="id" title="var">sc_src'</span> &amp; <span class="id" title="var">mem_src'</span> &amp; <span class="id" title="var">te'</span> &amp; <span class="id" title="var">SILENT</span> &amp; <span class="id" title="var">SRCSTEP</span> &amp; <span class="id" title="var">MATCH_STATE</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.state"><span class="id" title="projection">Thread.state</span></a> := <span class="id" title="var">st_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.local"><span class="id" title="projection">Thread.local</span></a> := <span class="id" title="var">lc_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.sc"><span class="id" title="projection">Thread.sc</span></a> := <span class="id" title="var">sc_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.memory"><span class="id" title="projection">Thread.memory</span></a> := <span class="id" title="var">mem_src'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|} <span class="id" title="keyword">as</span> <span class="id" title="var">e_src'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> <span class="id" title="var">e_src'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">do</span> 3 <span class="id" title="tactic">∃</span> (@<a class="idref" href="CompOptCert.DelaySet.html#dset_init"><span class="id" title="definition">DelaySet.dset_init</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.DelaySet.html#dset_become_na_read"><span class="id" title="constructor">DelaySet.dset_become_na_read</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> <span class="id" title="var">SILENT</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">H</span> <span class="id" title="tactic">in</span> <span class="id" title="var">SRCSTEP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.DelaySet.html#na_steps_dset_tau"><span class="id" title="constructor">DelaySet.na_steps_dset_tau</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">SRCSTEP</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.Local.html#ThreadEvent.is_na_read"><span class="id" title="definition">ThreadEvent.is_na_read</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">te'</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">discriminate</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">contradiction</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">ord</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">contradiction</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.DelaySet.html#na_steps_dset_read"><span class="id" title="constructor">DelaySet.na_steps_dset_read</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">SRCSTEP</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="CompOptCert.DelaySet.html#dset_gempty"><span class="id" title="lemma">DelaySet.dset_gempty</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H0</span>; <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.DelaySet.html#dset_reduce_init"><span class="id" title="lemma">DelaySet.dset_reduce_init</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+case: promise step -&gt; sim 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">e_tgt'</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_tgt'</span>, <span class="id" title="var">lc_tgt'</span>, <span class="id" title="var">sc_tgt'</span>, <span class="id" title="var">mem_tgt'</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">EqETgt'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofStep.html#cse_match_state_preserving_prm"><span class="id" title="lemma">cse_match_state_preserving_prm</span></a> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span> (<span class="id" title="var">st_tgt'</span> := <span class="id" title="var">st_tgt'</span>) (<span class="id" title="var">lc_tgt'</span> := <span class="id" title="var">lc_tgt'</span>) <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">sc_tgt'</span> := <span class="id" title="var">sc_tgt'</span>) (<span class="id" title="var">mem_tgt'</span> := <span class="id" title="var">mem_tgt'</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">te</span> := <span class="id" title="var">te</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">PROMISE</span> <span class="id" title="tactic">in</span> <span class="id" title="var">STEP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">PRM_STEP</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">loc</span> &amp; <span class="id" title="var">t</span> &amp; <span class="id" title="var">PRM_STEP</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">ThreadEvent.is_promising</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">te</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">discriminate</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">PRM_STEP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">STEP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_src'</span> &amp; <span class="id" title="var">lc_src'</span> &amp; <span class="id" title="var">sc_src'</span> &amp; <span class="id" title="var">mem_src'</span> &amp; <span class="id" title="var">inj'</span> &amp; <span class="id" title="var">H</span> &amp; <span class="id" title="var">H1</span> &amp; <span class="id" title="var">H2</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.state"><span class="id" title="projection">Thread.state</span></a> := <span class="id" title="var">st_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.local"><span class="id" title="projection">Thread.local</span></a> := <span class="id" title="var">lc_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.sc"><span class="id" title="projection">Thread.sc</span></a> := <span class="id" title="var">sc_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.memory"><span class="id" title="projection">Thread.memory</span></a> := <span class="id" title="var">mem_src'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|} <span class="id" title="keyword">as</span> <span class="id" title="var">e_src'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> <span class="id" title="var">e_src'</span>. <span class="id" title="tactic">∃</span> <span class="id" title="var">inj'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.Basic.html#rtc_n1"><span class="id" title="lemma">rtc_n1</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">b</span>:=<span class="id" title="var">e_src</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">rewrite</span> <span class="id" title="var">EqESrc</span>. <span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.Basic.html#rtc_refl"><span class="id" title="lemma">rtc_refl</span></a>. <span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">rewrite</span> <span class="id" title="var">EqESrc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">PROMISE</span> <span class="id" title="tactic">in</span> <span class="id" title="var">STEP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">PRM_STEP</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">loc</span> &amp; <span class="id" title="var">t</span> &amp; <span class="id" title="var">PRM_STEP</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">ThreadEvent.is_promising</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">te</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">discriminate</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">PRM_STEP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.Thread.html#Thread.prc_step_intro"><span class="id" title="constructor">Thread.prc_step_intro</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+case: promise-free step -&gt; sim 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">e_tgt'</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_tgt'</span>, <span class="id" title="var">lc_tgt'</span>, <span class="id" title="var">sc_tgt'</span>, <span class="id" title="var">mem_tgt'</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">EqETgt'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofStep.html#cse_match_state_preserving_pf_prm"><span class="id" title="lemma">cse_match_state_preserving_pf_prm</span></a> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span> (<span class="id" title="var">st_tgt'</span> := <span class="id" title="var">st_tgt'</span>) (<span class="id" title="var">lc_tgt'</span> := <span class="id" title="var">lc_tgt'</span>) <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">sc_tgt'</span> := <span class="id" title="var">sc_tgt'</span>) (<span class="id" title="var">mem_tgt'</span> := <span class="id" title="var">mem_tgt'</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.Thread.html#Thread.pf_promise_step_intro"><span class="id" title="constructor">Thread.pf_promise_step_intro</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">e</span>:=<span class="id" title="var">te</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">PF</span> <span class="id" title="tactic">in</span> <span class="id" title="var">STEP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">PRM_STEP</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">loc</span> &amp; <span class="id" title="var">t</span> &amp; <span class="id" title="var">PRM_STEP</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">ThreadEvent.is_promising</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">te</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">discriminate</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">PRM_STEP</span>. <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">STEP</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">STEP0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">LOCAL</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">discriminate</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;} <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">st_src'</span> &amp; <span class="id" title="var">lc_src'</span> &amp; <span class="id" title="var">sc_src'</span> &amp; <span class="id" title="var">mem_src'</span> &amp; <span class="id" title="var">H</span> &amp; <span class="id" title="var">H1</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> {|<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.state"><span class="id" title="projection">Thread.state</span></a> := <span class="id" title="var">st_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.local"><span class="id" title="projection">Thread.local</span></a> := <span class="id" title="var">lc_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.sc"><span class="id" title="projection">Thread.sc</span></a> := <span class="id" title="var">sc_src'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Thread.html#Thread.memory"><span class="id" title="projection">Thread.memory</span></a> := <span class="id" title="var">mem_src'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|} <span class="id" title="keyword">as</span> <span class="id" title="var">e_src'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> <span class="id" title="var">e_src'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;}<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab256"></a><h2 class="section">Correctness of the Common subexpression elimination</h2>
+ proof for initial match state 
+</div>
+<div class="code">
+<span class="id" title="keyword">Theorem</span> <a id="verif_cse" class="idref" href="#verif_cse"><span class="id" title="lemma">verif_cse</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> <a id="code_s:6" class="idref" href="#code_s:6"><span class="id" title="binder">code_s</span></a> <a id="code_t:7" class="idref" href="#code_t:7"><span class="id" title="binder">code_t</span></a> <a id="lo:8" class="idref" href="#lo:8"><span class="id" title="binder">lo</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.optimizer.CSE.html#cse_optimizer"><span class="id" title="definition">cse_optimizer</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#lo:8"><span class="id" title="variable">lo</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#code_s:6"><span class="id" title="variable">code_s</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#code_t:7"><span class="id" title="variable">code_t</span></a> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<a class="idref" href="CompOptCert.LocalSim.html#local_sim"><span class="id" title="record">local_sim</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Peano.html#lt"><span class="id" title="definition">lt</span></a> <a class="idref" href="CompOptCert.Semantics.html#rtl_lang"><span class="id" title="definition">rtl_lang</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_invariant"><span class="id" title="definition">cse_invariant</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#lo:8"><span class="id" title="variable">lo</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#code_t:7"><span class="id" title="variable">code_t</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#code_s:6"><span class="id" title="variable">code_s</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="CompOptCert.LocalSim.html#nat_lt_is_well_founded"><span class="id" title="lemma">nat_lt_is_well_founded</span></a>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#wf_cse_invariant"><span class="id" title="lemma">wf_cse_invariant</span></a>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_invariant_init"><span class="id" title="lemma">cse_invariant_init</span></a>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">inv</span> <span class="id" title="var">INIT_STATE</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">State.init</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">code_t</span> <a class="idref" href="CompOptCert.Maps.html#73774dfd3fef401022b78a58a582fe58"><span class="id" title="notation">!</span></a> <span class="id" title="var">fid</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">CodetFunc</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">f</span> <span class="id" title="var">eqn</span>:<span class="id" title="var">FunctCdhp</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="var">c</span> <a class="idref" href="CompOptCert.Maps.html#73774dfd3fef401022b78a58a582fe58"><span class="id" title="notation">!</span></a> <span class="id" title="var">f0</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">CdhptBlk</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">H1</span>. <span class="id" title="tactic">clear</span> <span class="id" title="var">H1</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <span class="id" title="var">H</span> <span class="id" title="keyword">as</span> <span class="id" title="var">OPT</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.optimizer.CSE.html#cse_optimizer"><span class="id" title="definition">cse_optimizer</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">clear</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">transform_prog</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <span class="id" title="var">CodetFunc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H1</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="CompOptCert.Maps.html#PTree.gmap"><span class="id" title="lemma">PTree.gmap</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">Coqlib.option_map</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">code_s</span> <a class="idref" href="CompOptCert.Maps.html#73774dfd3fef401022b78a58a582fe58"><span class="id" title="notation">!</span></a> <span class="id" title="var">fid</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">CodeSFunc</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">clear</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">f1</span> <span class="id" title="var">eqn</span>:<span class="id" title="var">FuncS</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rename</span> <span class="id" title="var">f1</span> <span class="id" title="var">into</span> <span class="id" title="var">func_s</span>, <span class="id" title="var">c0</span> <span class="id" title="var">into</span> <span class="id" title="var">cdhp_s</span>, <span class="id" title="var">f2</span> <span class="id" title="var">into</span> <span class="id" title="var">fentry_s</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rename</span> <span class="id" title="var">f</span> <span class="id" title="var">into</span> <span class="id" title="var">func_t</span>, <span class="id" title="var">c</span> <span class="id" title="var">into</span> <span class="id" title="var">cdhp_t</span>, <span class="id" title="var">f0</span> <span class="id" title="var">into</span> <span class="id" title="var">fentry_t</span>, <span class="id" title="var">t</span> <span class="id" title="var">into</span> <span class="id" title="var">blk_t</span>.<br/>
+</div>
+
+<div class="doc">
+
+<div class="paragraph"> </div>
+
+      code_t -&gt; func_t -&gt; (cdhp_t, fentry_t) -&gt; blk_t
+      code_s -&gt; func_s -&gt; chdp_s <font size=-2>&#9744;</font> -&gt; <font size=-2>&#9744;</font> 
+    
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">transform_func</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> <a class="idref" href="CompOptCert.Maps.html#73774dfd3fef401022b78a58a582fe58"><span class="id" title="notation">(</span></a><a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveDS.analyze_program"><span class="id" title="definition">AveDS.analyze_program</span></a> <span class="id" title="var">code_s</span> <a class="idref" href="CompOptCert.Syntax.html#succ"><span class="id" title="definition">succ</span></a> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveLat.top"><span class="id" title="definition">AveLat.top</span></a> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#Ave_B.transf_blk"><span class="id" title="definition">Ave_B.transf_blk</span></a><a class="idref" href="CompOptCert.Maps.html#73774dfd3fef401022b78a58a582fe58"><span class="id" title="notation">)</span></a> <a class="idref" href="CompOptCert.Maps.html#73774dfd3fef401022b78a58a582fe58"><span class="id" title="notation">!</span></a> <span class="id" title="var">fid</span> <span class="id" title="keyword">as</span> <span class="id" title="var">AFunc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="var">fentry_s</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="var">fentry_t</span>). {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">AFunc</span>; <span class="id" title="var">inv</span> <span class="id" title="var">H3</span>; <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;} <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> (<span class="id" title="var">cdhp_s</span> <a class="idref" href="CompOptCert.Maps.html#73774dfd3fef401022b78a58a582fe58"><span class="id" title="notation">!</span></a> <span class="id" title="var">fentry_s</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">opt_blk_s</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">opt_blk_s</span> <span class="id" title="var">eqn</span>:<span class="id" title="var">BlkS</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;2: {  </div>
+
+<div class="doc">
+blk_t exists implies blk_s exists  
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">AFunc</span> <span class="id" title="var">eqn</span>:<span class="id" title="var">AFuncEq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: { </div>
+
+<div class="doc">
+AFunc = None =&gt; blk_t = blk_s 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">H3</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H4</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Heqopt_blk_s</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H5</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Heqopt_blk_s</span>. <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">Heqopt_blk_s</span> <span class="id" title="tactic">in</span> <span class="id" title="var">CdhptBlk</span>. <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} </div>
+
+<div class="doc">
+AFunc = Some res =&gt; blk_t becomes from blk_s 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">H3</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <span class="id" title="var">CdhptBlk</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">transform_cdhp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H4</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="CompOptCert.Maps.html#PTree.gmap"><span class="id" title="lemma">PTree.gmap</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">Coqlib.option_map</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="var">cdhp_s</span> <a class="idref" href="CompOptCert.Maps.html#73774dfd3fef401022b78a58a582fe58"><span class="id" title="notation">!</span></a> <span class="id" title="var">fentry_t</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">BlkSS</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rename</span> <span class="id" title="var">t</span> <span class="id" title="var">into</span> <span class="id" title="var">blk_s</span>. <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H5</span> <span class="id" title="tactic">in</span> <span class="id" title="var">BlkSS</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">BlkSS</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Heqopt_blk_s</span>. <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rename</span> <span class="id" title="var">t</span> <span class="id" title="var">into</span> <span class="id" title="var">blk_s</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">clear</span> <span class="id" title="var">BlkS</span> <span class="id" title="var">opt_blk_s</span>.<br/>
+</div>
+
+<div class="doc">
+Some prepare clean-up finished. Now we have:  
+        fid &amp; AFunc
+        code_t -&gt; func_t -&gt; (cdhp_t, fentry_t) -&gt; blk_t
+          SS       SS          SS       ||         SS
+        code_s -&gt; func_s -&gt; (chdp_s, fentry_t) -&gt; blk_s 
+     Let prove match_state_init 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> (<a class="idref" href="CompOptCert.Semantics.html#State.mk"><span class="id" title="constructor">State.mk</span></a> <a class="idref" href="CompOptCert.Semantics.html#RegFile.init"><span class="id" title="definition">RegFile.init</span></a> <span class="id" title="var">blk_s</span> <span class="id" title="var">cdhp_s</span> <a class="idref" href="CompOptCert.Semantics.html#Continuation.done"><span class="id" title="constructor">Continuation.done</span></a> <span class="id" title="var">code_s</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">st_src</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">∃</span> <span class="id" title="var">st_src</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">splits</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+Init(code_s, fid) = st_src
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">State.init</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">CodeSFunc</span>. <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">Heqopt_blk_s</span>. <span class="id" title="tactic">eapply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f_equal"><span class="id" title="lemma">f_equal</span></a>. <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+let's prove local simulation  1. we have match_state on initial states 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_invariant_init"><span class="id" title="lemma">cse_invariant_init</span></a> <span class="id" title="var">lo</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_match_state"><span class="id" title="inductive">cse_match_state</span></a> <a class="idref" href="CompOptCert.MsgMapping.html#inj_init"><span class="id" title="definition">inj_init</span></a> <span class="id" title="var">lo</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="CompOptCert.Thread.html#Thread.mk"><span class="id" title="constructor">Thread.mk</span></a> <a class="idref" href="CompOptCert.Semantics.html#rtl_lang"><span class="id" title="definition">rtl_lang</span></a> <span class="id" title="var">st_tgt</span> <a class="idref" href="CompOptCert.Local.html#Local.init"><span class="id" title="definition">Local.init</span></a> <a class="idref" href="CompOptCert.View.html#TimeMap.bot"><span class="id" title="definition">TimeMap.bot</span></a> <a class="idref" href="CompOptCert.Memory.html#Memory.init"><span class="id" title="definition">Memory.init</span></a>) <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="CompOptCert.Thread.html#Thread.mk"><span class="id" title="constructor">Thread.mk</span></a> <a class="idref" href="CompOptCert.Semantics.html#rtl_lang"><span class="id" title="definition">rtl_lang</span></a> <span class="id" title="var">st_src</span> <a class="idref" href="CompOptCert.Local.html#Local.init"><span class="id" title="definition">Local.init</span></a> <a class="idref" href="CompOptCert.View.html#TimeMap.bot"><span class="id" title="definition">TimeMap.bot</span></a> <a class="idref" href="CompOptCert.Memory.html#Memory.init"><span class="id" title="definition">Memory.init</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>). {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_match_state_intro"><span class="id" title="constructor">cse_match_state_intro</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">inj'</span> := <a class="idref" href="CompOptCert.MsgMapping.html#inj_init"><span class="id" title="definition">inj_init</span></a>); <span class="id" title="var">simpls</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: { </div>
+
+<div class="doc">
+inj = inj' = init_inj 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">left</span>. <span class="id" title="var">splits</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">eq_inj</span>. <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.Local.html#Local.wf_init"><span class="id" title="lemma">Local.wf_init</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.Memory.html#Memory.closed_timemap_bot"><span class="id" title="lemma">Memory.closed_timemap_bot</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">Memory.inhabited</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.Memory.html#Memory.init_closed"><span class="id" title="lemma">Memory.init_closed</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+match local state 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_match_local_state_intro"><span class="id" title="constructor">cse_match_local_state_intro</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">Local.init</span>; <span class="id" title="tactic">simpl</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="var">unfolds</span> <span class="id" title="var">TView.eq</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">AFunc</span> <span class="id" title="var">eqn</span>:<span class="id" title="var">AFunc_is_None</span>.<br/>
+</div>
+
+<div class="doc">
+match rtl state 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_match_rtl_state_intro"><span class="id" title="constructor">cse_match_rtl_state_intro</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+transform code_s aprog = code_t 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">Heqst_src</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H2</span>; <span class="id" title="var">simpls</span>. <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: { <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">Heqst_src</span>; <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H2</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_match_cont_base"><span class="id" title="constructor">cse_match_cont_base</span></a>; <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rename</span> <span class="id" title="var">a</span> <span class="id" title="var">into</span> <span class="id" title="var">acdhp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_match_frame_intro"><span class="id" title="constructor">cse_match_frame_intro</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="var">i</span> := 0) (<span class="id" title="var">l</span> := <span class="id" title="var">fentry_s</span>) (<span class="id" title="var">enode</span> := <span class="id" title="var">fentry_s</span>) (<span class="id" title="var">blk</span> := <span class="id" title="var">blk_s</span>) (<span class="id" title="var">analysis</span>:= <span class="id" title="var">acdhp</span>); <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">try</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Heqst_src</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H2</span>; <span class="id" title="var">simpls</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: { <span class="id" title="var">inv</span> <span class="id" title="var">H3</span>; <span class="id" title="tactic">trivial</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3: { </div>
+
+<div class="doc">
+match abstract interp 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">match_abstract_interp</span>; <span class="id" title="var">unfolds</span> <span class="id" title="var">AveAI.br_from_i</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveAI.ge"><span class="id" title="definition">AveAI.ge</span></a> (<a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveAI.getFirst"><span class="id" title="definition">AveAI.getFirst</span></a> (<span class="id" title="var">acdhp</span> <a class="idref" href="CompOptCert.Maps.html#296632fb4990639c1b4cd78e3f181771"><span class="id" title="notation">!!</span></a> <span class="id" title="var">fentry_s</span>)) <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveLat.top"><span class="id" title="definition">AveLat.top</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveDS.analyze_func_entry"><span class="id" title="lemma">AveDS.analyze_func_entry</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#Ave_B.wf_transf_blk"><span class="id" title="lemma">Ave_B.wf_transf_blk</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> (<a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveAI.getFirst"><span class="id" title="definition">AveAI.getFirst</span></a> <span class="id" title="var">acdhp</span><a class="idref" href="CompOptCert.Maps.html#296632fb4990639c1b4cd78e3f181771"><span class="id" title="notation">!!</span></a><span class="id" title="var">fentry_s</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">aentry</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> <span class="id" title="var">aentry</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#W.empty_1"><span class="id" title="definition">W.empty_1</span></a>. <span class="id" title="var">unfolds</span> <span class="id" title="var">W.Empty</span>. <span class="id" title="var">unfolds</span> <span class="id" title="var">W.Subset</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <span class="id" title="var">H4</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H5</span>. <span class="id" title="tactic">eapply</span> <span class="id" title="var">H6</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H5</span>. <span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: {  </div>
+
+<div class="doc">
+transform blk_s analysis fentry_s =&gt; blk_t 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">AveAI.br_from_i</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">H3</span>; <span class="id" title="tactic">clear</span> <span class="id" title="var">H6</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.optimizer.CSE.html#transform_cdhp"><span class="id" title="definition">transform_cdhp</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <span class="id" title="var">CdhptBlk</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H5</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="CompOptCert.Maps.html#PTree.gmap"><span class="id" title="lemma">PTree.gmap</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>; <span class="id" title="var">unfolds</span> <span class="id" title="var">Coqlib.option_map</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>; <span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">Heqopt_blk_s</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">H4</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.optimizer.CSE.html#transform_blk'"><span class="id" title="definition">transform_blk'</span></a>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <span class="id" title="var">HeqAFunc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveDS.analyze_program"><span class="id" title="definition">AveDS.analyze_program</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="CompOptCert.Maps.html#PTree.gmap1"><span class="id" title="lemma">PTree.gmap1</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">Coqlib.option_map</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">CodeSFunc</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>. <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">inversion</span> <span class="id" title="var">H4</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">remember</span> (<a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveDS.fixpoint_blk"><span class="id" title="definition">AveDS.fixpoint_blk</span></a> <span class="id" title="var">cdhp_s</span> <a class="idref" href="CompOptCert.Syntax.html#succ"><span class="id" title="definition">succ</span></a> <span class="id" title="var">fentry_s</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveLat.top"><span class="id" title="definition">AveLat.top</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">fun</span> (<a id="n:11" class="idref" href="#n:11"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a>) (<a id="ai:12" class="idref" href="#ai:12"><span class="id" title="binder">ai</span></a> : <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveDS.AI.t"><span class="id" title="definition">AveDS.AI.t</span></a>) ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">cdhp_s</span> <a class="idref" href="CompOptCert.Maps.html#73774dfd3fef401022b78a58a582fe58"><span class="id" title="notation">!</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#n:9"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">b</span> ⇒ <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#Ave_B.transf_blk"><span class="id" title="definition">Ave_B.transf_blk</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#ai:10"><span class="id" title="variable">ai</span></a> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> ⇒ <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveDS.AI.Atom"><span class="id" title="constructor">AveDS.AI.Atom</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#ai:10"><span class="id" title="variable">ai</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>)) <span class="id" title="keyword">as</span> <span class="id" title="var">acdhp_partial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">acdhp_partial</span> <span class="id" title="var">eqn</span>:<span class="id" title="var">acdhp_partial_eq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">left</span>. <span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">right</span>. <span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ </div>
+
+<div class="doc">
+link 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">AveAI.br_from_i</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveDS.analyze_func_solution"><span class="id" title="lemma">AveDS.analyze_func_solution</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#Ave_B.wf_transf_blk"><span class="id" title="lemma">Ave_B.wf_transf_blk</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#Ave_B.wf_transf_blk2"><span class="id" title="lemma">Ave_B.wf_transf_blk2</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">AveAI.br_from_i</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveAI.ge"><span class="id" title="definition">AveAI.ge</span></a> (<a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveAI.getFirst"><span class="id" title="definition">AveAI.getFirst</span></a> (<span class="id" title="var">acdhp</span> <a class="idref" href="CompOptCert.Maps.html#296632fb4990639c1b4cd78e3f181771"><span class="id" title="notation">!!</span></a> <span class="id" title="var">fentry_s</span>)) <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveLat.top"><span class="id" title="definition">AveLat.top</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveDS.analyze_func_entry"><span class="id" title="lemma">AveDS.analyze_func_entry</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#Ave_B.wf_transf_blk"><span class="id" title="lemma">Ave_B.wf_transf_blk</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveAI.ge"><span class="id" title="definition">AveAI.ge</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveDS.L.ge"><span class="id" title="axiom">AveDS.L.ge</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveAI.getFirst"><span class="id" title="definition">AveAI.getFirst</span></a> <span class="id" title="var">acdhp</span> <a class="idref" href="CompOptCert.Maps.html#296632fb4990639c1b4cd78e3f181771"><span class="id" title="notation">!!</span></a> <span class="id" title="var">fentry_s</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">EqEntry</span>; <span class="id" title="var">unfolds</span> <span class="id" title="var">AveLat.top</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">contradiction</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#W.Empty"><span class="id" title="definition">W.Empty</span></a> <span class="id" title="var">tuples</span>). {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">W.Subset</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.Classical_Prop.html#classic"><span class="id" title="axiom">classic</span></a> (<a class="idref" href="CompOptCert.LibTactics.html#3cd408940d17a0809f793173996d5fd5"><span class="id" title="notation">∃</span></a> <a id="a:14" class="idref" href="#a:14"><span class="id" title="binder">a</span></a><a class="idref" href="CompOptCert.LibTactics.html#3cd408940d17a0809f793173996d5fd5"><span class="id" title="notation">,</span></a> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#W.In"><span class="id" title="definition">W.In</span></a> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#a:13"><span class="id" title="variable">a</span></a> <span class="id" title="var">tuples</span>)). <span class="id" title="tactic">destruct</span> <span class="id" title="var">H5</span>; <span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2: {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#W.Empty"><span class="id" title="definition">W.Empty</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Logic.Classical_Pred_Type.html#not_ex_all_not"><span class="id" title="lemma">not_ex_all_not</span></a>. <span class="id" title="tactic">trivial</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H5</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">specialize</span> (<span class="id" title="var">H4</span> <span class="id" title="var">x</span> <span class="id" title="var">H5</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#W.empty_1"><span class="id" title="definition">W.empty_1</span></a>. <span class="id" title="var">unfolds</span> <span class="id" title="var">W.Empty</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">specialize</span> (<span class="id" title="var">H6</span> <span class="id" title="var">x</span>). <span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">loc_fact_valid</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">W.Empty</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">specialize</span> (<span class="id" title="var">H5</span> (<a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveTuple.AVar"><span class="id" title="constructor">AveTuple.AVar</span></a> <span class="id" title="var">r</span> <span class="id" title="var">loc</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">H2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">Heqst_src</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveDS.wf_analyze_func"><span class="id" title="lemma">AveDS.wf_analyze_func</span></a> <span class="id" title="keyword">with</span> (<span class="id" title="tactic">eval</span> := <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#AveLat.top"><span class="id" title="definition">AveLat.top</span></a>) (<span class="id" title="var">transfb</span> := <a class="idref" href="CompOptCert.optimizer.AveAnalysis.html#Ave_B.transf_blk"><span class="id" title="definition">Ave_B.transf_blk</span></a>) <span class="id" title="tactic">in</span> <span class="id" title="var">CodeSFunc</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">CodeSFunc</span> <span class="id" title="keyword">as</span> (<span class="id" title="var">acdhp</span> &amp; <span class="id" title="var">ACdhp</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">ACdhp</span> <span class="id" title="tactic">in</span> <span class="id" title="var">HeqAFunc</span>. <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.MsgMapping.html#mem_injected"><span class="id" title="definition">mem_injected</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="CompOptCert.Local.html#Local.init"><span class="id" title="definition">Local.init</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">MSG</span>; <span class="id" title="var">simpls</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="CompOptCert.Memory.html#Memory.bot_get"><span class="id" title="lemma">Memory.bot_get</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">MSG</span>. <span class="id" title="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#cse_match_state_implies_sim"><span class="id" title="lemma">cse_match_state_implies_sim</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H4</span>; <span class="id" title="var">simpls</span>; <span class="id" title="tactic">auto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Common subexpression elimination optimizer is correct. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Theorem</span> <a id="correct_cse" class="idref" href="#correct_cse"><span class="id" title="lemma">correct_cse</span></a>:<br/>
+&nbsp;&nbsp;<a class="idref" href="CompOptCert.CorrectOpt.html#Correct"><span class="id" title="definition">Correct</span></a> <a class="idref" href="CompOptCert.optimizer.CSE.html#cse_optimizer"><span class="id" title="definition">cse_optimizer</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.CorrectOpt.html#Verif_implies_Correctness"><span class="id" title="lemma">Verif_implies_Correctness</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">unfolds</span> <span class="id" title="var">Verif</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">∃</span> <a class="idref" href="CompOptCert.optimizer.CSEProofMState.html#cse_invariant"><span class="id" title="definition">cse_invariant</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Peano.html#lt"><span class="id" title="definition">lt</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="CompOptCert.optimizer.CSEProof.html#verif_cse"><span class="id" title="lemma">verif_cse</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>CompOptCert.Event</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library CompOptCert.Event</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#"><span class="id" title="library">List</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Arith.PeanoNat.html#"><span class="id" title="library">PeanoNat</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Structures.Orders.html#"><span class="id" title="library">Orders</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.MSets.MSetList.html#"><span class="id" title="library">MSetList</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.sflib.html#"><span class="id" title="library">sflib</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.DataStructure.html#"><span class="id" title="library">DataStructure</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Basic.html#"><span class="id" title="library">Basic</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Loc.html#"><span class="id" title="library">Loc</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set Implicit Arguments</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="CompOptCert.Integers.html#"><span class="id" title="library">Integers</span></a>.<br/>
+<span class="id" title="keyword">Module</span> <a id="Const" class="idref" href="#Const"><span class="id" title="module">Const</span></a> := <a class="idref" href="CompOptCert.Integers.html#Int"><span class="id" title="module">Int</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="const_neq_sym" class="idref" href="#const_neq_sym"><span class="id" title="lemma">const_neq_sym</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:1" class="idref" href="#x:1"><span class="id" title="binder">x</span></a> <a id="y:2" class="idref" href="#y:2"><span class="id" title="binder">y</span></a>:<a class="idref" href="CompOptCert.Event.html#t"><span class="id" title="definition">Const.t</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Event.html#x:1"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">≠</span></a> <a class="idref" href="CompOptCert.Event.html#y:2"><span class="id" title="variable">y</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">↔</span></a> <a class="idref" href="CompOptCert.Event.html#y:2"><span class="id" title="variable">y</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">≠</span></a> <a class="idref" href="CompOptCert.Event.html#x:1"><span class="id" title="variable">x</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>. <span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>. <span class="id" title="var">contradiction</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="loc_neq_sym" class="idref" href="#loc_neq_sym"><span class="id" title="lemma">loc_neq_sym</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="x:3" class="idref" href="#x:3"><span class="id" title="binder">x</span></a> <a id="y:4" class="idref" href="#y:4"><span class="id" title="binder">y</span></a>:<a class="idref" href="CompOptCert.Loc.html#Loc.t"><span class="id" title="definition">Loc.t</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Event.html#x:3"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">≠</span></a> <a class="idref" href="CompOptCert.Event.html#y:4"><span class="id" title="variable">y</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">↔</span></a> <a class="idref" href="CompOptCert.Event.html#y:4"><span class="id" title="variable">y</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">≠</span></a> <a class="idref" href="CompOptCert.Event.html#x:3"><span class="id" title="variable">x</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>. <span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>. <span class="id" title="var">contradiction</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Ordering" class="idref" href="#Ordering"><span class="id" title="module">Ordering</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="Ordering.t" class="idref" href="#Ordering.t"><span class="id" title="inductive">t</span></a> :=<br/>
+&nbsp;&nbsp;| <a id="Ordering.plain" class="idref" href="#Ordering.plain"><span class="id" title="constructor">plain</span></a><br/>
+&nbsp;&nbsp;| <a id="Ordering.relaxed" class="idref" href="#Ordering.relaxed"><span class="id" title="constructor">relaxed</span></a><br/>
+&nbsp;&nbsp;| <a id="Ordering.strong_relaxed" class="idref" href="#Ordering.strong_relaxed"><span class="id" title="constructor">strong_relaxed</span></a><br/>
+&nbsp;&nbsp;| <a id="Ordering.acqrel" class="idref" href="#Ordering.acqrel"><span class="id" title="constructor">acqrel</span></a><br/>
+&nbsp;&nbsp;| <a id="Ordering.seqcst" class="idref" href="#Ordering.seqcst"><span class="id" title="constructor">seqcst</span></a><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="Ordering.atomicity" class="idref" href="#Ordering.atomicity"><span class="id" title="inductive">atomicity</span></a> := <br/>
+&nbsp;&nbsp;| <a id="Ordering.atomic" class="idref" href="#Ordering.atomic"><span class="id" title="constructor">atomic</span></a> <br/>
+&nbsp;&nbsp;| <a id="Ordering.nonatomic" class="idref" href="#Ordering.nonatomic"><span class="id" title="constructor">nonatomic</span></a><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Ordering.mem_ord_match" class="idref" href="#Ordering.mem_ord_match"><span class="id" title="definition">mem_ord_match</span></a> (<a id="ord:9" class="idref" href="#ord:9"><span class="id" title="binder">ord</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">t</span></a>) (<a id="o:10" class="idref" href="#o:10"><span class="id" title="binder">o</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.atomicity"><span class="id" title="inductive">atomicity</span></a>): <span class="id" title="keyword">Prop</span> := <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Event.html#o:10"><span class="id" title="variable">o</span></a> <span class="id" title="keyword">with</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.nonatomic"><span class="id" title="constructor">nonatomic</span></a> ⇒ <a class="idref" href="CompOptCert.Event.html#ord:9"><span class="id" title="variable">ord</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.plain"><span class="id" title="constructor">plain</span></a> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.atomic"><span class="id" title="constructor">atomic</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">(</span></a><a class="idref" href="CompOptCert.Event.html#ord:9"><span class="id" title="variable">ord</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.acqrel"><span class="id" title="constructor">acqrel</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">∨</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">(</span></a><a class="idref" href="CompOptCert.Event.html#ord:9"><span class="id" title="variable">ord</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.relaxed"><span class="id" title="constructor">relaxed</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">∨</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">(</span></a><a class="idref" href="CompOptCert.Event.html#ord:9"><span class="id" title="variable">ord</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.strong_relaxed"><span class="id" title="constructor">strong_relaxed</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="CompOptCert.Event.html#Ordering.LocOrdMap"><span class="id" title="definition">LocOrdMap</span></a></span>: records predefined atomicity for each location. 
+      atomic: allow relaxed or stronger access.
+      nonatomic: allow plain access. 
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Ordering.LocOrdMap" class="idref" href="#Ordering.LocOrdMap"><span class="id" title="definition">LocOrdMap</span></a> := <a class="idref" href="CompOptCert.Loc.html#Loc.t"><span class="id" title="definition">Loc.t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.atomicity"><span class="id" title="inductive">atomicity</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Ordering.le" class="idref" href="#Ordering.le"><span class="id" title="definition">le</span></a> (<a id="lhs:12" class="idref" href="#lhs:12"><span class="id" title="binder">lhs</span></a> <a id="rhs:13" class="idref" href="#rhs:13"><span class="id" title="binder">rhs</span></a>:<a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">t</span></a>): <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Event.html#lhs:12"><span class="id" title="variable">lhs</span></a>, <a class="idref" href="CompOptCert.Event.html#rhs:13"><span class="id" title="variable">rhs</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.plain"><span class="id" title="constructor">plain</span></a>, <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>, <a class="idref" href="CompOptCert.Event.html#Ordering.plain"><span class="id" title="constructor">plain</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.relaxed"><span class="id" title="constructor">relaxed</span></a>, <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>, <a class="idref" href="CompOptCert.Event.html#Ordering.relaxed"><span class="id" title="constructor">relaxed</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.strong_relaxed"><span class="id" title="constructor">strong_relaxed</span></a>, <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>, <a class="idref" href="CompOptCert.Event.html#Ordering.strong_relaxed"><span class="id" title="constructor">strong_relaxed</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.acqrel"><span class="id" title="constructor">acqrel</span></a>, <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>, <a class="idref" href="CompOptCert.Event.html#Ordering.acqrel"><span class="id" title="constructor">acqrel</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.seqcst"><span class="id" title="constructor">seqcst</span></a>, <a class="idref" href="CompOptCert.Event.html#Ordering.seqcst"><span class="id" title="constructor">seqcst</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Global Opaque</span> <a class="idref" href="CompOptCert.Event.html#Ordering.le"><span class="id" title="definition">le</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Global</span> <span class="id" title="var">Program</span> <span class="id" title="keyword">Instance</span> <a id="Ordering.le_PreOrder" class="idref" href="#Ordering.le_PreOrder"><span class="id" title="instance">le_PreOrder</span></a>: <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Classes.RelationClasses.html#PreOrder"><span class="id" title="class">PreOrder</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.le"><span class="id" title="definition">le</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ii</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">x</span>; <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ii</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">x</span>, <span class="id" title="var">y</span>, <span class="id" title="var">z</span>; <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">le_PreOrder_obligation_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Ordering.join" class="idref" href="#Ordering.join"><span class="id" title="definition">join</span></a> (<a id="lhs:16" class="idref" href="#lhs:16"><span class="id" title="binder">lhs</span></a> <a id="rhs:17" class="idref" href="#rhs:17"><span class="id" title="binder">rhs</span></a>:<a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">t</span></a>): <a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">t</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Event.html#lhs:16"><span class="id" title="variable">lhs</span></a>, <a class="idref" href="CompOptCert.Event.html#rhs:17"><span class="id" title="variable">rhs</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.plain"><span class="id" title="constructor">plain</span></a>, <span class="id" title="var">_</span> ⇒ <a class="idref" href="CompOptCert.Event.html#rhs:17"><span class="id" title="variable">rhs</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>, <a class="idref" href="CompOptCert.Event.html#Ordering.plain"><span class="id" title="constructor">plain</span></a> ⇒ <a class="idref" href="CompOptCert.Event.html#lhs:16"><span class="id" title="variable">lhs</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.relaxed"><span class="id" title="constructor">relaxed</span></a>, <span class="id" title="var">_</span> ⇒ <a class="idref" href="CompOptCert.Event.html#rhs:17"><span class="id" title="variable">rhs</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>, <a class="idref" href="CompOptCert.Event.html#Ordering.relaxed"><span class="id" title="constructor">relaxed</span></a> ⇒ <a class="idref" href="CompOptCert.Event.html#lhs:16"><span class="id" title="variable">lhs</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.strong_relaxed"><span class="id" title="constructor">strong_relaxed</span></a>, <span class="id" title="var">_</span> ⇒ <a class="idref" href="CompOptCert.Event.html#rhs:17"><span class="id" title="variable">rhs</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>, <a class="idref" href="CompOptCert.Event.html#Ordering.strong_relaxed"><span class="id" title="constructor">strong_relaxed</span></a> ⇒ <a class="idref" href="CompOptCert.Event.html#lhs:16"><span class="id" title="variable">lhs</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.acqrel"><span class="id" title="constructor">acqrel</span></a>, <span class="id" title="var">_</span> ⇒ <a class="idref" href="CompOptCert.Event.html#rhs:17"><span class="id" title="variable">rhs</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>, <a class="idref" href="CompOptCert.Event.html#Ordering.acqrel"><span class="id" title="constructor">acqrel</span></a> ⇒ <a class="idref" href="CompOptCert.Event.html#lhs:16"><span class="id" title="variable">lhs</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#Ordering.seqcst"><span class="id" title="constructor">seqcst</span></a>, <span class="id" title="var">_</span> ⇒ <a class="idref" href="CompOptCert.Event.html#rhs:17"><span class="id" title="variable">rhs</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Ordering.join_comm" class="idref" href="#Ordering.join_comm"><span class="id" title="lemma">join_comm</span></a> <a id="lhs:20" class="idref" href="#lhs:20"><span class="id" title="binder">lhs</span></a> <a id="rhs:21" class="idref" href="#rhs:21"><span class="id" title="binder">rhs</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> <a class="idref" href="CompOptCert.Event.html#lhs:20"><span class="id" title="variable">lhs</span></a> <a class="idref" href="CompOptCert.Event.html#rhs:21"><span class="id" title="variable">rhs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> <a class="idref" href="CompOptCert.Event.html#rhs:21"><span class="id" title="variable">rhs</span></a> <a class="idref" href="CompOptCert.Event.html#lhs:20"><span class="id" title="variable">lhs</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">lhs</span>, <span class="id" title="var">rhs</span>; <span class="id" title="var">ss</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Ordering.join_assoc" class="idref" href="#Ordering.join_assoc"><span class="id" title="lemma">join_assoc</span></a> <a id="a:22" class="idref" href="#a:22"><span class="id" title="binder">a</span></a> <a id="b:23" class="idref" href="#b:23"><span class="id" title="binder">b</span></a> <a id="c:24" class="idref" href="#c:24"><span class="id" title="binder">c</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> (<a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> <a class="idref" href="CompOptCert.Event.html#a:22"><span class="id" title="variable">a</span></a> <a class="idref" href="CompOptCert.Event.html#b:23"><span class="id" title="variable">b</span></a>) <a class="idref" href="CompOptCert.Event.html#c:24"><span class="id" title="variable">c</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> <a class="idref" href="CompOptCert.Event.html#a:22"><span class="id" title="variable">a</span></a> (<a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> <a class="idref" href="CompOptCert.Event.html#b:23"><span class="id" title="variable">b</span></a> <a class="idref" href="CompOptCert.Event.html#c:24"><span class="id" title="variable">c</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">a</span>, <span class="id" title="var">b</span>, <span class="id" title="var">c</span>; <span class="id" title="var">ss</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Ordering.join_l" class="idref" href="#Ordering.join_l"><span class="id" title="lemma">join_l</span></a> <a id="lhs:25" class="idref" href="#lhs:25"><span class="id" title="binder">lhs</span></a> <a id="rhs:26" class="idref" href="#rhs:26"><span class="id" title="binder">rhs</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Event.html#Ordering.le"><span class="id" title="definition">le</span></a> <a class="idref" href="CompOptCert.Event.html#lhs:25"><span class="id" title="variable">lhs</span></a> (<a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> <a class="idref" href="CompOptCert.Event.html#lhs:25"><span class="id" title="variable">lhs</span></a> <a class="idref" href="CompOptCert.Event.html#rhs:26"><span class="id" title="variable">rhs</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">lhs</span>, <span class="id" title="var">rhs</span>; <span class="id" title="var">ss</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Ordering.join_r" class="idref" href="#Ordering.join_r"><span class="id" title="lemma">join_r</span></a> <a id="lhs:27" class="idref" href="#lhs:27"><span class="id" title="binder">lhs</span></a> <a id="rhs:28" class="idref" href="#rhs:28"><span class="id" title="binder">rhs</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Event.html#Ordering.le"><span class="id" title="definition">le</span></a> <a class="idref" href="CompOptCert.Event.html#rhs:28"><span class="id" title="variable">rhs</span></a> (<a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> <a class="idref" href="CompOptCert.Event.html#lhs:27"><span class="id" title="variable">lhs</span></a> <a class="idref" href="CompOptCert.Event.html#rhs:28"><span class="id" title="variable">rhs</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">lhs</span>, <span class="id" title="var">rhs</span>; <span class="id" title="var">ss</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Ordering.join_spec" class="idref" href="#Ordering.join_spec"><span class="id" title="lemma">join_spec</span></a> <a id="lhs:29" class="idref" href="#lhs:29"><span class="id" title="binder">lhs</span></a> <a id="rhs:30" class="idref" href="#rhs:30"><span class="id" title="binder">rhs</span></a> <a id="o:31" class="idref" href="#o:31"><span class="id" title="binder">o</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="LHS:32" class="idref" href="#LHS:32"><span class="id" title="binder">LHS</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.le"><span class="id" title="definition">le</span></a> <a class="idref" href="CompOptCert.Event.html#lhs:29"><span class="id" title="variable">lhs</span></a> <a class="idref" href="CompOptCert.Event.html#o:31"><span class="id" title="variable">o</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="RHS:33" class="idref" href="#RHS:33"><span class="id" title="binder">RHS</span></a>: <a class="idref" href="CompOptCert.Event.html#Ordering.le"><span class="id" title="definition">le</span></a> <a class="idref" href="CompOptCert.Event.html#rhs:30"><span class="id" title="variable">rhs</span></a> <a class="idref" href="CompOptCert.Event.html#o:31"><span class="id" title="variable">o</span></a>):<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Event.html#Ordering.le"><span class="id" title="definition">le</span></a> (<a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> <a class="idref" href="CompOptCert.Event.html#lhs:29"><span class="id" title="variable">lhs</span></a> <a class="idref" href="CompOptCert.Event.html#rhs:30"><span class="id" title="variable">rhs</span></a>) <a class="idref" href="CompOptCert.Event.html#o:31"><span class="id" title="variable">o</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">lhs</span>, <span class="id" title="var">rhs</span>; <span class="id" title="var">ss</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Ordering.join_cases" class="idref" href="#Ordering.join_cases"><span class="id" title="lemma">join_cases</span></a> <a id="lhs:34" class="idref" href="#lhs:34"><span class="id" title="binder">lhs</span></a> <a id="rhs:35" class="idref" href="#rhs:35"><span class="id" title="binder">rhs</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> <a class="idref" href="CompOptCert.Event.html#lhs:34"><span class="id" title="variable">lhs</span></a> <a class="idref" href="CompOptCert.Event.html#rhs:35"><span class="id" title="variable">rhs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Event.html#lhs:34"><span class="id" title="variable">lhs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">∨</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.join"><span class="id" title="definition">join</span></a> <a class="idref" href="CompOptCert.Event.html#lhs:34"><span class="id" title="variable">lhs</span></a> <a class="idref" href="CompOptCert.Event.html#rhs:35"><span class="id" title="variable">rhs</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="CompOptCert.Event.html#rhs:35"><span class="id" title="variable">rhs</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">lhs</span>, <span class="id" title="var">rhs</span>; <span class="id" title="tactic">auto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Event.html#Ordering"><span class="id" title="module">Ordering</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Event" class="idref" href="#Event"><span class="id" title="module">Event</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Structure</span> <a id="Event.t" class="idref" href="#Event.t"><span class="id" title="record">t</span></a> := <a id="Event.mk" class="idref" href="#Event.mk"><span class="id" title="constructor">mk</span></a> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="Event.output" class="idref" href="#Event.output"><span class="id" title="projection">output</span></a>: <a class="idref" href="CompOptCert.Event.html#Const.t"><span class="id" title="definition">Const.t</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;}.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Event.html#Event"><span class="id" title="module">Event</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab97"></a><h2 class="section">Observable event</h2>
+ Observable event includes:
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="CompOptCert.Event.html#Event.output"><span class="id" title="projection">output</span></a></span>: for system call;
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="CompOptCert.Event.html#VisibleEvent.abort"><span class="id" title="constructor">abort</span></a></span>: for program abort;
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="CompOptCert.Event.html#VisibleEvent.done"><span class="id" title="constructor">done</span></a></span>: for program done. 
+
+</li>
+</ul>
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="VisibleEvent" class="idref" href="#VisibleEvent"><span class="id" title="module">VisibleEvent</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="VisibleEvent.t" class="idref" href="#VisibleEvent.t"><span class="id" title="inductive">t</span></a> :=<br/>
+&nbsp;&nbsp;| <a id="VisibleEvent.out" class="idref" href="#VisibleEvent.out"><span class="id" title="constructor">out</span></a> (<a id="e:40" class="idref" href="#e:40"><span class="id" title="binder">e</span></a>: <a class="idref" href="CompOptCert.Event.html#Event.t"><span class="id" title="record">Event.t</span></a>)<br/>
+&nbsp;&nbsp;| <a id="VisibleEvent.abort" class="idref" href="#VisibleEvent.abort"><span class="id" title="constructor">abort</span></a> <br/>
+&nbsp;&nbsp;| <a id="VisibleEvent.done" class="idref" href="#VisibleEvent.done"><span class="id" title="constructor">done</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Event.html#VisibleEvent"><span class="id" title="module">VisibleEvent</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="AuxEvent" class="idref" href="#AuxEvent"><span class="id" title="module">AuxEvent</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="AuxEvent.t" class="idref" href="#AuxEvent.t"><span class="id" title="inductive">t</span></a> := <br/>
+&nbsp;&nbsp;| <a id="AuxEvent.na" class="idref" href="#AuxEvent.na"><span class="id" title="constructor">na</span></a> <br/>
+&nbsp;&nbsp;| <a id="AuxEvent.prc" class="idref" href="#AuxEvent.prc"><span class="id" title="constructor">prc</span></a> <br/>
+&nbsp;&nbsp;| <a id="AuxEvent.atm" class="idref" href="#AuxEvent.atm"><span class="id" title="constructor">atm</span></a><br/>
+&nbsp;&nbsp;| <a id="AuxEvent.out" class="idref" href="#AuxEvent.out"><span class="id" title="constructor">out</span></a> (<a id="e:43" class="idref" href="#e:43"><span class="id" title="binder">e</span></a>: <a class="idref" href="CompOptCert.Event.html#Event.t"><span class="id" title="record">Event.t</span></a>)<br/>
+&nbsp;&nbsp;| <a id="AuxEvent.sw" class="idref" href="#AuxEvent.sw"><span class="id" title="constructor">sw</span></a><br/>
+&nbsp;&nbsp;| <a id="AuxEvent.tterm" class="idref" href="#AuxEvent.tterm"><span class="id" title="constructor">tterm</span></a> <br/>
+&nbsp;&nbsp;.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Event.html#AuxEvent"><span class="id" title="module">AuxEvent</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab98"></a><h2 class="section">Program transition event (or machine evet)</h2>
+ Program transition event includes:
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="CompOptCert.Local.html#ThreadEvent.silent"><span class="id" title="constructor">silent</span></a></span>: silent step;
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="CompOptCert.Event.html#MachineEvent.switch"><span class="id" title="constructor">switch</span></a></span>: thread switching;
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="CompOptCert.Local.html#ThreadEvent.syscall"><span class="id" title="constructor">syscall</span></a></span>: system call (observable event). 
+
+</li>
+</ul>
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="MachineEvent" class="idref" href="#MachineEvent"><span class="id" title="module">MachineEvent</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="MachineEvent.t" class="idref" href="#MachineEvent.t"><span class="id" title="inductive">t</span></a> :=<br/>
+&nbsp;&nbsp;| <a id="MachineEvent.silent" class="idref" href="#MachineEvent.silent"><span class="id" title="constructor">silent</span></a><br/>
+&nbsp;&nbsp;| <a id="MachineEvent.switch" class="idref" href="#MachineEvent.switch"><span class="id" title="constructor">switch</span></a><br/>
+&nbsp;&nbsp;| <a id="MachineEvent.syscall" class="idref" href="#MachineEvent.syscall"><span class="id" title="constructor">syscall</span></a> (<a id="e:46" class="idref" href="#e:46"><span class="id" title="binder">e</span></a>: <a class="idref" href="CompOptCert.Event.html#Event.t"><span class="id" title="record">Event.t</span></a>)<br/>
+&nbsp;&nbsp;.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Event.html#MachineEvent"><span class="id" title="module">MachineEvent</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="ProgramEvent" class="idref" href="#ProgramEvent"><span class="id" title="module">ProgramEvent</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="ProgramEvent.t" class="idref" href="#ProgramEvent.t"><span class="id" title="inductive">t</span></a> :=<br/>
+&nbsp;&nbsp;| <a id="ProgramEvent.silent" class="idref" href="#ProgramEvent.silent"><span class="id" title="constructor">silent</span></a><br/>
+&nbsp;&nbsp;| <a id="ProgramEvent.read" class="idref" href="#ProgramEvent.read"><span class="id" title="constructor">read</span></a> (<a id="loc:49" class="idref" href="#loc:49"><span class="id" title="binder">loc</span></a>:<a class="idref" href="CompOptCert.Loc.html#Loc.t"><span class="id" title="definition">Loc.t</span></a>) (<a id="val:50" class="idref" href="#val:50"><span class="id" title="binder">val</span></a>:<a class="idref" href="CompOptCert.Event.html#Const.t"><span class="id" title="definition">Const.t</span></a>) (<a id="ord:51" class="idref" href="#ord:51"><span class="id" title="binder">ord</span></a>:<a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">Ordering.t</span></a>)<br/>
+&nbsp;&nbsp;| <a id="ProgramEvent.write" class="idref" href="#ProgramEvent.write"><span class="id" title="constructor">write</span></a> (<a id="loc:52" class="idref" href="#loc:52"><span class="id" title="binder">loc</span></a>:<a class="idref" href="CompOptCert.Loc.html#Loc.t"><span class="id" title="definition">Loc.t</span></a>) (<a id="val:53" class="idref" href="#val:53"><span class="id" title="binder">val</span></a>:<a class="idref" href="CompOptCert.Event.html#Const.t"><span class="id" title="definition">Const.t</span></a>) (<a id="ord:54" class="idref" href="#ord:54"><span class="id" title="binder">ord</span></a>:<a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">Ordering.t</span></a>)<br/>
+&nbsp;&nbsp;| <a id="ProgramEvent.update" class="idref" href="#ProgramEvent.update"><span class="id" title="constructor">update</span></a> (<a id="loc:55" class="idref" href="#loc:55"><span class="id" title="binder">loc</span></a>:<a class="idref" href="CompOptCert.Loc.html#Loc.t"><span class="id" title="definition">Loc.t</span></a>) (<a id="valr:56" class="idref" href="#valr:56"><span class="id" title="binder">valr</span></a> <a id="valw:57" class="idref" href="#valw:57"><span class="id" title="binder">valw</span></a>:<a class="idref" href="CompOptCert.Event.html#Const.t"><span class="id" title="definition">Const.t</span></a>) (<a id="ordr:58" class="idref" href="#ordr:58"><span class="id" title="binder">ordr</span></a> <a id="ordw:59" class="idref" href="#ordw:59"><span class="id" title="binder">ordw</span></a>:<a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">Ordering.t</span></a>)<br/>
+&nbsp;&nbsp;| <a id="ProgramEvent.fence" class="idref" href="#ProgramEvent.fence"><span class="id" title="constructor">fence</span></a> (<a id="ordr:60" class="idref" href="#ordr:60"><span class="id" title="binder">ordr</span></a> <a id="ordw:61" class="idref" href="#ordw:61"><span class="id" title="binder">ordw</span></a>:<a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">Ordering.t</span></a>)<br/>
+&nbsp;&nbsp;| <a id="ProgramEvent.syscall" class="idref" href="#ProgramEvent.syscall"><span class="id" title="constructor">syscall</span></a> (<a id="e:62" class="idref" href="#e:62"><span class="id" title="binder">e</span></a>:<a class="idref" href="CompOptCert.Event.html#Event.t"><span class="id" title="record">Event.t</span></a>)<br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="ProgramEvent.is_reading" class="idref" href="#ProgramEvent.is_reading"><span class="id" title="definition">is_reading</span></a> (<a id="e:63" class="idref" href="#e:63"><span class="id" title="binder">e</span></a>:<a class="idref" href="CompOptCert.Event.html#ProgramEvent.t"><span class="id" title="inductive">t</span></a>): <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<a class="idref" href="CompOptCert.Loc.html#Loc.t"><span class="id" title="definition">Loc.t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="CompOptCert.Event.html#Const.t"><span class="id" title="definition">Const.t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">Ordering.t</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Event.html#e:63"><span class="id" title="variable">e</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#ProgramEvent.read"><span class="id" title="constructor">read</span></a> <span class="id" title="var">loc</span> <span class="id" title="var">val</span> <span class="id" title="var">ord</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">loc</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">val</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">ord</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#ProgramEvent.update"><span class="id" title="constructor">update</span></a> <span class="id" title="var">loc</span> <span class="id" title="var">valr</span> <span class="id" title="var">_</span> <span class="id" title="var">ordr</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">loc</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">valr</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">ordr</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="ProgramEvent.is_writing" class="idref" href="#ProgramEvent.is_writing"><span class="id" title="definition">is_writing</span></a> (<a id="e:65" class="idref" href="#e:65"><span class="id" title="binder">e</span></a>:<a class="idref" href="CompOptCert.Event.html#ProgramEvent.t"><span class="id" title="inductive">t</span></a>): <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<a class="idref" href="CompOptCert.Loc.html#Loc.t"><span class="id" title="definition">Loc.t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="CompOptCert.Event.html#Const.t"><span class="id" title="definition">Const.t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">Ordering.t</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Event.html#e:65"><span class="id" title="variable">e</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#ProgramEvent.write"><span class="id" title="constructor">write</span></a> <span class="id" title="var">loc</span> <span class="id" title="var">val</span> <span class="id" title="var">ord</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">loc</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">val</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">ord</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#ProgramEvent.update"><span class="id" title="constructor">update</span></a> <span class="id" title="var">loc</span> <span class="id" title="var">_</span> <span class="id" title="var">valw</span> <span class="id" title="var">_</span> <span class="id" title="var">ordw</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">loc</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">valw</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">ordw</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="ProgramEvent.is_updating" class="idref" href="#ProgramEvent.is_updating"><span class="id" title="definition">is_updating</span></a> (<a id="e:67" class="idref" href="#e:67"><span class="id" title="binder">e</span></a>:<a class="idref" href="CompOptCert.Event.html#ProgramEvent.t"><span class="id" title="inductive">t</span></a>): <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<a class="idref" href="CompOptCert.Loc.html#Loc.t"><span class="id" title="definition">Loc.t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="CompOptCert.Event.html#Const.t"><span class="id" title="definition">Const.t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="CompOptCert.Event.html#Ordering.t"><span class="id" title="inductive">Ordering.t</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="CompOptCert.Event.html#e:67"><span class="id" title="variable">e</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CompOptCert.Event.html#ProgramEvent.update"><span class="id" title="constructor">update</span></a> <span class="id" title="var">loc</span> <span class="id" title="var">valr</span> <span class="id" title="var">_</span> <span class="id" title="var">ordr</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">loc</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">valr</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">ordr</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="CompOptCert.Event.html#ProgramEvent"><span class="id" title="module">ProgramEvent</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
